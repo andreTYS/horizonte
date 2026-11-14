@@ -42,22 +42,31 @@ NASA_API_KEY=tu_clave node tools/actualizar-donki.mjs 2024-05-01 2024-05-31
 ## Desarrollo
 
 Sin frameworks ni compilación: HTML, CSS y JavaScript (módulos ES). Es una PWA instalable que funciona sin conexión.
+La escena isométrica de la base se dibuja en SVG desde código (`js/escena.js`), sin librerías.
 
 ```bash
-npm start      # servidor local en http://localhost:5173
-npm test       # pruebas del motor de simulación (node --test)
+npm start      # juego + API en http://localhost:8080 (Node ≥ 22.5)
+npm test       # pruebas del motor y del servidor (node --test)
 ```
 
 | Archivo | Qué hace |
 |---|---|
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
-| `js/main.js` | Pantallas, decisiones, línea de tiempo y rebobinado |
+| `js/escena.js` | Escena isométrica SVG: módulos, día/noche, tormenta, refugio, alarmas |
+| `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
+| `js/api.js` | Envía resultados al servidor si existe (en GitHub Pages el juego funciona sin él) |
+| `server/server.mjs` | Servidor del VPS: estáticos, partidas (SQLite), panel docente, proxy NASA DONKI |
+| `docente.html` | Panel docente: resultados por aula |
 | `data/misiones.json` | Misiones, eventos, diseño sugerido y textos de Nebula |
-| `tests/sim.test.js` | Comprueba que cada misión se puede ganar y que la falla se explica bien |
+| `docs/DISENO.md` | Documento de diseño: reglas exactas, arte, arquitectura |
+
+## Despliegue
+
+- **Demo:** GitHub Pages, automático en cada push a `main`.
+- **Producción (VPS):** Docker + Caddy (HTTPS automático). Guía paso a paso: [`deploy/VPS.md`](deploy/VPS.md).
 
 ## Próximos pasos
 
-- Ver el documento de diseño completo: [`docs/DISENO.md`](docs/DISENO.md).
 - Prueba inicial / final y rúbrica 0–8 para medir aprendizaje.
 - Misión en Marte (MOXIE, RAD de Curiosity).
 - Arte original de Nebula y de la base.

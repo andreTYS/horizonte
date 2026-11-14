@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HORIZONTE · Panel docente</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <div class="estrellas" aria-hidden="true"></div>
+  <main>
+    <p class="lema">Panel docente</p>
+    <h2 class="titulo-mision">Resultados por aula</h2>
+    <form id="form" class="tarjeta jugador">
+      <label>Código de aula <input id="aula" required maxlength="20" placeholder="3B-2026"></label>
+      <label>Clave docente <input id="token" type="password" required autocomplete="current-password"></label>
+      <button class="primario" type="submit">Ver resultados</button>
+    </form>
+    <div id="salida"></div>
+  </main>
+  <script type="module" src="js/docente.js"></script>
+</body>
+</html>

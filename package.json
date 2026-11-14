@@ -5,8 +5,12 @@
   "description": "HORIZONTE – juego educativo de bases en la Luna con datos de la NASA (Space Apps 2026, Stellar Experience)",
   "type": "module",
   "scripts": {
-    "start": "npx --yes serve -l 5173 .",
+    "start": "node --no-warnings server/server.mjs",
+    "estatico": "npx --yes serve -l 5173 .",
     "test": "node --test"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5"
+  }
 }

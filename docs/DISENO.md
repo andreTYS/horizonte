@@ -1,6 +1,6 @@
 # HORIZONTE · Documento de diseño del juego (GDD)
 
-Versión 0.2 · 14 nov 2026 · Stellar Experience
+Versión 0.3 · 14 nov 2026 · Stellar Experience
 Este documento es la **fuente de verdad** del juego: si el código y este documento no coinciden, se corrige uno de los dos.
 
 ---
@@ -220,9 +220,9 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P0 | Motor, 3 misiones, rebobinado, análisis de falla | ✅ |
 | P0 | Publicación (GitHub Pages) | ✅ |
 | P0 | Datos DONKI reales en la misión 3 | ✅ |
-| P1 | Escena isométrica de la base (§7.3) | ⏳ |
-| P1 | Nueva interfaz de la misión (§7.4) | ⏳ |
+| P1 | Escena isométrica de la base (§7.3) | ✅ |
+| P1 | Nueva interfaz de la misión (§7.4) | ✅ |
 | P1 | Prueba inicial y final y rúbrica (§6) | ⏳ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
-| P2 | Despliegue en VPS con Docker | ⏳ |
+| P2 | Servidor VPS: Docker + Caddy, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
 | P3 | Misión 4: Marte | ⏳ |

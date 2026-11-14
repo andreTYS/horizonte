@@ -1,7 +1,7 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v1';
+const CACHE = 'horizonte-v2';
 const ARCHIVOS = [
-  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js',
+  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js',
   'data/nasa.json', 'data/juego.json', 'data/misiones.json',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
@@ -13,7 +13,7 @@ self.addEventListener('activate', (e) => {
 });
 // Red primero (para ver cambios al desarrollar), caché si no hay conexión.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET' || new URL(e.request.url).pathname.includes('/api/')) return;
   e.respondWith(
     fetch(e.request)
       .then((r) => { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); return r; })
