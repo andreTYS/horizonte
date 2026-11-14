@@ -14,11 +14,14 @@ import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
 import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
 
+/** ¿Hay WebGL? Si no, deja en `soportaWebGL.motivo` lo que dijo el navegador (p. ej. que bloqueó el 3D en este sitio). */
 export function soportaWebGL() {
+  soportaWebGL.motivo = '';
   try {
     const c = document.createElement('canvas');
+    c.addEventListener('webglcontextcreationerror', (e) => { soportaWebGL.motivo = e.statusMessage || ''; }, { once: true });
     return Boolean(c.getContext('webgl2') || c.getContext('webgl'));
-  } catch { return false; }
+  } catch (err) { soportaWebGL.motivo = err.message; return false; }
 }
 
 // Dónde va cada módulo (metros en el mundo)
@@ -124,7 +127,7 @@ export class Mundo {
     this.capaEtiquetas = capaEtiquetas;
     this.calidad = this.#elegirCalidad();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.calidad !== 'baja', powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.calidad === 'alta' ? 2 : 1.5));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.calidad === 'alta' ? 1.5 : 1.25)); // menos carga para la tarjeta gráfica
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -174,7 +177,7 @@ export class Mundo {
 
     if (this.calidad === 'alta') try {
       // Antialias (MSAA) dentro del compositor: sin esto los bordes se ven dentados con el bloom
-      const destino = new THREE.WebGLRenderTarget(256, 256, { type: THREE.HalfFloatType, samples: 4 });
+      const destino = new THREE.WebGLRenderTarget(256, 256, { type: THREE.HalfFloatType, samples: window.devicePixelRatio > 1 ? 2 : 4 });
       this.composer = new EffectComposer(this.renderer, destino);
       this.composer.addPass(new RenderPass(this.escena, this.camara));
       this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.5, 0.82);

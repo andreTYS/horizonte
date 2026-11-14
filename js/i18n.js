@@ -54,6 +54,7 @@ const EN = {
   '{n} astronautas · {d} días': '{n} astronauts · {d} days',
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
+  "Chrome bloqueó el 3D en este sitio después de un fallo de la tarjeta gráfica. Cierra Chrome por completo, vuelve a abrirlo y recarga.": "Chrome blocked 3D on this site after a graphics card failure. Close Chrome completely, open it again and reload.",
   "Vista 2D": "2D view",
   "Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.": "Your browser has 3D turned off. In Chrome: Settings → System → \"Use graphics acceleration\", then reload.",
   "El 3D no pudo iniciar en este equipo ({x}).": "3D couldn't start on this device ({x}).",

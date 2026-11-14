@@ -55,7 +55,7 @@ const resaltar = (tipo) => G.mundo?.resaltar(tipo);
 async function iniciarMundo() {
   try {
     const { Mundo, soportaWebGL } = await import('./mundo3d.js');
-    if (!soportaWebGL()) throw new Error('sin WebGL');
+    if (!soportaWebGL()) throw new Error(`sin WebGL${soportaWebGL.motivo ? ': ' + soportaWebGL.motivo : ''}`);
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
   } catch (err) {
     console.warn('Modo 2D:', err);
@@ -69,9 +69,10 @@ async function iniciarMundo() {
 function avisoModo2D() {
   if (!document.body.classList.contains('modo-2d') || document.getElementById('aviso-2d')) return;
   const sinWebGL = /WebGL/i.test(G.motivo2D || '');
+  const bloqueado = /block|bloque/i.test(G.motivo2D || '');
   const a = document.createElement('div');
   a.id = 'aviso-2d';
-  a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
+  a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${bloqueado ? t('Chrome bloqueó el 3D en este sitio después de un fallo de la tarjeta gráfica. Cierra Chrome por completo, vuelve a abrirlo y recarga.') : sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
     <button class="secundario" id="reintentar3d">${t('Reintentar 3D')}</button><button class="fantasma" id="cerrar2d" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
   document.body.appendChild(a);
   a.querySelector('#reintentar3d').addEventListener('click', () => location.reload());
