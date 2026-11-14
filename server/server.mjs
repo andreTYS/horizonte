@@ -47,6 +47,9 @@ db.exec(`
     fecha TEXT, aula TEXT, nombre TEXT, mision TEXT NOT NULL, nota TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS notas_aula ON notas(aula);
+  CREATE TABLE IF NOT EXISTS aulas (
+    codigo TEXT PRIMARY KEY, pausa INTEGER NOT NULL DEFAULT 0, mensaje TEXT, actualizado TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 // Columna nueva en bases creadas antes (predicción del paso «Predice»)
 if (!db.prepare('PRAGMA table_info(partidas)').all().some((c) => c.name === 'prediccion')) db.exec('ALTER TABLE partidas ADD COLUMN prediccion TEXT');
@@ -102,7 +105,7 @@ function permitido(ip) {
   const lista = (golpes.get(ip) || []).filter((t) => ahora - t < 60_000);
   lista.push(ahora);
   golpes.set(ip, lista);
-  return lista.length <= 30;
+  return lista.length <= 240; // un colegio entero puede salir a internet por la misma IP
 }
 
 // ── API ──
@@ -150,12 +153,38 @@ async function api(req, res, url) {
     return json(res, 201, { ok: true });
   }
 
+  // Modo aula: el juego consulta si el docente pausó el aula (público: solo dice sí/no y un mensaje corto)
+  if (url.pathname === '/api/aula' && req.method === 'GET') {
+    const aula = texto(url.searchParams.get('aula'), 20)?.toUpperCase();
+    if (!aula) return json(res, 400, { error: 'falta el aula' });
+    const a = db.prepare('SELECT pausa, mensaje FROM aulas WHERE codigo = ?').get(aula);
+    return json(res, 200, { aula, pausa: Boolean(a?.pausa), mensaje: a?.mensaje || null });
+  }
+
+  if (url.pathname === '/api/aula' && req.method === 'POST') {
+    if (!DOCENTE_TOKEN || req.headers.authorization !== `Bearer ${DOCENTE_TOKEN}`) return json(res, 401, { error: 'no autorizado' });
+    let a;
+    try { a = JSON.parse(await leerCuerpo(req)); } catch { return json(res, 400, { error: 'JSON inválido' }); }
+    const aula = texto(a.aula, 20)?.toUpperCase();
+    if (!aula || typeof a.pausa !== 'boolean') return json(res, 400, { error: 'faltan datos' });
+    db.prepare(`INSERT INTO aulas (codigo, pausa, mensaje, actualizado) VALUES (?, ?, ?, datetime('now'))
+      ON CONFLICT(codigo) DO UPDATE SET pausa = excluded.pausa, mensaje = excluded.mensaje, actualizado = excluded.actualizado`)
+      .run(aula, a.pausa ? 1 : 0, texto(a.mensaje, 120) || null);
+    return json(res, 200, { aula, pausa: a.pausa });
+  }
+
   if (url.pathname === '/api/resultados' && req.method === 'GET') {
     if (!DOCENTE_TOKEN || req.headers.authorization !== `Bearer ${DOCENTE_TOKEN}`) return json(res, 401, { error: 'no autorizado' });
     const aula = texto(url.searchParams.get('aula'), 20)?.toUpperCase();
     if (!aula) return json(res, 400, { error: 'falta el aula' });
-    const filas = db.prepare(`SELECT nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, fecha
+    const filas = db.prepare(`SELECT nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, prediccion, fecha
       FROM partidas WHERE aula = ? ORDER BY id DESC LIMIT 2000`).all(aula);
+    // Paso «Predice»: ¿acertaron qué fallaría primero? (o que llegarían al final)
+    const predicciones = db.prepare(`SELECT mision, COUNT(*) total,
+        SUM(CASE WHEN (exito = 1 AND prediccion = 'exito') OR (exito = 0 AND prediccion = motivo) THEN 1 ELSE 0 END) aciertos
+      FROM partidas WHERE aula = ? AND prediccion IS NOT NULL GROUP BY mision`).all(aula);
+    const notas = db.prepare('SELECT nombre, mision, nota, fecha FROM notas WHERE aula = ? ORDER BY id DESC LIMIT 500').all(aula);
+    const estadoAula = db.prepare('SELECT pausa, mensaje FROM aulas WHERE codigo = ?').get(aula);
     const resumen = db.prepare(`SELECT mision, COUNT(*) intentos, SUM(exito) exitos, ROUND(AVG(rebobinados), 1) rebobinados_prom
       FROM partidas WHERE aula = ? GROUP BY mision`).all(aula);
     const fallas = db.prepare(`SELECT mision, motivo, COUNT(*) veces FROM partidas WHERE aula = ? AND exito = 0
@@ -177,7 +206,7 @@ async function api(req, res, url) {
     const niveles = { AD: 0, A: 0, B: 0, C: 0 };
     for (const x of estudiantes) if (x.caso?.nivel) niveles[x.caso.nivel] += 1;
     const aprendizaje = { inicial: prom('inicial'), final: prom('final'), caso: prom('caso'), ganancia, niveles, estudiantes };
-    return json(res, 200, { aula, resumen, fallas, partidas: filas, aprendizaje });
+    return json(res, 200, { aula, resumen, fallas, partidas: filas, aprendizaje, predicciones, notas, pausa: Boolean(estadoAula?.pausa), mensaje: estadoAula?.mensaje || null });
   }
 
   if (url.pathname === '/api/donki' && req.method === 'GET') {

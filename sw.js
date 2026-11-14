@@ -1,7 +1,7 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v9';
+const CACHE = 'horizonte-v10';
 const ARCHIVOS = [
-  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js', 'js/mundo3d.js', 'js/terreno3d.js', 'js/modelos3d.js', 'js/plataforma3d.js', 'js/i18n.js', 'js/sonido.js', 'js/voz.js',
+  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js', 'js/mundo3d.js', 'js/terreno3d.js', 'js/modelos3d.js', 'js/plataforma3d.js', 'js/i18n.js', 'js/sonido.js', 'js/voz.js', 'js/docente.js', 'vendor/qrcode/qrcode.mjs',
   'data/en/misiones.json', 'data/en/nasa.json', 'data/en/evaluacion.json',
   'vendor/three/three.module.min.js', 'vendor/three/addons/controls/OrbitControls.js', 'vendor/three/addons/loaders/GLTFLoader.js',
   'vendor/three/addons/utils/BufferGeometryUtils.js', 'vendor/three/addons/postprocessing/EffectComposer.js', 'vendor/three/addons/postprocessing/RenderPass.js',

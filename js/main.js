@@ -5,8 +5,8 @@ import { escena as escenaSVG } from './escena.js';
 import * as api from './api.js';
 import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
-import { sfx, alternarSonido, sonidoActivo, ambienteEstado } from './sonido.js';
-import { decir, callar, olvidarUltimo, alternarVoz, vozActiva } from './voz.js';
+import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido } from './sonido.js';
+import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz } from './voz.js';
 
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
@@ -26,6 +26,7 @@ const G = {
   reservas: leer('horizonte.reservas', {}), // lo que sobra de una misión de la campaña pasa a la siguiente
   notas: leer('horizonte.notas', {}),       // bitácora del estudiante («Cuéntalo»)
   prediccion: null,
+  aula: leer('horizonte.modoAula', { activo: false, tranquilo: false }), // modo aula (enlace del docente)
   mundo: null,
 };
 
@@ -69,8 +70,57 @@ async function cargar() {
   G.juego = juego;
   G.orig = { nasa, misiones, evaluacion };
   await cargarIdioma();
-  api.detectar(); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
+  leerEnlaceDocente();
+  api.detectar().then(vigilarPausa); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
   inicio();
+}
+
+// ───────────────────────── Modo aula ─────────────────────────
+// El enlace del docente (?aula=3B-2026&modo=aula[&ritmo=tranquilo]) llena el código de aula,
+// empieza sin sonido ni voz (se pueden prender) y deja que el docente pause a toda el aula desde su panel.
+function leerEnlaceDocente() {
+  const q = new URLSearchParams(location.search);
+  const aula = q.get('aula')?.trim().slice(0, 20);
+  if (!aula) return;
+  G.jugador.aula = aula.toUpperCase();
+  guardar('horizonte.jugador', G.jugador);
+  if (q.get('modo') === 'aula') {
+    G.aula = { activo: true, tranquilo: q.get('ritmo') === 'tranquilo' };
+    guardar('horizonte.modoAula', G.aula);
+    fijarSonido(false);
+    fijarVoz(false);
+  }
+  history.replaceState(null, '', location.pathname); // el enlace no queda en la barra (ni se vuelve a aplicar al recargar)
+}
+
+function vigilarPausa() {
+  if (G.vigilando) return;
+  G.vigilando = true;
+  const revisar = async () => {
+    const e = G.aula.activo ? await api.estadoAula(G.jugador.aula) : null;
+    mostrarPausa(Boolean(e?.pausa), e?.mensaje);
+  };
+  revisar();
+  setInterval(revisar, 8000);
+}
+
+function mostrarPausa(pausa, mensaje) {
+  let capa = document.getElementById('pausa-aula');
+  if (!pausa) { capa?.remove(); return; }
+  if (!capa) {
+    callar();
+    capa = document.createElement('div');
+    capa.id = 'pausa-aula';
+    capa.setAttribute('role', 'alertdialog');
+    capa.setAttribute('aria-modal', 'true');
+    document.body.appendChild(capa);
+  }
+  capa.innerHTML = `<div class="pausa-caja">${personaje('astronauta-peruana', 'retrato')}<p class="lema">${t('Modo aula · {x}', { x: esc(G.jugador.aula) })}</p>
+    <h2>${t('Pausa: mira a tu docente')}</h2>${mensaje ? `<p class="mensaje-docente">${esc(mensaje)}</p>` : ''}<p class="suave chico">${t('Tu partida está guardada. Seguirás cuando tu docente quite la pausa.')}</p></div>`;
+}
+
+function chipAula() {
+  return G.aula.activo ? `<span class="chip-aula" title="${t('Modo aula')}">${I('aula')} ${t('Aula {x}', { x: esc(G.jugador.aula || '—') })}</span>` : '';
 }
 
 const leerJson = (f) => fetch(`data/${f}`).then((r) => r.json());
@@ -186,6 +236,7 @@ function inicio() {
       <button class="boton-idioma" id="idioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
       ${botonSonido()}
       ${botonVoz()}
+      ${chipAula()}
     </div>
     <header class="marca">
       <h1 class="logo"><img src="assets/marca/logo-color.webp" alt="ASU STELLAR" width="1200" height="800"><span class="sub-logo">Horizonte</span></h1>
@@ -201,6 +252,8 @@ function inicio() {
         <label>${t('Nombre')} <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
         <label>${t('Código de aula')} <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="${t('p. ej. 3B-2026')}"></label>
         <p class="chico suave">${t('Si tu docente te dio un código, escríbelo para que vea tu avance.')}</p>
+        <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
+        <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
       </details>
       <div class="fila"><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
@@ -214,6 +267,8 @@ function inicio() {
   for (const id of ['nombre', 'aula']) {
     document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
   }
+  document.getElementById('modoAula').addEventListener('change', (ev) => { G.aula.activo = ev.target.checked; guardar('horizonte.modoAula', G.aula); if (!G.aula.activo) mostrarPausa(false); inicio(); });
+  document.getElementById('ritmoTranquilo').addEventListener('change', (ev) => { G.aula.tranquilo = ev.target.checked; guardar('horizonte.modoAula', G.aula); });
   document.getElementById('fuentes').addEventListener('click', fuentes);
   document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('idioma').addEventListener('click', async () => {
@@ -489,13 +544,13 @@ function mision() {
       <div class="linea-tiempo" aria-label="${t('Cronoscopio: toca un día pasado para rebobinar')}">${linea}</div></div>
       <div class="acciones">
         <button class="boton-avanzar" id="dia1">${I('avanzar')} ${t('AVANZAR')} <small>${t('1 día')}</small></button>
-        <button class="boton-rapido" id="dia5" aria-label="${t('Avanzar 5 días')}">${I('rapido')}<small>×5</small></button>
+        ${G.aula.tranquilo ? '' : `<button class="boton-rapido" id="dia5" aria-label="${t('Avanzar 5 días')}">${I('rapido')}<small>×5</small></button>`}
       </div>
     </footer>`;
 
   document.getElementById('abortar').addEventListener('click', () => { G.config = { ...ini.config }; G.rebobinados += 1; construir(); });
   document.getElementById('dia1').addEventListener('click', () => avanzar(1));
-  document.getElementById('dia5').addEventListener('click', () => avanzar(5));
+  document.getElementById('dia5')?.addEventListener('click', () => avanzar(5));
   document.getElementById('bitacora').addEventListener('click', () => { G.bitacoraAbierta = !G.bitacoraAbierta; mision(); });
   document.getElementById('cerrarBitacora').addEventListener('click', () => { G.bitacoraAbierta = false; mision(); });
   enlazarSonido();

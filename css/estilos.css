@@ -336,8 +336,8 @@ details.tarjeta > summary { cursor: pointer; font-weight: 600; }
 
 /* Panel docente (página normal, sin mapa) */
 .titulo-mision { font-size: 1.4rem; margin-top: 8px; }
-body.pagina { overflow: auto; background: radial-gradient(circle at 70% -10%, #18245a, var(--fondo) 60%); }
-body.pagina main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+body.pagina { overflow: auto; background: radial-gradient(circle at 70% -10%, #3a1670, var(--fondo) 60%); }
+body.pagina main { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
 body.pagina .tarjeta { background: var(--vidrio); }
 
 /* ═════ Pantallas más grandes ═════ */
@@ -603,3 +603,45 @@ body.nebula-habla .nebula .cara { animation: nebula-habla .6s ease-in-out infini
   .marca .lema { font-size: .58rem; letter-spacing: .12em; }
   body[data-pantalla="portada"] .pista-gesto { display: none; }
 }
+
+/* ═══════════ Modo aula ═══════════ */
+.chip-aula { display: inline-flex; align-items: center; gap: 6px; align-self: center; padding: 6px 12px; border-radius: 999px; background: rgba(91, 227, 176, .15); border: 1px solid var(--ok); color: var(--ok); font: 800 .85rem var(--boton); white-space: nowrap; }
+.chip-aula .i { width: 16px; height: 16px; }
+.casilla { display: flex !important; gap: 10px; align-items: flex-start; margin-top: 10px; font-size: .92rem; cursor: pointer; }
+.casilla input { width: 20px !important; height: 20px; margin: 2px 0 0 !important; flex: none; accent-color: var(--acento); }
+#pausa-aula { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgba(14, 6, 36, .9); backdrop-filter: blur(10px); animation: entra .3s ease-out; }
+.pausa-caja { max-width: 420px; text-align: center; padding: 26px 22px; border-radius: 22px; background: var(--tarjeta); border: 2px solid var(--acento); box-shadow: 0 0 40px rgba(255, 214, 0, .25); }
+.pausa-caja .retrato { width: 120px; margin: -70px auto 6px; }
+.pausa-caja h2 { font-size: 1.4rem; }
+.mensaje-docente { font: 700 1.15rem var(--boton); color: var(--acento-2); margin: 8px 0 12px; }
+
+/* ═══════════ Panel docente ═══════════ */
+.cabecera-docente { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+.cabecera-docente img { width: 140px; height: auto; flex: none; }
+.cabecera-docente h1 { font-size: clamp(1.2rem, 4vw, 1.7rem); margin: 0; }
+.docente .tarjeta { margin-bottom: 14px; }
+.docente h3 { display: flex; align-items: center; gap: 8px; }
+.docente h3 .i { width: 20px; height: 20px; color: var(--acento-2); }
+.docente .entre { gap: 10px; flex-wrap: wrap; }
+.tabla-fuentes th { text-align: left; font: 800 .82rem var(--boton); color: var(--suave); border-bottom: 1px solid var(--borde-fuerte); padding: 8px 4px; white-space: nowrap; }
+.tabla-fuentes .ok { color: var(--ok); font-weight: 700; } .tabla-fuentes .mal { color: var(--peligro); font-weight: 700; }
+.aula-grid { display: grid; gap: 16px; }
+@media (min-width: 700px) { .aula-grid { grid-template-columns: 1fr 220px; align-items: start; } }
+.enlace-aula { display: flex; gap: 8px; margin: 12px 0; }
+.enlace-aula input { flex: 1; min-width: 0; font: 400 .85rem var(--cuerpo); color: var(--texto); background: var(--fondo-2); border: 1px solid var(--borde-fuerte); border-radius: 10px; padding: 10px; }
+.qr { margin: 0; padding: 12px; background: #fff; border-radius: 16px; text-align: center; }
+.qr svg { width: 100%; height: auto; display: block; }
+.qr figcaption { color: #160c2b; font: 800 .85rem var(--boton); margin-top: 6px; }
+.pausa-panel { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--borde-fuerte); background: rgba(255, 255, 255, .03); }
+.pausa-panel.activa { border-color: var(--acento); background: rgba(255, 214, 0, .08); }
+.pausa-panel p b { display: flex; gap: 8px; align-items: center; }
+.pausa-panel .i { width: 18px; height: 18px; }
+.pausa-panel label { display: block; font-size: .9rem; margin: 8px 0; }
+.pausa-panel input { display: block; width: 100%; margin-top: 4px; font: inherit; color: var(--texto); background: var(--fondo-2); border: 1px solid var(--borde-fuerte); border-radius: 10px; padding: 10px 12px; }
+.pausa-panel button, .fila-botones button, .enlace-aula button { display: inline-flex; gap: 6px; align-items: center; }
+.pausa-panel button .i, .fila-botones .i, .enlace-aula .i { width: 16px; height: 16px; }
+.fila-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+.lista-notas { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.lista-notas li { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .04); border-left: 3px solid var(--acento-2); }
+.lista-notas p { margin: 0 0 4px; font-size: 1rem; }
+.lista-notas small { color: var(--suave); }

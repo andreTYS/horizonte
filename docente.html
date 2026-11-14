@@ -3,22 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HORIZONTE · Panel docente</title>
+  <title>ASU STELLAR · Panel docente</title>
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0e0624">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
 </head>
-<body class="pagina">
+<body class="pagina docente">
   <div class="estrellas" aria-hidden="true"></div>
   <main>
-    <p class="lema">Panel docente</p>
-    <h2 class="titulo-mision">Resultados por aula</h2>
+    <header class="cabecera-docente">
+      <img src="assets/marca/logo-color.webp" alt="ASU STELLAR" width="1200" height="800">
+      <div><p class="lema">Panel docente · Horizonte</p><h1>Tu aula en la expedición</h1></div>
+    </header>
     <form id="form" class="tarjeta jugador">
-      <label>Código de aula <input id="aula" required maxlength="20" placeholder="3B-2026"></label>
+      <label>Código de aula <input id="aula" required maxlength="20" placeholder="3B-2026" autocomplete="off"></label>
       <label>Clave docente <input id="token" type="password" required autocomplete="current-password"></label>
-      <button class="primario" type="submit">Ver resultados</button>
+      <button class="primario" type="submit">Ver mi aula</button>
     </form>
     <div id="salida"></div>
+    <p class="chico suave pie">Stellar Experience · Moquegua, Perú · Proyecto para NASA Space Apps Challenge 2026</p>
   </main>
   <script type="module" src="js/docente.js"></script>
 </body>

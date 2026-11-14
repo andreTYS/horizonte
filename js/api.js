@@ -59,3 +59,12 @@ export const enviarEvaluacion = (evaluacion) => enviarPartida(evaluacion);
 
 /** Frase de la bitácora del estudiante («Cuéntalo»). */
 export const enviarNota = (nota) => enviarPartida(nota);
+
+/** Modo aula: ¿el docente pausó el aula? Devuelve { pausa, mensaje } o null si no hay servidor. */
+export async function estadoAula(aula) {
+  if (!disponible || !aula) return null;
+  try {
+    const r = await fetch(`api/aula?aula=${encodeURIComponent(aula)}`, { cache: 'no-store' });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}

@@ -59,6 +59,27 @@ test('guarda evaluaciones y el panel calcula promedios, ganancia y niveles', asy
   assert.equal(d.aprendizaje.estudiantes.length, 2);
 });
 
+test('predicciones y bitácora llegan al panel docente', async () => {
+  const post = (ruta, x) => fetch(`${BASE}/api/${ruta}`, { method: 'POST', body: JSON.stringify({ aula: 'PR-1', ...x }) });
+  assert.equal((await post('partidas', { mision: 'noche', exito: false, motivo: 'energia', prediccion: 'energia', nombre: 'Ana' })).status, 201);
+  assert.equal((await post('partidas', { mision: 'noche', exito: true, prediccion: 'agua', nombre: 'Luis' })).status, 201);
+  assert.equal((await post('notas', { mision: 'noche', nota: 'Apagué el invernadero de noche', nombre: 'Ana' })).status, 201);
+  assert.equal((await post('notas', { mision: 'noche', nota: '' })).status, 400);
+  const d = await (await fetch(`${BASE}/api/resultados?aula=pr-1`, { headers: { Authorization: 'Bearer secreto' } })).json();
+  assert.deepEqual(d.predicciones, [{ mision: 'noche', total: 2, aciertos: 1 }]);
+  assert.equal(d.notas[0].nota, 'Apagué el invernadero de noche');
+});
+
+test('modo aula: solo el docente pausa; el juego consulta el estado', async () => {
+  const pausar = (pausa, clave = 'secreto') => fetch(`${BASE}/api/aula`, { method: 'POST', headers: { Authorization: `Bearer ${clave}` }, body: JSON.stringify({ aula: '3b', pausa, mensaje: 'Miren la pizarra' }) });
+  assert.equal((await pausar(true, 'otra')).status, 401);
+  assert.deepEqual(await (await fetch(`${BASE}/api/aula?aula=3B`)).json(), { aula: '3B', pausa: false, mensaje: null });
+  assert.equal((await pausar(true)).status, 200);
+  assert.deepEqual(await (await fetch(`${BASE}/api/aula?aula=3b`)).json(), { aula: '3B', pausa: true, mensaje: 'Miren la pizarra' });
+  assert.equal((await pausar(false)).status, 200);
+  assert.equal((await (await fetch(`${BASE}/api/aula?aula=3B`)).json()).pausa, false);
+});
+
 test('sin NASA_API_KEY el proxy de DONKI lo dice claramente', async () => {
   assert.equal((await fetch(`${BASE}/api/donki?tipo=GST&inicio=2024-05-01&fin=2024-05-31`)).status, 503);
 });

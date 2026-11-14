@@ -58,6 +58,10 @@ export async function decir(html) {
 /** Permite que Nebula repita la misma frase (al volver a una pantalla). */
 export const olvidarUltimo = () => { ultimo = ''; };
 
+export function fijarVoz(on) {
+  if (on !== activa) alternarVoz();
+}
+
 export function alternarVoz() {
   activa = !activa;
   try { localStorage.setItem('horizonte.voz', activa ? 'si' : 'no'); } catch { /* sin almacenamiento */ }

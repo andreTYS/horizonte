@@ -33,6 +33,15 @@ Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 
 **Personajes:** Nebula es el gato piloto (voz y pistas); la astronauta peruana guía con preguntas (paso *Predice*); la llama presenta las fichas de ciencia y los logros.
 
+## Para docentes: panel y modo aula
+
+En el VPS, `docente.html` (con la clave `DOCENTE_TOKEN`) muestra por código de aula:
+
+- **Enlace y código QR** para estudiantes (`?aula=CODIGO&modo=aula`): el juego se abre con el aula puesta y **sin sonido ni voz** al inicio. Con *ritmo tranquilo* (`&ritmo=tranquilo`) se quita el botón ×5.
+- **Pausar el aula**: los estudiantes en modo aula ven en unos 8 s una pantalla de pausa con tu mensaje; su partida no se pierde.
+- **Aprendizaje** (prueba inicial/final, ganancia, rúbrica), **predicciones** (% de aciertos del paso *Predice*), **bitácora** (las frases de *Cuéntalo*), dónde fallan más y todas las partidas.
+- **Exportar a CSV** (partidas y bitácoras), listo para Excel.
+
 ## Datos NASA
 
 Todas las cifras reales están en [`data/nasa.json`](data/nasa.json), cada una con su fuente y enlace, y se muestran

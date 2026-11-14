@@ -43,10 +43,15 @@ function iniciar() {
   cargarMuestras();
 }
 
+/** Fija el sonido (modo aula: empieza apagado). */
+export function fijarSonido(on) {
+  if (on !== activo) alternarSonido();
+}
+
 export function alternarSonido() {
   activo = !activo;
   try { localStorage.setItem('horizonte.sonido', activo ? 'si' : 'no'); } catch { /* sin almacenamiento */ }
-  iniciar();
+  if (activo || ctx) iniciar();
   if (maestro) maestro.gain.setTargetAtTime(activo ? 0.6 : 0, ctx.currentTime, 0.1);
   if (!activo) callarVoz();
   return activo;
