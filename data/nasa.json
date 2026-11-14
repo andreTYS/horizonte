@@ -1,0 +1,118 @@
+{
+  "_nota": "Cifras reales que usa la simulación. Cada una lleva su fuente. 'verificado': false = el equipo debe confirmar el valor exacto en la fuente antes de la presentación.",
+  "actualizado": "2026-11-14",
+  "cifras": {
+    "o2_persona_dia": {
+      "valor": 0.82,
+      "unidad": "kg de O₂ por persona y día",
+      "texto": "Un astronauta respira unos 0,82 kg de oxígeno al día.",
+      "fuente": "NASA Life Support Baseline Values and Assumptions Document (BVAD), NASA/TP-2015-218570/REV2",
+      "url": "https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document",
+      "verificado": true
+    },
+    "agua_persona_dia": {
+      "valor": 3.5,
+      "unidad": "kg de agua por persona y día (beber, comida e higiene)",
+      "texto": "Cada astronauta usa varios litros de agua al día entre bebida, preparación de comida e higiene.",
+      "fuente": "NASA BVAD, NASA/TP-2015-218570/REV2",
+      "url": "https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document",
+      "verificado": false
+    },
+    "comida_persona_dia": {
+      "valor": 1.5,
+      "unidad": "kg de comida por persona y día",
+      "texto": "Cada astronauta necesita alrededor de 1,5 kg de comida al día.",
+      "fuente": "NASA BVAD, NASA/TP-2015-218570/REV2",
+      "url": "https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document",
+      "verificado": false
+    },
+    "recuperacion_agua": {
+      "valor": 0.98,
+      "unidad": "fracción del agua recuperada",
+      "texto": "La Estación Espacial Internacional recupera el 98 % del agua que usa la tripulación.",
+      "fuente": "NASA – NASA Achieves Water Recovery Milestone on International Space Station (2023)",
+      "url": "https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/",
+      "verificado": true
+    },
+    "agua_por_kg_o2": {
+      "valor": 1.125,
+      "unidad": "kg de agua por kg de O₂ (electrólisis)",
+      "texto": "Para fabricar 1 kg de oxígeno partiendo agua (2H₂O → 2H₂ + O₂) se gastan 1,125 kg de agua.",
+      "fuente": "Estequiometría de la electrólisis; el Oxygen Generation Assembly de la ISS usa este proceso",
+      "url": "https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/",
+      "verificado": true
+    },
+    "fsp_kw": {
+      "valor": 40,
+      "unidad": "kW eléctricos",
+      "texto": "El reactor Fission Surface Power de la NASA está pensado para dar 40 kW de forma continua, de día y de noche.",
+      "fuente": "NASA Glenn – Fission Surface Power Project",
+      "url": "https://www.nasa.gov/centers-and-facilities/glenn/nasas-fission-surface-power-project-energizes-lunar-exploration/",
+      "verificado": true
+    },
+    "fsp_masa_t": {
+      "valor": 6,
+      "unidad": "toneladas",
+      "texto": "La NASA pidió que el reactor de superficie pese menos de 6 toneladas.",
+      "fuente": "NASA Glenn – Fission Surface Power Project",
+      "url": "https://www.nasa.gov/centers-and-facilities/glenn/nasas-fission-surface-power-project-energizes-lunar-exploration/",
+      "verificado": true
+    },
+    "ciclo_lunar_dias": {
+      "valor": 29.5,
+      "unidad": "días terrestres",
+      "texto": "Un día completo en la Luna (de amanecer a amanecer) dura unos 29,5 días terrestres: casi 15 días de luz y casi 15 de noche.",
+      "fuente": "NASA Science – Moon Facts",
+      "url": "https://science.nasa.gov/moon/facts/",
+      "verificado": true
+    },
+    "dosis_luna_msv_dia": {
+      "valor": 1.37,
+      "unidad": "mSv por día en la superficie lunar",
+      "texto": "En la superficie de la Luna, sin protección, se reciben unos 1,37 mSv de radiación al día: unas 200 veces más que en la Tierra.",
+      "fuente": "Zhang et al. 2020, Science Advances – First measurements of the radiation dose on the lunar surface (Chang'e-4 LND)",
+      "url": "https://www.science.org/doi/10.1126/sciadv.abc1334",
+      "verificado": false
+    },
+    "dosis_marte_msv_dia": {
+      "valor": 0.64,
+      "unidad": "mSv por día en la superficie de Marte",
+      "texto": "El instrumento RAD del rover Curiosity midió unos 0,64 mSv por día en la superficie de Marte.",
+      "fuente": "Hassler et al. 2014, Science – Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover",
+      "url": "https://www.science.org/doi/10.1126/science.1244797",
+      "verificado": true
+    },
+    "limite_carrera_msv": {
+      "valor": 600,
+      "unidad": "mSv en toda la carrera de un astronauta",
+      "texto": "La NASA limita la radiación que puede recibir un astronauta en toda su carrera a 600 mSv.",
+      "fuente": "NASA Human Research Program – Space Radiation (NASA-STD-3001)",
+      "url": "https://www.nasa.gov/hrp/radiation/",
+      "verificado": true
+    },
+    "tormenta_mayo_2024": {
+      "valor": "2024-05-10",
+      "unidad": "fecha",
+      "texto": "En mayo de 2024 el Sol lanzó varias llamaradas clase X y causó la tormenta geomagnética más fuerte en 20 años. En la Luna, sin atmósfera ni campo magnético, la tripulación debe ir al refugio.",
+      "fuente": "NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information)",
+      "url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/",
+      "verificado": true
+    },
+    "gravedad_luna": {
+      "valor": 1.62,
+      "unidad": "m/s²",
+      "texto": "La gravedad de la Luna es 1,62 m/s², un sexto de la terrestre.",
+      "fuente": "NASA NSSDC – Moon Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+      "verificado": true
+    },
+    "veggie": {
+      "valor": "lechuga, mizuna, rábano, pimiento",
+      "unidad": "cultivos",
+      "texto": "En la ISS el sistema Veggie ya cultivó lechuga, rábanos y pimientos que los astronautas comieron.",
+      "fuente": "NASA Science – Veggie",
+      "url": "https://science.nasa.gov/mission/veggie/",
+      "verificado": true
+    }
+  }
+}

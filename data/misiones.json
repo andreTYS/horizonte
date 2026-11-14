@@ -1,0 +1,124 @@
+[
+  {
+    "id": "amanecer",
+    "titulo": "Misión 1 · Primer amanecer",
+    "resumen": "Dos astronautas pasan 7 días en el polo sur de la Luna, con el Sol en el cielo. Aprende a equilibrar energía, oxígeno, agua y comida.",
+    "lugar": "Polo sur lunar",
+    "tripulacion": 2,
+    "dias": 7,
+    "fase_inicial": 2,
+    "presupuesto_t": 8,
+    "limite_dosis_msv": 50,
+    "objetivo_ciencia": 5,
+    "eventos": [],
+    "sugerido": {
+      "panel": 3,
+      "bateria": 1,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "o2": 12,
+      "agua": 30,
+      "comida": 22
+    },
+    "nebula": {
+      "briefing": "¡Hola! Soy Nebula 🐱. Tu base necesita energía para fabricar oxígeno y limpiar el agua. Empieza con paneles solares: aquí el Sol no se pone en toda la misión.",
+      "construir": "Mira la barra de masa: cada kilo que subes al cohete cuenta. El reciclador pesa, pero recupera casi toda el agua.",
+      "exito": "¡Primera misión cumplida! Ahora prueba algo más difícil: la noche lunar."
+    },
+    "luz_permanente": true
+  },
+  {
+    "id": "noche",
+    "titulo": "Misión 2 · La larga noche",
+    "resumen": "Cuatro astronautas, 30 días. A los pocos días el Sol se pone y llega la noche lunar: casi 15 días sin luz.",
+    "lugar": "Mar de la Tranquilidad",
+    "tripulacion": 4,
+    "dias": 30,
+    "fase_inicial": 10,
+    "presupuesto_t": 13,
+    "limite_dosis_msv": 60,
+    "objetivo_ciencia": 22,
+    "eventos": [
+      {
+        "dia": 12,
+        "tipo": "micrometeorito",
+        "texto": "Un micrometeorito daña 2 paneles solares.",
+        "paneles": 2
+      },
+      {
+        "dia": 20,
+        "tipo": "averia_reciclador",
+        "texto": "El reciclador de agua se avería durante 3 días.",
+        "duracion": 3
+      }
+    ],
+    "sugerido": {
+      "panel": 4,
+      "bateria": 2,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 1,
+      "o2": 20,
+      "agua": 120,
+      "comida": 180
+    },
+    "nebula": {
+      "briefing": "Esta vez el Sol se pone. Sin luz, los paneles no producen nada. ¿Cómo guardarás o generarás energía durante la noche?",
+      "construir": "Pista: cuenta cuánta energía gasta tu base por día y multiplícala por los días de noche.",
+      "exito": "¡Sobreviviste a la noche lunar! Así piensa la NASA cuando diseña el reactor Fission Surface Power."
+    }
+  },
+  {
+    "id": "tormenta",
+    "titulo": "Misión 3 · Tormenta solar",
+    "resumen": "Basada en la tormenta real de mayo de 2024. En el borde del cráter Shackleton casi siempre hay luz, pero el Sol también es una amenaza: cuatro astronautas, 20 días, y una llamarada en camino.",
+    "lugar": "Cráter Shackleton",
+    "tripulacion": 4,
+    "dias": 20,
+    "fase_inicial": 1,
+    "presupuesto_t": 11,
+    "limite_dosis_msv": 60,
+    "objetivo_ciencia": 15,
+    "eventos": [
+      {
+        "dia": 6,
+        "tipo": "alerta_solar",
+        "texto": "Alerta: llamarada clase X detectada. Las partículas llegarán mañana."
+      },
+      {
+        "dia": 7,
+        "tipo": "tormenta_solar",
+        "texto": "¡Llegan las partículas solares!",
+        "dosis_msv": 45,
+        "dato": "tormenta_mayo_2024"
+      },
+      {
+        "dia": 8,
+        "tipo": "tormenta_solar",
+        "texto": "La tormenta continúa.",
+        "dosis_msv": 20,
+        "dato": "tormenta_mayo_2024"
+      }
+    ],
+    "sugerido": {
+      "panel": 5,
+      "bateria": 1,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 1,
+      "o2": 10,
+      "agua": 80,
+      "comida": 125
+    },
+    "nebula": {
+      "briefing": "Los satélites de la NASA vigilan el Sol. Cuando avisen de una llamarada, tendrás un día para reaccionar.",
+      "construir": "El blindaje protege todos los días, pero pesa. El refugio protege mucho, pero mientras estén dentro no se hace ciencia.",
+      "exito": "¡Bien hecho! Así se protegerán los astronautas de Artemis en la Luna."
+    },
+    "luz_permanente": true
+  }
+]
