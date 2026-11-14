@@ -21,11 +21,18 @@ function vozNavegador(texto, idioma) {
   if (typeof speechSynthesis === 'undefined') return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(texto);
-  u.lang = idioma === 'es' ? 'es-ES' : 'en-US';
-  u.pitch = 1.45; // gata robot: voz más aguda
-  u.rate = 1.05;
-  const voz = speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith(idioma));
-  if (voz) u.voice = voz;
+  // Español latino (Perú primero, nunca España si hay otra) e inglés de EE. UU.
+  const PREFERIDAS = idioma === 'es' ? ['es-pe', 'es-419', 'es-us', 'es-mx', 'es-co', 'es-cl', 'es-ar', 'es'] : ['en-us', 'en'];
+  u.lang = idioma === 'es' ? 'es-PE' : 'en-US';
+  u.pitch = 1.1;
+  u.rate = 1;
+  const voces = speechSynthesis.getVoices();
+  const norm = (v) => (v.lang || '').toLowerCase().replace('_', '-');
+  for (const pref of PREFERIDAS) {
+    const opciones = voces.filter((v) => norm(v) === pref || (pref.length === 2 && norm(v).startsWith(pref) && norm(v) !== 'es-es'));
+    const voz = opciones.find((v) => /natural|neural|online|google/i.test(v.name)) || opciones[0];
+    if (voz) { u.voice = voz; u.lang = voz.lang; break; }
+  }
   u.onstart = () => document.body.classList.add('nebula-habla');
   u.onend = () => document.body.classList.remove('nebula-habla');
   speechSynthesis.speak(u);

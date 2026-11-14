@@ -85,14 +85,16 @@ npm test       # pruebas del motor y del servidor (node --test)
 ## Créditos de audio e íconos
 
 - Efectos de sonido: **“Oculus Audio Pack 01”** de Oculus VR, LLC (Meta), licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) — ver [`assets/sonidos/ATRIBUCION-oculus-audio-pack.md`](assets/sonidos/ATRIBUCION-oculus-audio-pack.md).
-- Voz de Nebula: [Piper TTS](https://github.com/rhasspy/piper) (MIT). Voz en español `mls_10246` (Multilingual LibriSpeech, CC BY 4.0); voz en inglés `amy` (mimic3-voices, licencia por confirmar).
+- Voz de Nebula en español latino: [Piper TTS](https://github.com/rhasspy/piper) (MIT) con la voz `es_MX-claude-high` (Apache 2.0, fonética latinoamericana es-419).
+- Voz de Nebula en inglés americano: [Kokoro-82M](https://github.com/hexgrad/kokoro) (Apache 2.0), voz `af_heart`, ejecutada con [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0).
 - Íconos: [Lucide](https://lucide.dev) (ISC).
 
 Para regenerar la voz tras cambiar textos de Nebula:
 
 ```bash
 node tools/voz/textos.mjs > textos.json
-python tools/voz/generar.py textos.json --piper venv/bin/piper --es voces/es-mls_10246-low.onnx --en voces/en-us-amy-low.onnx
+python tools/voz/generar.py textos.json --piper venv/bin/piper --es modelos/vits-piper-es_MX-claude-high/es_MX-claude-high.onnx --kokoro modelos/kokoro-multi-lang-v1_0
+python tools/voz/verificar.py --whisper modelos/sherpa-onnx-whisper-small   # control: Whisper transcribe cada audio
 ```
 
 ## Equipo

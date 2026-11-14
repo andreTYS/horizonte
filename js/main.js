@@ -604,7 +604,7 @@ function fuentes() {
     <h3 style="margin-top:18px">${t('Créditos')}</h3>
     <ul class="creditos chico">
       <li>${t('Efectos de sonido')}: “Oculus Audio Pack 01” — Oculus VR, LLC (Meta), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
-      <li>${t('Voz de Nebula')}: <a href="https://github.com/rhasspy/piper" target="_blank" rel="noopener">Piper TTS</a> (MIT). ${t('Voz en español')}: mls_10246 (Multilingual LibriSpeech, CC BY 4.0). ${t('Voz en inglés')}: amy (mimic3-voices).</li>
+      <li>${t('Voz de Nebula')}: <a href="https://github.com/rhasspy/piper" target="_blank" rel="noopener">Piper TTS</a> (MIT). ${t('Voz en español')}: es_MX claude (Apache 2.0). ${t('Voz en inglés')}: <a href="https://github.com/hexgrad/kokoro" target="_blank" rel="noopener">Kokoro</a> af_heart (Apache 2.0).</li>
       <li>${t('Íconos')}: <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> (ISC). ${t('Tipografías')}: Orbitron, Exo 2 (SIL OFL). ${t('Motor 3D')}: Three.js (MIT).</li>
     </ul>`;
 }
