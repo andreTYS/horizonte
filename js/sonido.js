@@ -1,37 +1,61 @@
-// Sonido de HORIZONTE generado en el navegador (Web Audio): sin archivos, pesa 0 KB.
+// Sonido de HORIZONTE.
+// - Efectos reales: "Oculus Audio Pack 01" (Meta, CC BY 4.0) en assets/sonidos/
+// - Capas generadas con Web Audio (zumbido espacial, ruido de tormenta, retumbe del despegue)
+// - Voz de Nebula (archivos generados con Piper TTS), con el ambiente bajando mientras habla
 // El audio arranca con el primer toque del jugador (regla de los navegadores).
 
 let ctx = null;
 let maestro = null;
+let busAmbiente = null;
 let ambiente = null;
+const muestras = {};
 let activo = (() => { try { return localStorage.getItem('horizonte.sonido') !== 'no'; } catch { return true; } })();
+let vozActual = null;
 
 export const sonidoActivo = () => activo;
+export const contexto = () => ctx;
+
+const ARCHIVOS = ['clic', 'abrir', 'atras', 'modulo', 'interruptor', 'alarma', 'aviso', 'exito', 'falla', 'impacto', 'tormenta', 'despegue', 'rebobinar', 'habitat', 'hidraulica'];
+
+async function cargarMuestras() {
+  await Promise.all(ARCHIVOS.map(async (n) => {
+    try {
+      const r = await fetch(`assets/sonidos/${n}.mp3`);
+      if (r.ok) muestras[n] = await ctx.decodeAudioData(await r.arrayBuffer());
+    } catch { /* sin ese archivo: se usa el sonido generado */ }
+  }));
+  if (muestras.habitat && ambiente) iniciarZumbidoHabitat();
+}
 
 function iniciar() {
-  if (ctx) return ctx.state === 'suspended' ? ctx.resume() : undefined;
+  if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   ctx = new AC();
   maestro = ctx.createGain();
-  maestro.gain.value = activo ? 0.5 : 0;
+  maestro.gain.value = activo ? 0.6 : 0;
   const comp = ctx.createDynamicsCompressor();
   maestro.connect(comp).connect(ctx.destination);
+  busAmbiente = ctx.createGain();
+  busAmbiente.gain.value = 1;
+  busAmbiente.connect(maestro);
   crearAmbiente();
+  cargarMuestras();
 }
 
 export function alternarSonido() {
   activo = !activo;
   try { localStorage.setItem('horizonte.sonido', activo ? 'si' : 'no'); } catch { /* sin almacenamiento */ }
   iniciar();
-  if (maestro) maestro.gain.setTargetAtTime(activo ? 0.5 : 0, ctx.currentTime, 0.1);
+  if (maestro) maestro.gain.setTargetAtTime(activo ? 0.6 : 0, ctx.currentTime, 0.1);
+  if (!activo) callarVoz();
   return activo;
 }
 
-// Zumbido espacial de fondo: dos osciladores graves desafinados + filtro que "respira"
+// ── Ambiente: zumbido espacial generado + sonido real de la sala de máquinas del hábitat ──
 function crearAmbiente() {
   const salida = ctx.createGain();
-  salida.gain.value = 0.0;
+  salida.gain.value = 0;
   const filtro = ctx.createBiquadFilter();
   filtro.type = 'lowpass';
   filtro.frequency.value = 420;
@@ -51,19 +75,45 @@ function crearAmbiente() {
     o.start();
     return o;
   });
-  filtro.connect(salida).connect(maestro);
+  filtro.connect(salida).connect(busAmbiente);
   lfo.start();
-  salida.gain.setTargetAtTime(0.35, ctx.currentTime, 2);
+  salida.gain.setTargetAtTime(0.28, ctx.currentTime, 2);
   ambiente = { salida, filtro, oscs };
 }
 
-/** De noche el ambiente baja de tono y se oscurece; en tormenta se vuelve más tenso. */
+function iniciarZumbidoHabitat() {
+  const src = ctx.createBufferSource();
+  src.buffer = muestras.habitat;
+  src.loop = true;
+  const g = ctx.createGain();
+  g.gain.value = 0;
+  src.connect(g).connect(busAmbiente);
+  src.start();
+  g.gain.setTargetAtTime(0.16, ctx.currentTime, 3);
+  ambiente.habitat = g;
+}
+
+/** De noche el ambiente baja de tono; en tormenta se vuelve más tenso. */
 export function ambienteEstado({ noche = false, tormenta = false } = {}) {
   if (!ambiente) return;
   const t = ctx.currentTime;
   const base = noche ? 0.8 : 1;
   ambiente.oscs.forEach((o, i) => o.frequency.setTargetAtTime([55, 55.4, 82.5][i] * base * (tormenta ? 1.06 : 1), t, 1.5));
   ambiente.filtro.Q.setTargetAtTime(tormenta ? 12 : 6, t, 0.8);
+  ambiente.habitat?.gain.setTargetAtTime(noche ? 0.22 : 0.16, t, 1.5);
+}
+
+// ── Utilidades ──
+function muestra(nombre, { vol = 1, velocidad = 1, desde = 0 } = {}) {
+  if (!ctx || !activo || !muestras[nombre]) return false;
+  const src = ctx.createBufferSource();
+  src.buffer = muestras[nombre];
+  src.playbackRate.value = velocidad;
+  const g = ctx.createGain();
+  g.gain.value = vol;
+  src.connect(g).connect(maestro);
+  src.start(ctx.currentTime + desde);
+  return true;
 }
 
 function tono(freq, dur, { tipo = 'sine', vol = 0.25, desde = 0, hasta = null, ataque = 0.005 } = {}) {
@@ -102,20 +152,71 @@ function ruido(dur, { vol = 0.2, desde = 0, frec = 800, hastaFrec = null, tipo =
   src.start(t);
 }
 
+// ── Efectos del juego (muestra real si está cargada; si no, sonido generado) ──
 export const sfx = {
-  clic: () => tono(1400, 0.05, { tipo: 'square', vol: 0.05 }),
-  paso: () => { tono(660, 0.08, { vol: 0.08 }); tono(990, 0.1, { vol: 0.06, desde: 0.06 }); },
-  modulo: () => { tono(520, 0.12, { tipo: 'triangle', vol: 0.12, hasta: 880 }); },
-  alarma: () => { for (let i = 0; i < 3; i++) { tono(880, 0.14, { tipo: 'square', vol: 0.08, desde: i * 0.3 }); tono(660, 0.14, { tipo: 'square', vol: 0.08, desde: i * 0.3 + 0.15 }); } },
-  tormenta: () => { ruido(2.2, { vol: 0.25, frec: 300, hastaFrec: 3000 }); tono(110, 1.6, { tipo: 'sawtooth', vol: 0.06, hasta: 70 }); },
-  polvo: () => ruido(2.8, { vol: 0.22, frec: 500, hastaFrec: 180, tipo: 'lowpass' }),
-  despegue: () => { ruido(2.4, { vol: 0.3, frec: 120, hastaFrec: 900, tipo: 'lowpass' }); tono(60, 2.2, { tipo: 'sawtooth', vol: 0.08, hasta: 160 }); },
-  rebobinar: () => tono(1200, 0.45, { tipo: 'triangle', vol: 0.12, hasta: 180 }),
-  exito: () => [523, 659, 784, 1047].forEach((f, i) => tono(f, 0.35, { tipo: 'triangle', vol: 0.14, desde: i * 0.12 })),
-  falla: () => [392, 330, 262, 196].forEach((f, i) => tono(f, 0.4, { tipo: 'sawtooth', vol: 0.07, desde: i * 0.18 })),
+  clic: () => muestra('clic', { vol: 0.35 }) || tono(1400, 0.05, { tipo: 'square', vol: 0.05 }),
+  abrir: () => muestra('abrir', { vol: 0.5 }) || tono(900, 0.08, { vol: 0.08, hasta: 1300 }),
+  paso: () => muestra('aviso', { vol: 0.35, velocidad: 1.2 }) || (tono(660, 0.08, { vol: 0.08 }), tono(990, 0.1, { vol: 0.06, desde: 0.06 })),
+  modulo: () => { if (!muestra('modulo', { vol: 0.55 })) tono(520, 0.12, { tipo: 'triangle', vol: 0.12, hasta: 880 }); muestra('interruptor', { vol: 0.5, desde: 0.05 }); },
+  alarma: () => {
+    if (!muestra('alarma', { vol: 0.6 })) tono(880, 0.14, { tipo: 'square', vol: 0.08 });
+    muestra('alarma', { vol: 0.5, desde: 0.35 });
+    muestra('alarma', { vol: 0.4, desde: 0.7 });
+  },
+  aviso: () => muestra('aviso', { vol: 0.55 }) || tono(1046, 0.2, { vol: 0.1 }),
+  tormenta: () => { muestra('tormenta', { vol: 0.7 }); muestra('alarma', { vol: 0.5 }); ruido(2.2, { vol: 0.22, frec: 300, hastaFrec: 3000 }); },
+  polvo: () => { muestra('tormenta', { vol: 0.5, velocidad: 0.8 }); ruido(3, { vol: 0.25, frec: 500, hastaFrec: 160, tipo: 'lowpass' }); },
+  despegue: () => {
+    muestra('hidraulica', { vol: 0.5 });
+    ruido(2.6, { vol: 0.32, frec: 120, hastaFrec: 900, tipo: 'lowpass', desde: 0.3 });
+    tono(55, 2.4, { tipo: 'sawtooth', vol: 0.09, hasta: 170, desde: 0.3 });
+    muestra('despegue', { vol: 0.7, velocidad: 0.7, desde: 0.9 });
+  },
+  rebobinar: () => { muestra('rebobinar', { vol: 0.7, velocidad: 0.8 }); tono(1200, 0.45, { tipo: 'triangle', vol: 0.1, hasta: 180 }); },
+  exito: () => { if (!muestra('exito', { vol: 0.75 })) [523, 659, 784, 1047].forEach((f, i) => tono(f, 0.35, { tipo: 'triangle', vol: 0.14, desde: i * 0.12 })); },
+  falla: () => { muestra('impacto', { vol: 0.6 }); if (!muestra('falla', { vol: 0.6, desde: 0.1 })) [392, 330, 262, 196].forEach((f, i) => tono(f, 0.4, { tipo: 'sawtooth', vol: 0.07, desde: i * 0.18 })); },
 };
 
-// El primer toque del jugador enciende el audio; cada botón hace un clic suave.
+// ── Voz de Nebula ──
+const cacheVoz = new Map();
+export function callarVoz() {
+  document.body.classList.remove('nebula-habla');
+  try { vozActual?.stop(); } catch { /* ya terminó */ }
+  vozActual = null;
+  if (busAmbiente) busAmbiente.gain.setTargetAtTime(1, ctx.currentTime, 0.3);
+}
+
+/** Reproduce un archivo de voz. Devuelve false si no se pudo (para usar la voz del navegador). */
+export async function reproducirVoz(url) {
+  if (!activo) return true;
+  iniciar();
+  if (!ctx) return false;
+  try {
+    let buf = cacheVoz.get(url);
+    if (!buf) {
+      const r = await fetch(url);
+      if (!r.ok) return false;
+      buf = await ctx.decodeAudioData(await r.arrayBuffer());
+      cacheVoz.set(url, buf);
+    }
+    callarVoz();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.value = 1.15;
+    src.connect(g).connect(maestro);
+    busAmbiente.gain.setTargetAtTime(0.35, ctx.currentTime, 0.15); // el ambiente baja mientras Nebula habla
+    src.onended = () => { if (vozActual === src) callarVoz(); };
+    src.start();
+    vozActual = src;
+    document.body.classList.add('nebula-habla');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// El primer toque del jugador enciende el audio; cada botón hace un clic.
 document.addEventListener('pointerdown', (ev) => {
   iniciar();
   if (ev.target.closest('button')) sfx.clic();

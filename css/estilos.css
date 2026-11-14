@@ -490,3 +490,8 @@ button .i { width: 1.2em; height: 1.2em; }
   .barra-rapida { left: 24px; top: 24px; }
   .marca { top: auto; }
 }
+
+/* Nebula hablando: el avatar late y brilla mientras suena su voz */
+@keyframes nebula-habla { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(140, 160, 255, .55); } 50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(140, 160, 255, 0); } }
+body.nebula-habla .nebula .cara { animation: nebula-habla .6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { body.nebula-habla .nebula .cara { animation: none; outline: 2px solid #8ca0ff; } }

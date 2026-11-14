@@ -6,6 +6,7 @@ import * as api from './api.js';
 import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
 import { sfx, alternarSonido, sonidoActivo, ambienteEstado } from './sonido.js';
+import { decir, callar, olvidarUltimo, alternarVoz, vozActiva } from './voz.js';
 
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
@@ -96,9 +97,27 @@ async function cargarIdioma() {
 }
 
 const botonSonido = () => `<button class="boton-icono" id="sonido" aria-label="${t('Sonido')}" aria-pressed="${sonidoActivo()}">${I(sonidoActivo() ? 'sonido' : 'mudo')}</button>`;
+const botonVoz = () => `<button class="boton-icono" id="voz" aria-label="${t('Voz de Nebula')}" aria-pressed="${vozActiva()}">${I(vozActiva() ? 'voz' : 'sinvoz')}</button>`;
+
+/** Nebula lee en voz alta su globo de texto visible (si hay uno nuevo). */
+function decirNebula() {
+  const globo = $app.querySelector('.nebula .globo');
+  if (!globo) return;
+  const copia = globo.cloneNode(true);
+  copia.querySelector('.quien')?.remove();
+  decir(copia.innerHTML);
+}
+
 function enlazarSonido() {
+  document.getElementById('voz')?.addEventListener('click', (ev) => {
+    const on = alternarVoz();
+    ev.currentTarget.innerHTML = I(on ? 'voz' : 'sinvoz');
+    ev.currentTarget.setAttribute('aria-pressed', on);
+    if (on) { olvidarUltimo(); decirNebula(); }
+  });
   document.getElementById('sonido')?.addEventListener('click', (ev) => {
     const on = alternarSonido();
+    if (!on) callar();
     ev.currentTarget.innerHTML = I(on ? 'sonido' : 'mudo');
     ev.currentTarget.setAttribute('aria-pressed', on);
   });
@@ -130,6 +149,8 @@ function modal({ ancho = false, cerrable = false } = {}) {
 function inicio() {
   document.body.dataset.pantalla = 'portada';
   ambienteEstado({});
+  callar();
+  olvidarUltimo();
   pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
   const boton = (m, i) => {
     const p = G.progreso[m.id] || 0;
@@ -144,6 +165,7 @@ function inicio() {
     <div class="barra-rapida">
       <button class="boton-idioma" id="idioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
       ${botonSonido()}
+      ${botonVoz()}
     </div>
     <header class="marca">
       <p class="lema">${t('Ensaya el futuro de tu base')}</p>
@@ -280,6 +302,7 @@ function construir() {
   $app.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.toggle; c[k] = !c[k]; construir(); if (c[k]) { resaltar(k); sfx.modulo(); } }));
   $app.querySelectorAll('[data-blindaje]').forEach((b) => b.addEventListener('click', () => { c.blindaje = +b.dataset.blindaje; construir(); resaltar('habitat'); }));
   document.getElementById('lanzar').addEventListener('click', lanzar);
+  decirNebula();
 }
 
 // ───────────────────────── Misión ─────────────────────────
@@ -382,7 +405,7 @@ function mision() {
 
   $app.innerHTML = `
     <header class="hud-superior">
-      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}</div>
+      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}${botonVoz()}</div>
       <div class="recursos">
         ${recurso(I('energia'), 'kWh', e.energia, capacidad || 1, fmt(e.energia))}
         ${recurso(I('o2'), t('kg O₂'), e.o2, Math.max(ini.o2, 1), fmt(e.o2, 1))}
@@ -429,6 +452,7 @@ function mision() {
   $app.querySelectorAll('[data-dia]').forEach((b) => b.addEventListener('click', () => rebobinar(+b.dataset.dia)));
   const hoy = $app.querySelector('.linea-tiempo .hoy');
   if (hoy) hoy.parentElement.scrollLeft = hoy.offsetLeft - hoy.parentElement.clientWidth / 2;
+  decirNebula();
 }
 
 // ───────────────────────── Resultado ─────────────────────────
@@ -475,6 +499,7 @@ function final() {
     document.getElementById('evalfinal')?.addEventListener('click', G.eval.final ? casoArtemis : pruebaFinal);
     document.getElementById('sig')?.addEventListener('click', () => { G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; construir(); });
     document.getElementById('inicio').addEventListener('click', inicio);
+    setTimeout(decirNebula, 1600); // después de la fanfarria
     return;
   }
 
@@ -492,7 +517,8 @@ function final() {
       <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} ${t('Rediseñar la base')}</button>
     </div>`;
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
-  document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; construir(); });
+  document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; olvidarUltimo(); construir(); });
+  setTimeout(decirNebula, 1400);
 }
 
 // ───────────────────────── Evaluación del aprendizaje ─────────────────────────
@@ -560,6 +586,7 @@ function resumenAprendizaje() {
     ${nebula(g != null && g > 0 ? t('¡Aprendiste cómo se conectan los sistemas de una base! Eso es lo que hacen los ingenieros de la NASA.') : t('Cada falla que entiendes te acerca a ser comandante. ¡Vuelve a jugar!'), 'feliz')}
     <div class="fila"><button class="primario" id="volver">${t('Volver al menú')}</button></div>`;
   document.getElementById('volver').addEventListener('click', inicio);
+  decirNebula();
 }
 
 // ───────────────────────── Fuentes ─────────────────────────
@@ -573,7 +600,13 @@ function fuentes() {
     <p class="lema">${t('Fuentes')}</p>
     <h2>${I('datos')} ${t('Datos NASA usados')}</h2>
     <p class="suave">${t('Cada número de la simulación tiene una fuente. Los valores de equilibrio del juego (masa de los paneles, energía del invernadero…) están aparte en <code>data/juego.json</code> y no se presentan como datos NASA.')}</p>
-    <table class="tabla-fuentes"><tbody>${filas}</tbody></table>`;
+    <table class="tabla-fuentes"><tbody>${filas}</tbody></table>
+    <h3 style="margin-top:18px">${t('Créditos')}</h3>
+    <ul class="creditos chico">
+      <li>${t('Efectos de sonido')}: “Oculus Audio Pack 01” — Oculus VR, LLC (Meta), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
+      <li>${t('Voz de Nebula')}: <a href="https://github.com/rhasspy/piper" target="_blank" rel="noopener">Piper TTS</a> (MIT). ${t('Voz en español')}: mls_10246 (Multilingual LibriSpeech, CC BY 4.0). ${t('Voz en inglés')}: amy (mimic3-voices).</li>
+      <li>${t('Íconos')}: <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> (ISC). ${t('Tipografías')}: Orbitron, Exo 2 (SIL OFL). ${t('Motor 3D')}: Three.js (MIT).</li>
+    </ul>`;
 }
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

@@ -62,7 +62,9 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `tools/visor.html` | Visor 3D: prueba estados y exporta modelos a `.glb` |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
 | `js/i18n.js` | Español / inglés: textos de la interfaz y traducción del análisis de fallas (datos en `data/en/`) |
-| `js/sonido.js` | Sonido generado con Web Audio (ambiente, alarmas, tormentas, despegue), sin archivos de audio |
+| `js/sonido.js` | Efectos reales (`assets/sonidos/`) + capas generadas con Web Audio (ambiente, tormentas, despegue) |
+| `js/voz.js` | Voz de Nebula: audios pregenerados (`assets/voz/`) y voz del navegador como respaldo |
+| `tools/voz/` | Genera la voz de Nebula con Piper TTS (`textos.mjs` lista las frases, `generar.py` las sintetiza) |
 | `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
 | `js/api.js` | Envía resultados al servidor si existe (en GitHub Pages el juego funciona sin él) |
 | `server/server.mjs` | Servidor del VPS: estáticos, partidas (SQLite), panel docente, proxy NASA DONKI |
@@ -79,6 +81,19 @@ npm test       # pruebas del motor y del servidor (node --test)
 
 - Misión en Marte (MOXIE, RAD de Curiosity).
 - Arte original de Nebula y de la base.
+
+## Créditos de audio e íconos
+
+- Efectos de sonido: **“Oculus Audio Pack 01”** de Oculus VR, LLC (Meta), licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) — ver [`assets/sonidos/ATRIBUCION-oculus-audio-pack.md`](assets/sonidos/ATRIBUCION-oculus-audio-pack.md).
+- Voz de Nebula: [Piper TTS](https://github.com/rhasspy/piper) (MIT). Voz en español `mls_10246` (Multilingual LibriSpeech, CC BY 4.0); voz en inglés `amy` (mimic3-voices, licencia por confirmar).
+- Íconos: [Lucide](https://lucide.dev) (ISC).
+
+Para regenerar la voz tras cambiar textos de Nebula:
+
+```bash
+node tools/voz/textos.mjs > textos.json
+python tools/voz/generar.py textos.json --piper venv/bin/piper --es voces/es-mls_10246-low.onnx --en voces/en-us-amy-low.onnx
+```
 
 ## Equipo
 

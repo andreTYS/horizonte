@@ -54,6 +54,7 @@ const EN = {
   '{n} astronautas · {d} días': '{n} astronauts · {d} days',
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
+  'Voz de Nebula': "Nebula's voice", 'Créditos': 'Credits', 'Efectos de sonido': 'Sound effects', 'Voz en español': 'Spanish voice', 'Voz en inglés': 'English voice', 'Íconos': 'Icons', 'Tipografías': 'Fonts', 'Motor 3D': '3D engine',
   'Idioma': 'Language',
   // Diseño
   'Volver a misiones': 'Back to missions',
@@ -226,3 +227,6 @@ const PATRONES = [
   [/^(\d+) astronautas × (\d+) días$/, '$1 astronauts × $2 days'],
   [/^Ciencia lograda: (\d+) de (\d+)$/, 'Science achieved: $1 of $2'],
 ];
+
+/** Para herramientas (generar la voz de Nebula): diccionario inglés. */
+export const diccionarioEN = () => EN;
