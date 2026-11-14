@@ -1,9 +1,9 @@
 # Desplegar HORIZONTE en el VPS (Docker + Traefik)
 
-HORIZONTE corre como un contenedor más detrás del **Traefik que ya tienes en el VPS**. No abre puertos propios: Traefik lo enruta por dominio y pone el HTTPS.
+HORIZONTE corre como un contenedor más detrás del **Traefik del VPS de Moqueguasoft** (`traefik-n0do`). No abre puertos propios: Traefik lo enruta por dominio y pone el HTTPS.
 
 ```
-Internet ──443──▶ Traefik (ya existente) ──red "traefik"──▶ horizonte:8080 (Node)
+Internet ──80/443──▶ traefik-n0do ──traefik-network──▶ horizonte:8080 (Node)
                                                             ├─ juego (estáticos)
                                                             ├─ /api/partidas    resultados de los estudiantes
                                                             ├─ /api/resultados  panel docente (con clave)
@@ -11,41 +11,31 @@ Internet ──443──▶ Traefik (ya existente) ──red "traefik"──▶ 
                                                             └─ SQLite en el volumen horizonte_datos
 ```
 
-## 1. Saca los valores de tu Traefik
+## 1. Valores de este VPS (ya configurados en `docker-compose.yml`)
 
-Lo único que hay que alinear son 3 nombres. Míralos en el VPS:
-
-```bash
-docker network ls --format '{{.Name}}' | grep -iE 'traefik|proxy|web'
-```
-
-```bash
-docker inspect $(docker ps -qf name=traefik) --format '{{join .Args "\n"}}' | grep -E 'entrypoints|certificatesresolvers' | sort -u
-```
-
-Si tu Traefik usa `traefik.yml` en vez de argumentos, mira ahí las secciones `entryPoints` y `certificatesResolvers`.
-
-| Variable en `.env` | Qué es | Valor típico |
-|---|---|---|
-| `TRAEFIK_NETWORK` | Red Docker externa donde está Traefik | `traefik`, `proxy` o `web` |
-| `TRAEFIK_ENTRYPOINT` | Entrypoint HTTPS | `websecure` |
-| `TRAEFIK_CERTRESOLVER` | Resolver de Let's Encrypt | `letsencrypt`, `le` o `myresolver` |
+| Qué | Valor |
+|---|---|
+| Traefik | `traefik-n0do-traefik-1` (`traefik:latest`) |
+| Red | `traefik-network` |
+| Entrypoints | `web` (redirige a https) y `websecure` |
+| Certresolver | `letsencrypt` |
+| Carpeta | `/opt/horizonte` (junto a `/opt/stellarscribe`) |
 
 ## 2. DNS
 
-Crea un registro **A** `horizonte.tudominio.pe` apuntando a la IP del VPS (por la API de Hostinger, como en tus otros sitios).
+Crea un registro **A** `horizonte.moqueguasoft.com` → `76.13.234.161` (por la API de Hostinger, como en tus otros sitios).
 
 ## 3. Clonar y configurar
 
 ```bash
-git clone https://github.com/andreTYS/horizonte.git && cd horizonte
+git clone https://github.com/andreTYS/horizonte.git /opt/horizonte && cd /opt/horizonte
 ```
 
 ```bash
 cp .env.example .env && nano .env
 ```
 
-Completa `DOMINIO`, las 3 variables de Traefik, `NASA_API_KEY` y `DOCENTE_TOKEN`. Puedes generar el token con `openssl rand -hex 24`.
+Completa `DOMINIO`, `NASA_API_KEY` y `DOCENTE_TOKEN`. Puedes generar el token con `openssl rand -hex 24`.
 
 ## 4. Levantar
 
@@ -68,7 +58,7 @@ Debe responder `{"ok":true,"nasa":true}`.
 ## 5. Actualizar
 
 ```bash
-git pull && docker compose up -d --build
+cd /opt/horizonte && git pull && docker compose up -d --build
 ```
 
 ## Panel docente
@@ -85,9 +75,8 @@ docker compose cp horizonte:/app/datos/horizonte.db ./respaldo-$(date +%F).db
 
 | Síntoma | Causa probable |
 |---|---|
-| `404 page not found` de Traefik | El contenedor aún está en `starting` o `unhealthy`; `TRAEFIK_NETWORK` no es la red de Traefik; o `TRAEFIK_ENTRYPOINT` no coincide |
-| Certificado inválido | `TRAEFIK_CERTRESOLVER` no coincide con el de tu Traefik, o el DNS aún no apunta al VPS |
-| `network traefik declared as external, but could not be found` | Cambia `TRAEFIK_NETWORK` por el nombre real de la red |
+| `404 page not found` de Traefik | El contenedor aún está en `starting` o `unhealthy` (Traefik no lo enruta hasta que esté `healthy`) |
+| Certificado inválido | El DNS aún no apunta al VPS; espera a que propague y reinicia el contenedor |
 | `/api/salud` responde `"nasa":false` | Falta `NASA_API_KEY` en `.env`; reinicia con `docker compose up -d` |
 | Ver errores | `docker compose logs -f horizonte` |
 

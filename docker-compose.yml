@@ -1,22 +1,29 @@
-# HORIZONTE en el VPS, detrás del Traefik que ya corre ahí.
-# Despliegue: docker compose up -d --build
+# HORIZONTE en el VPS de Moqueguasoft, detrás de traefik-n0do (red traefik-network).
+# Ubicación: /opt/horizonte · Despliegue: docker compose up -d --build
 services:
   horizonte:
     build: .
+    image: horizonte:latest
     container_name: horizonte
     restart: unless-stopped
     env_file: .env
     volumes:
       - horizonte_datos:/app/datos
     networks:
-      - traefik
+      - traefik-network
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
-      - traefik.http.routers.horizonte.rule=Host(`${DOMINIO:?Define DOMINIO en .env}`)
-      - traefik.http.routers.horizonte.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.docker.network=traefik-network
+      # http → https (mismo patrón que snackmary)
+      - traefik.http.middlewares.horizonte-https.redirectscheme.scheme=https
+      - traefik.http.routers.horizonte-http.entrypoints=web
+      - traefik.http.routers.horizonte-http.rule=Host(`${DOMINIO:?Define DOMINIO en .env}`)
+      - traefik.http.routers.horizonte-http.middlewares=horizonte-https
+      # https
+      - traefik.http.routers.horizonte.entrypoints=websecure
+      - traefik.http.routers.horizonte.rule=Host(`${DOMINIO}`)
       - traefik.http.routers.horizonte.tls=true
-      - traefik.http.routers.horizonte.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.horizonte.tls.certresolver=letsencrypt
       - traefik.http.routers.horizonte.middlewares=horizonte-gzip
       - traefik.http.middlewares.horizonte-gzip.compress=true
       - traefik.http.services.horizonte.loadbalancer.server.port=8080
@@ -25,6 +32,5 @@ volumes:
   horizonte_datos:
 
 networks:
-  traefik:
+  traefik-network:
     external: true
-    name: ${TRAEFIK_NETWORK:-traefik}
