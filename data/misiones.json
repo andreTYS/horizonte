@@ -20,14 +20,24 @@
       "blindaje": 0,
       "o2": 12,
       "agua": 30,
-      "comida": 22
+      "comida": 22,
+      "extractor": false,
+      "moxie": false
     },
     "nebula": {
       "briefing": "¡Hola! Soy Nebula 🐱. Tu base necesita energía para fabricar oxígeno y limpiar el agua. Empieza con paneles solares: aquí el Sol no se pone en toda la misión.",
       "construir": "Mira la barra de masa: cada kilo que subes al cohete cuenta. El reciclador pesa, pero recupera casi toda el agua.",
       "exito": "¡Primera misión cumplida! Ahora prueba algo más difícil: la noche lunar."
     },
-    "luz_permanente": true
+    "luz_permanente": true,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje"
+    ]
   },
   {
     "id": "noche",
@@ -63,13 +73,23 @@
       "blindaje": 1,
       "o2": 20,
       "agua": 120,
-      "comida": 180
+      "comida": 180,
+      "extractor": false,
+      "moxie": false
     },
     "nebula": {
       "briefing": "Esta vez el Sol se pone. Sin luz, los paneles no producen nada. ¿Cómo guardarás o generarás energía durante la noche?",
       "construir": "Pista: cuenta cuánta energía gasta tu base por día y multiplícala por los días de noche.",
       "exito": "¡Sobreviviste a la noche lunar! Así piensa la NASA cuando diseña el reactor Fission Surface Power."
-    }
+    },
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje"
+    ]
   },
   {
     "id": "tormenta",
@@ -125,7 +145,9 @@
       "blindaje": 1,
       "o2": 10,
       "agua": 80,
-      "comida": 125
+      "comida": 125,
+      "extractor": false,
+      "moxie": false
     },
     "nebula": {
       "briefing": "Los satélites de la NASA vigilan el Sol. Cuando avisen de una llamarada, tendrás un día para reaccionar.",
@@ -134,6 +156,198 @@
     },
     "luz_permanente": true,
     "fecha_inicio_real": "2024-05-03",
-    "fuente_eventos": "data/donki-2024-05.json"
+    "fuente_eventos": "data/donki-2024-05.json",
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje"
+    ],
+    "sin_pistas": true,
+    "evaluacion": true
+  },
+  {
+    "id": "hielo",
+    "titulo": "Misión 4 · Hielo en la sombra",
+    "avanzada": true,
+    "sin_pistas": true,
+    "resumen": "Cuarenta días junto a un cráter en sombra eterna, donde LCROSS encontró hielo. Llevar toda el agua desde la Tierra pesa demasiado: ¿podrás sacarla del suelo?",
+    "lugar": "Borde de Cabeus",
+    "tripulacion": 4,
+    "dias": 40,
+    "fase_inicial": 0,
+    "luz_permanente": true,
+    "presupuesto_t": 12,
+    "limite_dosis_msv": 70,
+    "objetivo_ciencia": 30,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje",
+      "extractor"
+    ],
+    "eventos": [
+      {
+        "dia": 15,
+        "tipo": "averia_reciclador",
+        "texto": "El reciclador de agua se avería durante 3 días.",
+        "duracion": 3
+      },
+      {
+        "dia": 25,
+        "tipo": "micrometeorito",
+        "texto": "Un micrometeorito daña 2 paneles solares.",
+        "paneles": 2
+      }
+    ],
+    "sugerido": {
+      "panel": 5,
+      "bateria": 1,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 1,
+      "extractor": false,
+      "moxie": false,
+      "o2": 15,
+      "agua": 150,
+      "comida": 245
+    },
+    "nebula": {
+      "briefing": "Fabricar oxígeno gasta agua todos los días. En 40 días eso es mucha agua para subirla en un cohete.",
+      "construir": "El extractor calienta el regolito y saca el hielo, pero pesa y gasta energía.",
+      "exito": "¡Usaste los recursos de la Luna! Eso se llama ISRU y es clave para el programa Artemis."
+    }
+  },
+  {
+    "id": "cadena",
+    "titulo": "Misión 5 · Todo sale mal",
+    "avanzada": true,
+    "sin_pistas": true,
+    "resumen": "Treinta días en el Mar de las Lluvias. Un micrometeorito, la noche lunar, una tormenta solar y una avería, uno detrás de otro. Diseña una base que aguante todo.",
+    "lugar": "Mar de las Lluvias",
+    "tripulacion": 4,
+    "dias": 30,
+    "fase_inicial": 0,
+    "presupuesto_t": 14,
+    "limite_dosis_msv": 55,
+    "objetivo_ciencia": 22,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje"
+    ],
+    "eventos": [
+      {
+        "dia": 8,
+        "tipo": "micrometeorito",
+        "texto": "Un micrometeorito daña 3 paneles solares.",
+        "paneles": 3
+      },
+      {
+        "dia": 16,
+        "tipo": "alerta_solar",
+        "texto": "Alerta: llamarada solar detectada. Las partículas llegarán mañana."
+      },
+      {
+        "dia": 17,
+        "tipo": "tormenta_solar",
+        "texto": "¡Llegan las partículas solares!",
+        "dosis_msv": 50,
+        "dato": "tormenta_mayo_2024"
+      },
+      {
+        "dia": 21,
+        "tipo": "averia_reciclador",
+        "texto": "El reciclador de agua se avería durante 4 días.",
+        "duracion": 4
+      }
+    ],
+    "sugerido": {
+      "panel": 6,
+      "bateria": 2,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 1,
+      "extractor": false,
+      "moxie": false,
+      "o2": 20,
+      "agua": 140,
+      "comida": 185
+    },
+    "nebula": {
+      "briefing": "Esta misión junta todo lo que aprendiste. No te daré pistas durante el viaje.",
+      "construir": "Piensa en el peor día: de noche, con paneles rotos y el reciclador averiado.",
+      "exito": "¡Comandante de verdad! Tu base resistió una cadena de problemas, como en una misión real."
+    }
+  },
+  {
+    "id": "marte",
+    "titulo": "Misión 6 · Polvo en Marte",
+    "avanzada": true,
+    "sin_pistas": true,
+    "resumen": "Treinta soles en el cráter Jezero, donde explora Perseverance. Llega menos de la mitad de luz solar y se acerca una tormenta de polvo como la que apagó a Opportunity.",
+    "lugar": "Cráter Jezero · Marte",
+    "planeta": "marte",
+    "tripulacion": 4,
+    "dias": 30,
+    "fase_inicial": 0,
+    "luz_permanente": true,
+    "factor_solar": 0.43,
+    "dosis_dato": "dosis_marte_msv_dia",
+    "presupuesto_t": 14,
+    "limite_dosis_msv": 50,
+    "objetivo_ciencia": 22,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje",
+      "moxie"
+    ],
+    "eventos": [
+      {
+        "dia": 9,
+        "tipo": "alerta_polvo",
+        "texto": "Los satélites de Marte ven crecer una tormenta de polvo."
+      },
+      {
+        "dia": 10,
+        "tipo": "tormenta_polvo",
+        "texto": "¡Tormenta de polvo! Llega solo un cuarto de la luz solar durante 10 soles.",
+        "duracion": 10,
+        "factor_solar": 0.25,
+        "dato": "polvo_marte_2018"
+      }
+    ],
+    "sugerido": {
+      "panel": 8,
+      "bateria": 2,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "extractor": false,
+      "moxie": false,
+      "o2": 20,
+      "agua": 150,
+      "comida": 185
+    },
+    "nebula": {
+      "briefing": "En Marte hay atmósfera de CO₂: MOXIE puede convertirla en oxígeno sin gastar agua.",
+      "construir": "Los paneles rinden menos de la mitad que en la Luna, y el polvo los puede tapar por días.",
+      "exito": "¡Sobreviviste en Marte! Ahí es adonde la NASA quiere llevar astronautas después de Artemis."
+    }
   }
 ]

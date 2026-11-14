@@ -18,7 +18,10 @@ Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 |---|---|
 | 1 · Primer amanecer | Equilibrio básico: energía → oxígeno → agua (tutorial guiado por Nebula) |
 | 2 · La larga noche | La noche lunar dura ~15 días: baterías vs. reactor de fisión |
-| 3 · Tormenta solar | Basada en la tormenta real de mayo de 2024: blindaje vs. refugio (sin pistas de Nebula) |
+| 3 · Tormenta solar | Basada en la tormenta real de mayo de 2024: blindaje vs. refugio (sin pistas; abre la prueba final) |
+| 4 · Hielo en la sombra | Sacar agua del hielo lunar (LCROSS) con el extractor |
+| 5 · Todo sale mal | Micrometeorito, noche, tormenta y avería seguidos |
+| 6 · Polvo en Marte | Menos luz solar, tormenta de polvo (como la que apagó a Opportunity) y MOXIE |
 
 ## Datos NASA
 

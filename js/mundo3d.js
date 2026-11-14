@@ -8,6 +8,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
+import { crearPlataforma, crearRocas } from './plataforma3d.js';
 
 export function soportaWebGL() {
   try {
@@ -25,10 +26,13 @@ const POS = {
   reciclador: [-8, 7],
   invernadero: [3, 11.5],
   lander: [-18, 12],
+  extractor: [-15, -1],
+  moxie: [11, 4],
 };
+const SUELO_Y = 0.11; // altura de la plataforma donde se apoyan los módulos
 const MAX_PANELES = 20;
 const MAX_BATERIAS = 12;
-const NOMBRES = { habitat: 'Hábitat', panel: 'Paneles', bateria: 'Baterías', reactor: 'Reactor', reciclador: 'Reciclador', invernadero: 'Invernadero' };
+const NOMBRES = { habitat: 'Hábitat', panel: 'Paneles', bateria: 'Baterías', reactor: 'Reactor', reciclador: 'Reciclador', invernadero: 'Invernadero', extractor: 'Extractor de hielo', moxie: 'MOXIE' };
 
 // ── Ruido para el terreno ──
 function hash(x, y) {
@@ -50,7 +54,7 @@ const CRATERES = Array.from({ length: 26 }, (_, i) => {
 function altura(x, z) {
   const dist = Math.hypot(x, z);
   const plano = THREE.MathUtils.smoothstep(dist, 22, 34); // la base está en terreno nivelado
-  let h = (fbm(x * 0.035, z * 0.035) - 0.45) * 7 * plano + (fbm(x * 0.2, z * 0.2) - 0.45) * 0.5;
+  let h = (fbm(x * 0.035, z * 0.035) - 0.45) * 7 * plano + (fbm(x * 0.2, z * 0.2) - 0.45) * 0.5 * plano;
   for (const c of CRATERES) {
     const d = Math.hypot(x - c.x, z - c.z) / c.r;
     if (d < 1) h -= c.p * (1 - d * d) * 1.6;
@@ -71,8 +75,14 @@ function texturaRegolito() {
     img.data[i * 4] = v; img.data[i * 4 + 1] = v; img.data[i * 4 + 2] = v * 1.04; img.data[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0);
+  for (let i = 0; i < 140; i++) { // cráteres pequeños: centro oscuro y borde claro
+    const x = Math.random() * 512, y = Math.random() * 512, r = 2 + Math.pow(Math.random(), 3) * 18;
+    g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = Math.max(1, r * 0.25); g.beginPath(); g.arc(x - r * 0.15, y - r * 0.15, r, 0, Math.PI * 2); g.stroke();
+  }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
   t.repeat.set(28, 28);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -141,7 +151,8 @@ export class Mundo {
 
     this.reloj = new THREE.Clock();
     this.estado = { luz: true, tormenta: false, refugio: false, apagados: [], carga: 1, tripulacion: 0 };
-    this.objetivo = { sol: 3.4, hemi: 0.45, tierra: 0.0, noche: 0, tormenta: 0 };
+    this.objetivo = { sol: 3.4, hemi: 0.45, tierra: 0.0, noche: 0, tormenta: 0, polvo: 0 };
+    this.planeta = 'luna';
     this.actual = { ...this.objetivo };
     this.modulos = [];
     this.etiquetas = [];
@@ -216,7 +227,8 @@ export class Mundo {
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       return new THREE.Points(geo, new THREE.PointsMaterial({ size: tam, sizeAttenuation: false, color: 0xffffff, transparent: true, opacity: op, fog: false }));
     };
-    this.escena.add(estrellas(2500, 1.2, 0.7), estrellas(400, 2.2, 0.95));
+    this.estrellas = [estrellas(2500, 1.2, 0.7), estrellas(400, 2.2, 0.95)];
+    this.escena.add(...this.estrellas);
 
     const tierra = new THREE.Mesh(new THREE.SphereGeometry(22, 48, 32), new THREE.MeshStandardMaterial({ map: texturaTierra(), roughness: 0.8, emissive: 0x0a1a40, emissiveIntensity: 0.4 }));
     tierra.position.set(-300, 75, -380);
@@ -224,6 +236,7 @@ export class Mundo {
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaHalo(['rgba(120,180,255,.9)', 'rgba(80,140,255,.35)']), blending: THREE.AdditiveBlending, depthWrite: false }));
     halo.scale.setScalar(70); halo.position.copy(tierra.position);
     this.tierra = tierra;
+    this.haloTierra = halo;
     this.escena.add(tierra, halo);
 
     this.dirSol = new THREE.Vector3(60, 55, 30).normalize();
@@ -245,11 +258,13 @@ export class Mundo {
     const mat = new THREE.MeshStandardMaterial({ color: 0xb4b7c2, map: tex, bumpMap: tex, bumpScale: 2.5, roughness: 0.97, metalness: 0 });
     const suelo = new THREE.Mesh(geo, mat);
     suelo.receiveShadow = true;
+    this.suelo = suelo;
     this.escena.add(suelo);
-    // Plataforma de la base
-    const plataforma = new THREE.Mesh(new THREE.RingGeometry(23.4, 24, 96), new THREE.MeshBasicMaterial({ color: 0xffb547, transparent: true, opacity: 0.18 }));
-    plataforma.rotation.x = -Math.PI / 2; plataforma.position.y = 0.02; plataforma.receiveShadow = true;
-    this.escena.add(plataforma);
+    // Plataforma de la base (losas, caminos, pista y luces) y rocas alrededor
+    this.plataforma = crearPlataforma();
+    this.escena.add(this.plataforma.grupo);
+    this.rocas = crearRocas(altura, this.calidad === 'baja' ? 160 : 340);
+    this.escena.add(this.rocas);
   }
 
   #luces() {
@@ -315,7 +330,7 @@ export class Mundo {
   }
 
   #construirBase(c, forzar = false) {
-    const clave = JSON.stringify([c.panel, c.bateria, c.reactor, c.reciclador, c.invernadero, c.blindaje]);
+    const clave = JSON.stringify([c.panel, c.bateria, c.reactor, c.reciclador, c.invernadero, c.blindaje, c.extractor, c.moxie]);
     if (!forzar && clave === this.claveBase) return;
     this.claveBase = clave;
     this.ultimaConfig = { ...c };
@@ -323,7 +338,7 @@ export class Mundo {
     this.modulos = [];
     const poner = (tipo, x, z, extra = {}) => {
       const m = this.#fabricar(tipo);
-      m.position.set(x, 0, z);
+      m.position.set(x, SUELO_Y, z);
       if (extra.rot) m.rotation.y = extra.rot;
       m.userData.tipo = tipo;
       this.base.add(m);
@@ -332,6 +347,7 @@ export class Mundo {
     };
     poner('habitat', ...POS.habitat);
     const b = crearBlindaje(c.blindaje);
+    b.position.y = SUELO_Y;
     this.base.add(b);
     poner('lander', ...POS.lander, { rot: 0.4 });
     for (let i = 0; i < Math.min(c.panel, MAX_PANELES); i++) poner('panel', ...POS.panel(i), { rot: Math.PI });
@@ -339,11 +355,13 @@ export class Mundo {
     if (c.reactor) poner('reactor', ...POS.reactor);
     if (c.reciclador) poner('reciclador', ...POS.reciclador, { rot: 0.5 });
     if (c.invernadero) poner('invernadero', ...POS.invernadero);
+    if (c.extractor) poner('extractor', ...POS.extractor, { rot: 0.3 });
+    if (c.moxie) poner('moxie', ...POS.moxie, { rot: -0.4 });
 
     // Cables hacia el hábitat
     const cable = new THREE.MeshStandardMaterial({ color: 0x2b2f3d, roughness: 0.7, emissive: 0xff8a2a, emissiveIntensity: 0.25 });
     const unir = (x, z) => {
-      const curva = new THREE.CatmullRomCurve3([new THREE.Vector3(x, 0.08, z), new THREE.Vector3(x * 0.55, 0.08, z * 0.55 + 1), new THREE.Vector3(x * 0.22, 0.08, z * 0.22), new THREE.Vector3(0, 0.08, 0)]);
+      const curva = new THREE.CatmullRomCurve3([new THREE.Vector3(x, 0.17, z), new THREE.Vector3(x * 0.55, 0.17, z * 0.55 + 1), new THREE.Vector3(x * 0.22, 0.17, z * 0.22), new THREE.Vector3(0, 0.17, 0)]);
       const t = new THREE.Mesh(new THREE.TubeGeometry(curva, 40, 0.07, 6), cable);
       this.base.add(t);
     };
@@ -352,6 +370,8 @@ export class Mundo {
     if (c.reactor) unir(...POS.reactor);
     if (c.reciclador) unir(...POS.reciclador);
     if (c.invernadero) unir(...POS.invernadero);
+    if (c.extractor) unir(...POS.extractor);
+    if (c.moxie) unir(...POS.moxie);
 
     this.#crearEtiquetas(c);
     this.#aplicarDinamico();
@@ -380,6 +400,8 @@ export class Mundo {
     if (c.reactor) agregar(NOMBRES.reactor, new THREE.Vector3(...[POS.reactor[0], 0, POS.reactor[1]]), 6.5, 'reactor');
     if (c.reciclador) agregar(NOMBRES.reciclador, new THREE.Vector3(POS.reciclador[0], 0, POS.reciclador[1]), 3.6, 'reciclador');
     if (c.invernadero) agregar(NOMBRES.invernadero, new THREE.Vector3(POS.invernadero[0], 0, POS.invernadero[1]), 3.6, 'invernadero');
+    if (c.extractor) agregar(NOMBRES.extractor, new THREE.Vector3(POS.extractor[0], 0, POS.extractor[1]), 5.5, 'extractor');
+    if (c.moxie) agregar(NOMBRES.moxie, new THREE.Vector3(POS.moxie[0], 0, POS.moxie[1]), 3.4, 'moxie');
   }
 
   #astronautas(n) {
@@ -403,7 +425,10 @@ export class Mundo {
     this.objetivo.tierra = e.luz ? 0 : 0.32;
     this.objetivo.noche = e.luz ? 0 : 1;
     this.objetivo.tormenta = e.tormenta ? 1 : 0;
-    this.tormenta.visible = Boolean(e.tormenta);
+    this.tormenta.visible = Boolean(e.tormenta || e.polvo);
+    this.tormenta.material.color.setHex(e.polvo ? 0xc9875a : 0xffb04a);
+    this.objetivo.polvo = e.polvo ? 1 : 0;
+    if ((e.planeta || 'luna') !== this.planeta) this.#cambiarPlaneta(e.planeta || 'luna');
     this.escudo.visible = Boolean(e.refugio);
     this.#astronautas(e.refugio ? 0 : e.tripulacion || 0);
     this.#aplicarDinamico();
@@ -434,6 +459,18 @@ export class Mundo {
       }
       if (tipo === 'invernadero') m.traverse((o) => { if (o.name === 'luz') o.visible = e.invernaderoOn !== false && !m.userData.alarma; });
     }
+  }
+
+  #cambiarPlaneta(planeta) {
+    this.planeta = planeta;
+    const marte = planeta === 'marte';
+    this.suelo.material.color.setHex(marte ? 0xd98b5f : 0xb4b7c2);
+    this.rocas.material.color.setHex(marte ? 0x8f4f33 : 0x8b8e99);
+    this.hemi.color.setHex(marte ? 0xffc79a : 0x9aa8d8);
+    this.sol.color.setHex(marte ? 0xffe2c4 : 0xfff1dc);
+    for (const e of this.estrellas) e.visible = !marte; // el cielo de Marte de día es color caramelo
+    this.tierra.visible = this.haloTierra.visible = !marte;
+    this.escena.fog = marte ? new THREE.FogExp2(0xc08a62, 0.004) : null;
   }
 
   /** Destaca un tipo de módulo (al agregarlo en el diseño). */
@@ -478,7 +515,17 @@ export class Mundo {
     this.solVisible.material.opacity = Math.min(1, a.sol / 3.4);
     this.luzHabitat.intensity = a.noche * 90;
     this.luzTormenta.intensity = a.tormenta * (0.6 + Math.sin(t * 6) * 0.25);
-    this.escena.background.setRGB(0.008 + a.tormenta * 0.05, 0.012 + a.tormenta * 0.012, 0.04 - a.tormenta * 0.02);
+    if (this.planeta === 'marte') {
+      const dia = Math.min(1, a.sol / 3.4) * (1 - a.polvo * 0.45);
+      this.escena.background.setRGB(0.03 + dia * 0.55, 0.02 + dia * 0.33, 0.02 + dia * 0.2);
+      this.escena.fog.color.copy(this.escena.background);
+      this.escena.fog.density = 0.004 + a.polvo * 0.022;
+      this.sol.intensity = a.sol * (1 - a.polvo * 0.7);
+    } else {
+      this.escena.background.setRGB(0.008 + a.tormenta * 0.05, 0.012 + a.tormenta * 0.012, 0.04 - a.tormenta * 0.02);
+    }
+    for (const m of this.plataforma.luces) m.emissiveIntensity = 0.35 + a.noche * 2.2;
+    for (const b of this.plataforma.balizas) b.material.emissiveIntensity = 0.3 + ((t * 1.2 + b.userData.fase) % 1 < 0.12 ? 3 : 0) + a.noche;
 
     // Ventanas y baliza
     this.base.traverse((o) => {
@@ -517,7 +564,7 @@ export class Mundo {
       if (!as.visible) continue;
       const u = as.userData;
       const ang = u.f + t * u.v * u.dir;
-      as.position.set(Math.cos(ang) * u.r, Math.abs(Math.sin(t * 4 + u.f)) * 0.12, Math.sin(ang) * u.r);
+      as.position.set(Math.cos(ang) * u.r, SUELO_Y + Math.abs(Math.sin(t * 4 + u.f)) * 0.12, Math.sin(ang) * u.r);
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);
     }
 

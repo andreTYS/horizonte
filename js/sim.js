@@ -20,6 +20,8 @@ export function masa(config, juego, nasa) {
   if (config.reactor) t += cifra(nasa, 'fsp_masa_t');
   if (config.reciclador) t += m.reciclador.masa_t;
   if (config.invernadero) t += m.invernadero.masa_t;
+  if (config.extractor) t += m.extractor.masa_t;
+  if (config.moxie) t += m.moxie.masa_t;
   t += m.blindaje.niveles[config.blindaje].masa_t;
   t += (config.o2 + config.agua + config.comida) / 1000;
   return Math.round(t * 100) / 100;
@@ -44,6 +46,7 @@ export function crearEstado(mision, config, juego) {
     ciencia: 0,
     panelesDanados: 0,
     averias: {},
+    polvo: null, // { dias, factor } durante una tormenta de polvo en Marte
     falla: null,
     terminado: false,
   };
@@ -71,21 +74,28 @@ export function paso(estadoPrevio, mision, decision, nasa, juego) {
     if (ev.tipo === 'micrometeorito') e.panelesDanados = Math.min(c.panel, e.panelesDanados + ev.paneles);
     if (ev.tipo === 'averia_reciclador') e.averias.reciclador = ev.duracion;
     if (ev.tipo === 'tormenta_solar') dosisTormenta += ev.dosis_msv;
+    if (ev.tipo === 'tormenta_polvo') e.polvo = { dias: ev.duracion, factor: ev.factor_solar };
   }
+  reg.polvo = Boolean(e.polvo);
 
   // 2. Energía: producción y reparto por prioridad
   const panelesActivos = c.panel - e.panelesDanados;
-  const produccion = (reg.luz ? panelesActivos * m.panel.kwh_dia_luz : 0) + (c.reactor ? cifra(nasa, 'fsp_kw') * 24 : 0);
+  const solar = (mision.factor_solar ?? 1) * (e.polvo ? e.polvo.factor : 1); // Marte recibe menos luz; el polvo la tapa
+  const produccion = (reg.luz ? panelesActivos * m.panel.kwh_dia_luz * solar : 0) + (c.reactor ? cifra(nasa, 'fsp_kw') * 24 : 0);
   const capacidad = c.bateria * m.bateria.capacidad_kwh;
   let disponible = produccion + e.energia;
   reg.produccion = produccion;
 
   const racion = decision.racion ? juego.racion.reducida : 1;
   const o2Necesario = n * cifra(nasa, 'o2_persona_dia');
+  const o2Moxie = c.moxie ? Math.min(o2Necesario, m.moxie.o2_kg_dia) : 0; // MOXIE saca O₂ del CO₂ de Marte, sin agua
+  const o2Electrolisis = o2Necesario - o2Moxie;
   const demandas = [
     { id: 'soporte', kwh: juego.habitat.kwh_dia_base + n * juego.habitat.kwh_dia_persona },
-    { id: 'electrolizador', kwh: o2Necesario * juego.habitat.kwh_por_kg_o2 },
+    { id: 'moxie', kwh: c.moxie ? m.moxie.kwh_dia : 0 },
+    { id: 'electrolizador', kwh: o2Electrolisis * juego.habitat.kwh_por_kg_o2 },
     { id: 'reciclador', kwh: c.reciclador && !e.averias.reciclador ? m.reciclador.kwh_dia : 0 },
+    { id: 'extractor', kwh: c.extractor ? m.extractor.kwh_dia : 0 },
     { id: 'invernadero', kwh: c.invernadero && decision.invernadero ? m.invernadero.kwh_dia : 0 },
   ];
   const activo = {};
@@ -99,11 +109,11 @@ export function paso(estadoPrevio, mision, decision, nasa, juego) {
   e.energia = Math.min(capacidad, disponible);
   if (c.reciclador && e.averias.reciclador) reg.apagados.push('reciclador (averiado)');
 
-  // 3. Oxígeno
-  let o2Producido = 0;
+  // 3. Oxígeno: MOXIE aporta su parte (sin agua) y el electrolizador el resto (partiendo agua)
+  let o2Producido = activo.moxie ? o2Moxie : 0;
   if (activo.electrolizador) {
-    const aguaParaO2 = o2Necesario * cifra(nasa, 'agua_por_kg_o2');
-    if (e.agua >= aguaParaO2) { o2Producido = o2Necesario; e.agua -= aguaParaO2; }
+    const aguaParaO2 = o2Electrolisis * cifra(nasa, 'agua_por_kg_o2');
+    if (e.agua >= aguaParaO2) { o2Producido += o2Electrolisis; e.agua -= aguaParaO2; }
     else reg.apagados.push('electrolizador (sin agua)');
   }
   e.o2 += o2Producido - o2Necesario;
@@ -112,6 +122,7 @@ export function paso(estadoPrevio, mision, decision, nasa, juego) {
   const aguaUsada = n * cifra(nasa, 'agua_persona_dia');
   e.agua -= activo.reciclador ? aguaUsada * (1 - cifra(nasa, 'recuperacion_agua')) : aguaUsada;
   if (activo.invernadero) e.agua -= m.invernadero.agua_kg_dia;
+  if (activo.extractor) e.agua += m.extractor.agua_kg_dia; // hielo del regolito (LCROSS)
 
   // 5. Comida
   const comidaUsada = n * cifra(nasa, 'comida_persona_dia') * racion;
@@ -121,7 +132,7 @@ export function paso(estadoPrevio, mision, decision, nasa, juego) {
 
   // 6. Radiación
   const blindaje = m.blindaje.niveles[c.blindaje].reduccion;
-  let dosis = cifra(nasa, 'dosis_luna_msv_dia') * (1 - blindaje);
+  let dosis = cifra(nasa, mision.dosis_dato || 'dosis_luna_msv_dia') * (1 - blindaje);
   if (dosisTormenta) dosis += dosisTormenta * (1 - blindaje) * (decision.refugio ? 1 - juego.refugio.reduccion_tormenta : 1);
   e.dosis += dosis;
   reg.dosisDia = dosis;
@@ -131,6 +142,7 @@ export function paso(estadoPrevio, mision, decision, nasa, juego) {
 
   // 8. Averías que se reparan
   for (const k of Object.keys(e.averias)) if (--e.averias[k] <= 0) delete e.averias[k];
+  if (e.polvo && --e.polvo.dias <= 0) e.polvo = null;
 
   // 9. ¿Falló algo?
   if (!activo.soporte) e.falla = 'energia';
@@ -168,11 +180,26 @@ export function analizarFalla(motivo, historial, estado, mision, nasa) {
   if (motivo === 'energia' || motivo === 'o2') {
     const apagado = motivo === 'energia' ? historial[historial.length - 1] : primerApagado('electrolizador');
     if (apagado && apagado.apagados.includes('electrolizador (sin agua)')) {
+      const mods = mision.modulos || [];
+      const extra = mods.includes('extractor') && !c.extractor ? ' O usa el extractor: saca hielo del suelo lunar.'
+        : mods.includes('moxie') && !c.moxie ? ' En Marte, MOXIE fabrica oxígeno con el aire, sin gastar agua.' : '';
       return {
         titulo: 'Te quedaste sin agua para fabricar oxígeno',
         cadena: [`Día ${apagado.dia + 1}: no quedaba agua suficiente`, 'El electrolizador no pudo partir agua para hacer O₂', 'El oxígeno se agotó'],
-        dia: apagado.dia, datos: ['agua_por_kg_o2', 'o2_persona_dia'],
-        consejo: 'Lleva más agua o instala el reciclador: cada kilo de oxígeno cuesta 1,125 kg de agua.',
+        dia: apagado.dia,
+        datos: ['agua_por_kg_o2', 'o2_persona_dia', ...(mods.includes('extractor') ? ['lcross_hielo'] : []), ...(mods.includes('moxie') ? ['moxie_o2'] : [])],
+        consejo: 'Lleva más agua o instala el reciclador: cada kilo de oxígeno cuesta 1,125 kg de agua.' + extra,
+        redisenar: true,
+      };
+    }
+    const conPolvo = historial.find((r) => r.polvo);
+    if (apagado && conPolvo && !c.reactor) {
+      return {
+        titulo: 'La tormenta de polvo tapó tus paneles',
+        cadena: [`Día ${conPolvo.dia + 1}: llegó la tormenta de polvo y los paneles recibieron solo un cuarto de la luz`, `Día ${apagado.dia + 1}: las baterías se vaciaron`, motivo === 'o2' ? 'Sin energía, no se fabricó oxígeno' : 'El soporte vital se apagó'],
+        dia: apagado.dia, datos: ['polvo_marte_2018', 'luz_marte', 'fsp_kw'],
+        consejo: 'En Marte el Sol es débil y el polvo puede taparlo por días. Lleva baterías para aguantar la tormenta… o un reactor, que no depende del Sol.',
+        redisenar: true,
       };
     }
     if (apagado && !apagado.luz && !c.reactor) {

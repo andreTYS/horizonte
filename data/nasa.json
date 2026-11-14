@@ -113,6 +113,38 @@
       "fuente": "NASA Science – Veggie",
       "url": "https://science.nasa.gov/mission/veggie/",
       "verificado": true
+    },
+    "lcross_hielo": {
+      "valor": 5.6,
+      "unidad": "% de agua en el regolito de Cabeus (±2,9)",
+      "texto": "En 2009 la misión LCROSS de la NASA impactó el cráter Cabeus, en el polo sur lunar, y midió que su suelo tiene alrededor de 5,6 % de hielo de agua.",
+      "fuente": "Colaprete et al. 2010, Science – Detection of Water in the LCROSS Ejecta Plume",
+      "url": "https://science.nasa.gov/mission/lcross/",
+      "verificado": true
+    },
+    "moxie_o2": {
+      "valor": 12,
+      "unidad": "gramos de O₂ por hora (máximo)",
+      "texto": "MOXIE, a bordo del rover Perseverance, fabricó oxígeno a partir del CO₂ de Marte: hasta 12 g por hora y 122 g en total. Una planta para astronautas tendría que ser cientos de veces más grande.",
+      "fuente": "NASA – NASA's Oxygen-Generating Experiment MOXIE Completes Mars Mission",
+      "url": "https://www.nasa.gov/solar-system/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/",
+      "verificado": true
+    },
+    "polvo_marte_2018": {
+      "valor": "2018",
+      "unidad": "año",
+      "texto": "En 2018 una tormenta de polvo cubrió todo Marte durante semanas y tapó tanto el Sol que el rover Opportunity, que funcionaba con paneles solares, se quedó sin energía para siempre.",
+      "fuente": "NASA – Opportunity rover mission summary",
+      "url": "https://science.nasa.gov/mission/mer-opportunity/",
+      "verificado": true
+    },
+    "luz_marte": {
+      "valor": 0.43,
+      "unidad": "fracción de la luz solar que llega a la Tierra",
+      "texto": "Marte está 1,5 veces más lejos del Sol que la Tierra, así que recibe menos de la mitad de luz solar: los paneles producen bastante menos.",
+      "fuente": "NASA NSSDC – Mars Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verificado": true
     }
   }
 }

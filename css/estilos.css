@@ -405,3 +405,75 @@ body.pagina .tarjeta { background: var(--vidrio); }
 
 .tabla-scroll { overflow-x: auto; margin: 0 -4px; }
 .tabla-scroll td { white-space: nowrap; }
+
+/* ═════ Íconos (Lucide, sprite SVG) ═════ */
+.i { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; stroke-width: 2; }
+.i.rojo { color: var(--peligro); }
+button .i { width: 1.2em; height: 1.2em; }
+.boton-icono .i { width: 22px; height: 22px; }
+.pastilla .i { width: 14px; height: 14px; }
+.pista-gesto .i { color: var(--acento-2); }
+
+/* Nebula: gata robot con color según su ánimo */
+.nebula .cara { color: #fff; }
+.nebula .cara .i { width: 28px; height: 28px; }
+.nebula .cara.alerta { background: radial-gradient(circle at 30% 30%, #d65a6a, #661f2c); border-color: #ff8a9a; box-shadow: 0 0 20px rgba(255, 91, 107, .6); }
+.nebula .cara.feliz { background: radial-gradient(circle at 30% 30%, #4fcf8a, #1b5e3a); border-color: #8af0b8; box-shadow: 0 0 20px rgba(74, 222, 128, .55); }
+.nebula .cara.pensando { background: radial-gradient(circle at 30% 30%, #e0a43c, #6b4512); border-color: #ffd08a; box-shadow: 0 0 20px rgba(255, 181, 71, .5); }
+.nebula-mini { color: #fff; display: grid; place-items: center; }
+.nebula-mini .i { width: 26px; height: 26px; }
+
+/* Recursos con color propio (orden: energía, O₂, agua, comida, radiación, salud, ciencia) */
+.recurso .ico { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: rgba(255, 255, 255, .06); font-size: 0; }
+.recurso .ico .i { width: 16px; height: 16px; }
+.recurso:nth-child(1) .ico { color: #ffd23f; } .recurso:nth-child(2) .ico { color: #9be7ff; }
+.recurso:nth-child(3) .ico { color: #4fb3ff; } .recurso:nth-child(4) .ico { color: #ff9f5a; }
+.recurso:nth-child(5) .ico { color: #c7f25a; } .recurso:nth-child(6) .ico { color: #ff6b8a; }
+.recurso:nth-child(7) .ico { color: #c49bff; }
+.widget > span { display: grid; place-items: center; color: var(--acento-2); }
+.widget > span .i { width: 18px; height: 18px; }
+.carta-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--acento-2); background: rgba(95, 214, 255, .1); border: 1px solid rgba(95, 214, 255, .3); }
+.carta-ico .i { width: 22px; height: 22px; }
+.carta.activa .carta-ico { color: var(--ok); background: rgba(74, 222, 128, .1); border-color: rgba(74, 222, 128, .4); }
+.habilidad .ico { font-size: 0; }
+.habilidad .ico .i { width: 26px; height: 26px; }
+.habilidad[aria-pressed="true"] .ico, .habilidad[aria-expanded="true"] .ico { color: #fff; }
+.reloj-dia .astro { display: grid; place-items: center; color: #ffd23f; }
+.reloj-dia.noche .astro { color: #a8b6ff; }
+.reloj-dia .astro .i { width: 22px; height: 22px; }
+.reloj-dia .rebobinados .i { width: 12px; height: 12px; }
+.linea-tiempo .marca .i { width: 12px; height: 12px; color: var(--acento); }
+.boton-lanzar span { display: grid; place-items: center; }
+.boton-lanzar span .i { width: 26px; height: 26px; }
+.boton-avanzar .i { width: 18px; height: 18px; fill: currentColor; }
+.boton-rapido .i { width: 22px; height: 22px; }
+.fila-eval .ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: rgba(95, 214, 255, .1); color: var(--acento-2); font-size: 0; }
+.fila-eval .ico .i { width: 20px; height: 20px; }
+.fila-eval.hecho .ico { color: var(--ok); background: rgba(74, 222, 128, .1); }
+
+/* Bitácora: se abre desde la IZQUIERDA para no tapar los botones de acción de la derecha */
+.cajon { left: 0; right: auto; width: min(320px, 78vw); border-left: 0; border-right: 1px solid var(--borde); transform: translateX(-105%); padding: calc(max(8px, env(safe-area-inset-top)) + 150px) 14px 170px; z-index: 3; }
+.cajon.abierto { transform: none; box-shadow: 12px 0 40px rgba(0, 0, 0, .5); }
+.cajon h3 { margin: 0; display: flex; align-items: center; gap: 6px; }
+.chico-btn { width: 36px; height: 36px; min-height: 36px; border-radius: 10px; }
+.chico-btn .i { width: 18px; height: 18px; }
+.bitacora .i { width: 13px; height: 13px; }
+.habilidades { z-index: 5; }
+.zona-nebula { z-index: 2; }
+@media (min-width: 760px) { .cajon { padding-top: 100px; padding-bottom: 120px; } }
+
+/* Misiones avanzadas y Marte */
+.mision-btn.avanzada { background: linear-gradient(90deg, rgba(196, 155, 255, .14), rgba(13, 20, 51, .6) 40%); }
+.mision-btn.avanzada .num { color: #c49bff; }
+.mision-btn.marte { background: linear-gradient(90deg, rgba(255, 120, 60, .22), rgba(13, 20, 51, .6) 45%); }
+.mision-btn.marte .num { color: #ff8a4a; }
+.titulo-seccion .pastilla { margin-left: 6px; letter-spacing: 0; text-transform: none; font-family: var(--cuerpo); }
+
+/* Bitácora como panel flotante entre el HUD superior y el inferior (no tapa recursos, acciones ni AVANZAR) */
+.hud-superior, .hud-inferior { z-index: 4; }
+.cajon {
+  top: calc(max(8px, env(safe-area-inset-top)) + 146px); bottom: calc(150px + var(--seguro-abajo)); left: 8px; height: auto;
+  width: min(300px, calc(100vw - 110px)); padding: 12px 14px; border: 1px solid var(--borde-fuerte); border-radius: 18px;
+  transform: translateX(calc(-100% - 20px));
+}
+@media (min-width: 760px) { .cajon { top: 96px; bottom: 112px; left: 16px; padding: 14px 16px; } }

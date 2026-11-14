@@ -8,6 +8,8 @@ import * as E from './evaluacion.js';
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** Ícono SVG del sprite (Lucide). */
+const I = (nombre, clase = '') => `<svg class="i ${clase}" aria-hidden="true"><use href="icons/sprite.svg#i-${nombre}"></use></svg>`;
 const fmt = (n, d = 0) => Number(n).toLocaleString('es-PE', { maximumFractionDigits: d, minimumFractionDigits: d });
 
 const G = {
@@ -65,8 +67,7 @@ async function cargar() {
 
 // ───────────────────────── Piezas de interfaz ─────────────────────────
 function nebula(texto, animo = 'normal', extra = '') {
-  const cara = { normal: '🐱', alerta: '🙀', feliz: '😸', pensando: '🤔' }[animo];
-  return `<div class="nebula ${extra}"><div class="cara" aria-hidden="true">${cara}</div><div class="globo"><span class="quien">Nebula</span>${texto}</div></div>`;
+  return `<div class="nebula ${extra}"><div class="cara ${animo}" aria-hidden="true">${I('nebula')}</div><div class="globo"><span class="quien">Nebula</span>${texto}</div></div>`;
 }
 
 function cifraNasa(clave) {
@@ -79,7 +80,7 @@ function cifraNasa(clave) {
 /** Ventana flotante sobre el mapa (resultados, pruebas, fuentes). Devuelve el contenedor interior. */
 function modal({ ancho = false, cerrable = false } = {}) {
   $app.innerHTML = `<div class="velo"></div><section class="modal ${ancho ? 'ancho' : ''}" role="dialog" aria-modal="true">
-    ${cerrable ? '<button class="cerrar" aria-label="Cerrar">✕</button>' : ''}<div class="contenido"></div></section>`;
+    ${cerrable ? `<button class="cerrar" aria-label="Cerrar">${I('cerrar')}</button>` : ''}<div class="contenido"></div></section>`;
   if (cerrable) $app.querySelector('.cerrar').addEventListener('click', inicio);
   const c = $app.querySelector('.contenido');
   c.scrollTop = 0;
@@ -89,14 +90,16 @@ function modal({ ancho = false, cerrable = false } = {}) {
 // ───────────────────────── Portada ─────────────────────────
 function inicio() {
   document.body.dataset.pantalla = 'portada';
-  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true }, 'portada');
-  const misiones = G.misiones.map((m, i) => {
+  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  const boton = (m, i) => {
     const p = G.progreso[m.id] || 0;
-    return `<button class="mision-btn" data-mision="${i}">
+    return `<button class="mision-btn ${m.avanzada ? 'avanzada' : ''} ${m.planeta === 'marte' ? 'marte' : ''}" data-mision="${i}">
       <span class="num">0${i + 1}</span>
       <span class="info"><b>${esc(m.titulo.replace(/^Misión \d · /, ''))}</b><small>${esc(m.lugar)} · ${m.tripulacion} astronautas · ${m.dias} días</small></span>
       <span class="estrellas-mini" aria-label="${p} de 3 estrellas">${'★'.repeat(p)}<span>${'★'.repeat(3 - p)}</span></span></button>`;
-  }).join('');
+  };
+  const campana = G.misiones.map((m, i) => (m.avanzada ? '' : boton(m, i))).join('');
+  const avanzadas = G.misiones.map((m, i) => (m.avanzada ? boton(m, i) : '')).join('');
   $app.innerHTML = `
     <header class="marca">
       <p class="lema">Ensaya el futuro de tu base</p>
@@ -105,17 +108,18 @@ function inicio() {
     </header>
     <aside class="menu-principal panel-vidrio">
       <h2 class="titulo-seccion">Misiones</h2>
-      <div class="lista-misiones">${misiones}</div>
+      <div class="lista-misiones">${campana}</div>
+      ${avanzadas ? `<h2 class="titulo-seccion">Misiones avanzadas <span class="pastilla">sin pistas</span></h2><div class="lista-misiones">${avanzadas}</div>` : ''}
       ${tarjetaAprendizaje()}
-      <details class="jugador"><summary>👩‍🚀 ${G.jugador.nombre ? esc(G.jugador.nombre) : 'Tu nombre y aula (opcional)'}</summary>
+      <details class="jugador"><summary>${I('persona')} ${G.jugador.nombre ? esc(G.jugador.nombre) : 'Tu nombre y aula (opcional)'}</summary>
         <label>Nombre <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
         <label>Código de aula <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="p. ej. 3B-2026"></label>
         <p class="chico suave">Si tu docente te dio un código, escríbelo para que vea tu avance.</p>
       </details>
-      <div class="fila"><button id="fuentes" class="secundario">📚 Datos NASA</button></div>
+      <div class="fila"><button id="fuentes" class="secundario">${I('datos')} Datos NASA</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · NASA Space Apps 2026</p>
     </aside>
-    <p class="pista-gesto">🖐️ Arrastra para girar la base · pellizca para acercar</p>`;
+    <p class="pista-gesto">${I('mano')} Arrastra para girar la base · pellizca para acercar</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
     const empezar = () => { G.mision = G.misiones[+b.dataset.mision]; G.config = S.configInicial(G.mision); G.rebobinados = 0; construir(); };
     if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
@@ -133,31 +137,35 @@ function estimaciones() {
   const n = m.tripulacion;
   const v = (k) => nasa.cifras[k].valor;
   const o2Dia = n * v('o2_persona_dia');
-  const demanda = j.habitat.kwh_dia_base + n * j.habitat.kwh_dia_persona + o2Dia * j.habitat.kwh_por_kg_o2
-    + (c.reciclador ? j.modulos.reciclador.kwh_dia : 0) + (c.invernadero ? j.modulos.invernadero.kwh_dia : 0);
+  const o2Moxie = c.moxie ? Math.min(o2Dia, j.modulos.moxie.o2_kg_dia) : 0;
+  const demanda = j.habitat.kwh_dia_base + n * j.habitat.kwh_dia_persona + (o2Dia - o2Moxie) * j.habitat.kwh_por_kg_o2
+    + (c.reciclador ? j.modulos.reciclador.kwh_dia : 0) + (c.invernadero ? j.modulos.invernadero.kwh_dia : 0)
+    + (c.extractor ? j.modulos.extractor.kwh_dia : 0) + (c.moxie ? j.modulos.moxie.kwh_dia : 0);
   const reactor = c.reactor ? v('fsp_kw') * 24 : 0;
   const bateria = c.bateria * j.modulos.bateria.capacidad_kwh;
   const aguaDia = n * v('agua_persona_dia') * (c.reciclador ? 1 - v('recuperacion_agua') : 1)
-    + o2Dia * v('agua_por_kg_o2') + (c.invernadero ? j.modulos.invernadero.agua_kg_dia : 0);
+    + (o2Dia - o2Moxie) * v('agua_por_kg_o2') + (c.invernadero ? j.modulos.invernadero.agua_kg_dia : 0)
+    - (c.extractor ? j.modulos.extractor.agua_kg_dia : 0);
   const comidaDia = n * v('comida_persona_dia') * (c.invernadero ? 1 - j.modulos.invernadero.fraccion_comida : 1);
   return {
-    demanda, dia: c.panel * j.modulos.panel.kwh_dia_luz + reactor,
+    demanda, dia: c.panel * j.modulos.panel.kwh_dia_luz * (m.factor_solar ?? 1) + reactor,
     nochesAguanta: demanda - reactor <= 0 ? Infinity : bateria / (demanda - reactor),
-    diasAgua: c.agua / aguaDia, diasComida: c.comida / comidaDia, diasO2: c.o2 / o2Dia,
-    dosis: v('dosis_luna_msv_dia') * (1 - j.modulos.blindaje.niveles[c.blindaje].reduccion) * m.dias,
+    diasAgua: aguaDia <= 0 ? Infinity : c.agua / aguaDia, diasComida: c.comida / comidaDia, diasO2: c.o2 / o2Dia,
+    dosis: v(m.dosis_dato || 'dosis_luna_msv_dia') * (1 - j.modulos.blindaje.niveles[c.blindaje].reduccion) * m.dias,
   };
 }
 
 function construir() {
   document.body.dataset.pantalla = 'diseno';
   const { mision: m, config: c, juego: j, nasa } = G;
-  pintar({ config: c, luz: S.hayLuz(m, 0, nasa), tripulacion: m.tripulacion, carga: 1, tormenta: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true }, 'diseno');
+  pintar({ config: c, luz: S.hayLuz(m, 0, nasa), tripulacion: m.tripulacion, carga: 1, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: m.planeta || 'luna' }, 'diseno');
   const masa = S.masa(c, j, nasa);
   const pct = Math.min(100, (masa / m.presupuesto_t) * 100);
   const excedido = masa > m.presupuesto_t;
   const e = estimaciones();
   const dias = (x) => (x === Infinity ? '∞' : fmt(x, 1));
   const estado = (ok) => (ok ? 'bien' : 'mal');
+  const tiene = (k) => (m.modulos || ['panel', 'bateria', 'reactor', 'reciclador', 'invernadero', 'blindaje']).includes(k);
 
   const contador = (k, paso, icono, nombre, detalle, unidad = '') => `
     <div class="carta" data-carta="${k}"><div class="carta-ico">${icono}</div><b>${nombre}</b><small>${detalle}</small>
@@ -169,40 +177,42 @@ function construir() {
 
   $app.innerHTML = `
     <header class="barra-superior">
-      <button id="volver" class="boton-icono" aria-label="Volver a misiones">←</button>
+      <button id="volver" class="boton-icono" aria-label="Volver a misiones">${I('volver')}</button>
       <div class="titulo-barra"><small>${esc(m.lugar)} · ${m.tripulacion} astronautas · ${m.dias} días</small><b>${esc(m.titulo)}</b></div>
       <div class="masa ${excedido ? 'peligro' : pct > 85 ? 'alerta' : ''}" title="Masa que lleva el cohete">
-        <div class="entre"><span>🚀 Masa</span><b>${fmt(masa, 2)} / ${m.presupuesto_t} t</b></div>
+        <div class="entre"><span>${I('cohete')} Masa</span><b>${fmt(masa, 2)} / ${m.presupuesto_t} t</b></div>
         <div class="barra"><span style="width:${pct}%"></span></div>
       </div>
     </header>
 
     <aside class="widgets-diseno">
-      <div class="widget ${estado(e.dia >= e.demanda)}"><span>⚡</span><div><b>+${fmt(e.dia)} / −${fmt(e.demanda)}</b><small>kWh/día con luz</small></div></div>
-      ${m.luz_permanente ? '' : `<div class="widget ${estado(e.nochesAguanta >= 15)}"><span>🌑</span><div><b>${dias(e.nochesAguanta)} días</b><small>aguantas de noche (~15)</small></div></div>`}
-      <div class="widget ${estado(e.diasAgua >= m.dias)}"><span>💧</span><div><b>${dias(e.diasAgua)} días</b><small>de agua</small></div></div>
-      <div class="widget ${estado(e.diasComida >= m.dias)}"><span>🥫</span><div><b>${dias(e.diasComida)} días</b><small>de comida</small></div></div>
-      <div class="widget ${estado(e.dosis <= m.limite_dosis_msv)}"><span>☢️</span><div><b>${fmt(e.dosis, 1)} mSv</b><small>límite ${m.limite_dosis_msv}</small></div></div>
+      <div class="widget ${estado(e.dia >= e.demanda)}"><span>${I('energia')}</span><div><b>+${fmt(e.dia)} / −${fmt(e.demanda)}</b><small>kWh/día con luz</small></div></div>
+      ${m.luz_permanente ? '' : `<div class="widget ${estado(e.nochesAguanta >= 15)}"><span>${I('noche')}</span><div><b>${dias(e.nochesAguanta)} días</b><small>aguantas de noche (~15)</small></div></div>`}
+      <div class="widget ${estado(e.diasAgua >= m.dias)}"><span>${I('agua')}</span><div><b>${dias(e.diasAgua)} días</b><small>de agua</small></div></div>
+      <div class="widget ${estado(e.diasComida >= m.dias)}"><span>${I('comida')}</span><div><b>${dias(e.diasComida)} días</b><small>de comida</small></div></div>
+      <div class="widget ${estado(e.dosis <= m.limite_dosis_msv)}"><span>${I('radiacion')}</span><div><b>${fmt(e.dosis, 1)} mSv</b><small>límite ${m.limite_dosis_msv}</small></div></div>
     </aside>
 
-    <button class="nebula-mini" id="ayuda" aria-label="Ver la pista de Nebula">🐱</button>
+    <button class="nebula-mini" id="ayuda" aria-label="Ver la pista de Nebula">${I('nebula')}</button>
     ${G.briefingVisto[m.id] ? '' : `<div class="briefing">${nebula(esc(m.nebula.briefing) + '<br><br>' + esc(m.nebula.construir), 'pensando')}<button class="primario" id="entendido">¡Entendido!</button></div>`}
     ${excedido ? '<div class="toasts"><div class="toast peligro">El cohete no puede despegar: quita masa.</div></div>' : ''}
 
     <footer class="dock">
       <div class="cartas">
-        ${contador('panel', 1, '🔷', 'Paneles', `${j.modulos.panel.masa_t} t · ${j.modulos.panel.kwh_dia_luz} kWh/día con luz`)}
-        ${contador('bateria', 1, '🔋', 'Baterías', `${j.modulos.bateria.masa_t} t · ${j.modulos.bateria.capacidad_kwh} kWh`)}
-        ${interruptor('reactor', '☢️', 'Reactor', `${nasa.cifras.fsp_masa_t.valor} t · ${nasa.cifras.fsp_kw.valor} kW día y noche`)}
-        ${interruptor('reciclador', '♻️', 'Reciclador', `${j.modulos.reciclador.masa_t} t · recupera ${fmt(nasa.cifras.recuperacion_agua.valor * 100)} % del agua`)}
-        ${interruptor('invernadero', '🌱', 'Invernadero', `${j.modulos.invernadero.masa_t} t · ${fmt(j.modulos.invernadero.fraccion_comida * 100)} % de la comida`)}
-        <div class="carta"><div class="carta-ico">🛡️</div><b>Blindaje</b><small>${j.modulos.blindaje.niveles.map((nv) => `${nv.masa_t} t → −${fmt(nv.reduccion * 100)}%`).join(' · ')}</small>
+        ${contador('panel', 1, I('panel'), 'Paneles', `${j.modulos.panel.masa_t} t · ${j.modulos.panel.kwh_dia_luz} kWh/día con luz`)}
+        ${contador('bateria', 1, I('bateria'), 'Baterías', `${j.modulos.bateria.masa_t} t · ${j.modulos.bateria.capacidad_kwh} kWh`)}
+        ${tiene('reactor') ? interruptor('reactor', I('reactor'), 'Reactor', `${nasa.cifras.fsp_masa_t.valor} t · ${nasa.cifras.fsp_kw.valor} kW día y noche`) : ''}
+        ${interruptor('reciclador', I('reciclador'), 'Reciclador', `${j.modulos.reciclador.masa_t} t · recupera ${fmt(nasa.cifras.recuperacion_agua.valor * 100)} % del agua`)}
+        ${interruptor('invernadero', I('invernadero'), 'Invernadero', `${j.modulos.invernadero.masa_t} t · ${fmt(j.modulos.invernadero.fraccion_comida * 100)} % de la comida`)}
+        ${tiene('extractor') ? interruptor('extractor', I('extractor'), 'Extractor de hielo', `${j.modulos.extractor.masa_t} t · +${j.modulos.extractor.agua_kg_dia} kg agua/día · ${j.modulos.extractor.kwh_dia} kWh`) : ''}
+        ${tiene('moxie') ? interruptor('moxie', I('moxie'), 'MOXIE', `${j.modulos.moxie.masa_t} t · ${j.modulos.moxie.o2_kg_dia} kg O₂/día del aire · ${j.modulos.moxie.kwh_dia} kWh`) : ''}
+        <div class="carta"><div class="carta-ico">${I('blindaje')}</div><b>Blindaje</b><small>${j.modulos.blindaje.niveles.map((nv) => `${nv.masa_t} t → −${fmt(nv.reduccion * 100)}%`).join(' · ')}</small>
           <div class="segmentos" role="group" aria-label="Nivel de blindaje">${['No', 'Medio', 'Alto'].map((t, i) => `<button aria-pressed="${c.blindaje === i}" data-blindaje="${i}">${t}</button>`).join('')}</div></div>
-        ${contador('o2', 5, '🫁', 'Oxígeno', 'kg de reserva', ' kg')}
-        ${contador('agua', 10, '💧', 'Agua', 'kg · también hace O₂', ' kg')}
-        ${contador('comida', 10, '🥫', 'Comida', 'kg', ' kg')}
+        ${contador('o2', 5, I('o2'), 'Oxígeno', 'kg de reserva', ' kg')}
+        ${contador('agua', 10, I('agua'), 'Agua', 'kg · también hace O₂', ' kg')}
+        ${contador('comida', 10, I('comida'), 'Comida', 'kg', ' kg')}
       </div>
-      <button class="boton-lanzar" id="lanzar" ${excedido ? 'disabled' : ''}><span>🚀</span>LANZAR</button>
+      <button class="boton-lanzar" id="lanzar" ${excedido ? 'disabled' : ''}><span>${I('cohete')}</span>LANZAR</button>
     </footer>`;
 
   // Conservar la posición del dock al redibujar
@@ -234,7 +244,7 @@ function lanzar() {
 }
 
 const actual = () => G.estados[G.estados.length - 1];
-const guiada = () => G.mision.id !== G.misiones[G.misiones.length - 1].id; // en la misión final, Nebula no da pistas
+const guiada = () => !G.mision.sin_pistas; // en las misiones de evaluación y avanzadas, Nebula no da pistas
 
 function avanzar(maxDias) {
   for (let i = 0; i < maxDias; i++) {
@@ -263,7 +273,8 @@ function rebobinar(dia) {
 
 function pistaNebula(e, ultimo) {
   if (!guiada()) return '';
-  if (ultimo?.eventos.some((x) => x.tipo === 'alerta_solar')) return nebula('¡Una llamarada! Las partículas llegan mañana. Activa el <strong>refugio</strong> 🛡️ antes de avanzar.', 'alerta');
+  if (ultimo?.eventos.some((x) => x.tipo === 'alerta_polvo')) return nebula('Viene una tormenta de polvo: los paneles casi no producirán. Ahorra energía: apaga el invernadero.', 'alerta');
+  if (ultimo?.eventos.some((x) => x.tipo === 'alerta_solar')) return nebula('¡Una llamarada! Las partículas llegan mañana. Activa el <strong>refugio</strong> antes de avanzar.', 'alerta');
   if (e.dia === 0) return nebula('Cada <strong>Avanzar</strong> pasa un día. Si una barra llega a cero, la base falla. Toca un día pasado en la línea de tiempo para <strong>rebobinar</strong>.');
   if (ultimo?.apagados.length) return nebula(`Hoy se apagó <strong>${esc(ultimo.apagados.join(', '))}</strong>. ¿Qué puedes cambiar?`, 'alerta');
   if (ultimo && ultimo.luz && !S.hayLuz(G.mision, e.dia, G.nasa)) return nebula('Se puso el Sol: los paneles ya no producen. Solo cuentan las baterías y el reactor.', 'pensando');
@@ -287,43 +298,44 @@ function mision() {
   const tormentaAhora = ultimo?.eventos.some((x) => x.tipo === 'tormenta_solar');
   pintar({
     config: c, luz, carga: capacidad ? e.energia / capacidad : 0, danados: e.panelesDanados, apagados: ultimo?.apagados || [],
-    tormenta: Boolean(tormentaAhora), refugio: G.hoy.refugio, tripulacion: m.tripulacion, invernaderoOn: G.hoy.invernadero,
+    tormenta: Boolean(tormentaAhora), polvo: Boolean(e.polvo), refugio: G.hoy.refugio, tripulacion: m.tripulacion, invernaderoOn: G.hoy.invernadero,
+    planeta: m.planeta || 'luna',
   }, 'mision');
 
   const linea = Array.from({ length: m.dias }, (_, i) => {
     const r = G.registros[i];
     const ev = m.eventos.filter((x) => x.dia === i);
-    const marca = ev.some((x) => x.tipo.includes('solar')) ? '💥' : ev.length ? '⚠️' : '';
+    const marca = ev.some((x) => x.tipo.includes('solar')) ? I('llamarada') : ev.some((x) => x.tipo.includes('polvo')) ? I('polvo') : ev.some((x) => x.tipo === 'micrometeorito') ? I('meteorito') : ev.length ? I('averia') : '';
     const cls = [S.hayLuz(m, i, G.nasa) ? 'luz' : 'noche', i > e.dia ? 'futuro' : '', i === e.dia ? 'hoy' : '', r?.apagados.length ? 'mal' : '', r?.decision.refugio ? 'refugio' : ''].join(' ');
     const puede = i < e.dia;
     return `<button class="${cls}" ${puede ? `data-dia="${i}"` : 'disabled'} aria-label="Día ${i + 1}${puede ? ', rebobinar aquí' : ''}"><span>${i + 1}</span><span class="marca">${i <= e.dia ? marca : ''}</span></button>`;
   }).join('');
 
   const avisos = [];
-  if (G.avisoRebobinado !== null) avisos.push(`<div class="toast info">⏪ Volviste al día ${G.avisoRebobinado + 1}. Cambia tus decisiones y avanza.</div>`);
+  if (G.avisoRebobinado !== null) avisos.push(`<div class="toast info">${I('rebobinar')} Volviste al día ${G.avisoRebobinado + 1}. Cambia tus decisiones y avanza.</div>`);
   if (ultimo) for (const ev of ultimo.eventos) avisos.push(`<div class="toast ${ev.tipo === 'tormenta_solar' ? 'peligro' : 'alerta'}"><b>Día ${ultimo.dia + 1}</b> · ${esc(ev.texto)}${ev.url ? ` <a href="${esc(ev.url)}" target="_blank" rel="noopener">DONKI ↗</a>` : ''}</div>`);
   if (ultimo?.apagados.length) avisos.push(`<div class="toast peligro"><b>Día ${ultimo.dia + 1}</b> · Se apagó: ${esc(ultimo.apagados.join(', '))}</div>`);
 
   const habilidad = (k, icono, etiqueta, detalle, mostrar = true) => mostrar ? `
     <button class="habilidad" aria-pressed="${G.hoy[k]}" data-dec="${k}" title="${detalle}"><span class="ico">${icono}</span><span class="txt">${etiqueta}</span></button>` : '';
 
-  const bitacora = G.registros.slice().reverse().map((r) => `<li><b>Día ${r.dia + 1}</b> ${r.luz ? '☀️' : '🌑'} +${fmt(r.produccion)} / −${fmt(r.demanda)} kWh${r.decision.refugio ? ' · 🛡️' : ''}${r.eventos.length ? ' · ' + esc(r.eventos.map((x) => x.texto).join(' ')) : ''}</li>`).join('');
+  const bitacora = G.registros.slice().reverse().map((r) => `<li><b>Día ${r.dia + 1}</b> ${r.luz ? I('sol') : I('noche')} +${fmt(r.produccion)} / −${fmt(r.demanda)} kWh${r.decision.refugio ? ' · ' + I('refugio') : ''}${r.eventos.length ? ' · ' + esc(r.eventos.map((x) => x.texto).join(' ')) : ''}</li>`).join('');
 
   $app.innerHTML = `
     <header class="hud-superior">
-      <button id="abortar" class="boton-icono" aria-label="Volver al diseño de la base">⚙︎</button>
+      <button id="abortar" class="boton-icono" aria-label="Volver al diseño de la base">${I('ajustes')}</button>
       <div class="recursos">
-        ${recurso('⚡', 'kWh', e.energia, capacidad || 1, fmt(e.energia))}
-        ${recurso('🫁', 'kg O₂', e.o2, Math.max(ini.o2, 1), fmt(e.o2, 1))}
-        ${recurso('💧', 'kg agua', e.agua, Math.max(ini.agua, 1), fmt(e.agua))}
-        ${recurso('🥫', 'kg comida', e.comida, Math.max(ini.comida, 1), fmt(e.comida))}
-        ${recurso('☢️', `/${m.limite_dosis_msv} mSv`, e.dosis, m.limite_dosis_msv, fmt(e.dosis, 1), true)}
-        ${recurso('❤️', 'salud', e.salud, 100, `${fmt(e.salud)}%`)}
-        ${recurso('🔬', `/${m.objetivo_ciencia} ciencia`, e.ciencia, m.objetivo_ciencia, fmt(e.ciencia))}
+        ${recurso(I('energia'), 'kWh', e.energia, capacidad || 1, fmt(e.energia))}
+        ${recurso(I('o2'), 'kg O₂', e.o2, Math.max(ini.o2, 1), fmt(e.o2, 1))}
+        ${recurso(I('agua'), 'kg agua', e.agua, Math.max(ini.agua, 1), fmt(e.agua))}
+        ${recurso(I('comida'), 'kg comida', e.comida, Math.max(ini.comida, 1), fmt(e.comida))}
+        ${recurso(I('radiacion'), `/${m.limite_dosis_msv} mSv`, e.dosis, m.limite_dosis_msv, fmt(e.dosis, 1), true)}
+        ${recurso(I('salud'), 'salud', e.salud, 100, `${fmt(e.salud)}%`)}
+        ${recurso(I('ciencia'), `/${m.objetivo_ciencia} ciencia`, e.ciencia, m.objetivo_ciencia, fmt(e.ciencia))}
       </div>
       <div class="reloj-dia ${luz ? 'dia' : 'noche'}" aria-label="Día ${Math.min(e.dia + 1, m.dias)} de ${m.dias}">
-        <span class="astro">${luz ? '☀️' : '🌑'}</span><b>${Math.min(e.dia + 1, m.dias)}</b><small>/ ${m.dias}</small>
-        <span class="rebobinados" title="Rebobinados">⏪ ${G.rebobinados}</span>
+        <span class="astro">${luz ? I('sol') : I('noche')}</span><b>${Math.min(e.dia + 1, m.dias)}</b><small>/ ${m.dias}</small>
+        <span class="rebobinados" title="Rebobinados">${I('rebobinar')} ${G.rebobinados}</span>
       </div>
     </header>
 
@@ -332,19 +344,19 @@ function mision() {
 
     <nav class="habilidades" aria-label="Decisiones para el día ${e.dia + 1}">
       <small>Día ${e.dia + 1}</small>
-      ${habilidad('refugio', '🛡️', 'Refugio', 'Protege 90 % de la radiación de tormenta; ese día no hay ciencia')}
-      ${habilidad('racion', '🥣', 'Ración', 'Comen 20 % menos; baja la salud')}
-      ${habilidad('invernadero', '🌱', 'Invernadero', 'Apágalo para ahorrar energía y agua', c.invernadero)}
-      <button class="habilidad" id="bitacora" aria-expanded="${Boolean(G.bitacoraAbierta)}"><span class="ico">📜</span><span class="txt">Bitácora</span></button>
+      ${habilidad('refugio', I('refugio'), 'Refugio', 'Protege 90 % de la radiación de tormenta; ese día no hay ciencia')}
+      ${habilidad('racion', I('racion'), 'Ración', 'Comen 20 % menos; baja la salud')}
+      ${habilidad('invernadero', I('invernadero'), 'Invernadero', 'Apágalo para ahorrar energía y agua', c.invernadero)}
+      <button class="habilidad" id="bitacora" aria-expanded="${Boolean(G.bitacoraAbierta)}"><span class="ico">${I('bitacora')}</span><span class="txt">Bitácora</span></button>
     </nav>
 
-    <aside class="cajon ${G.bitacoraAbierta ? 'abierto' : ''}" aria-label="Bitácora"><h3>📜 Bitácora</h3>${bitacora ? `<ul class="bitacora">${bitacora}</ul>` : '<p class="suave chico">Aún no pasa ningún día.</p>'}</aside>
+    <aside class="cajon ${G.bitacoraAbierta ? 'abierto' : ''}" aria-label="Bitácora"><div class="entre"><h3>${I('bitacora')} Bitácora</h3><button class="boton-icono chico-btn" id="cerrarBitacora" aria-label="Cerrar bitácora">${I('cerrar')}</button></div>${bitacora ? `<ul class="bitacora">${bitacora}</ul>` : '<p class="suave chico">Aún no pasa ningún día.</p>'}</aside>
 
     <footer class="hud-inferior">
       <div class="linea-tiempo" aria-label="Línea de tiempo: toca un día pasado para rebobinar">${linea}</div>
       <div class="acciones">
-        <button class="boton-avanzar" id="dia1">AVANZAR <small>1 día</small> ▶</button>
-        <button class="boton-rapido" id="dia5" aria-label="Avanzar 5 días">⏩<small>×5</small></button>
+        <button class="boton-avanzar" id="dia1">${I('avanzar')} AVANZAR <small>1 día</small></button>
+        <button class="boton-rapido" id="dia5" aria-label="Avanzar 5 días">${I('rapido')}<small>×5</small></button>
       </div>
     </footer>`;
 
@@ -352,6 +364,7 @@ function mision() {
   document.getElementById('dia1').addEventListener('click', () => avanzar(1));
   document.getElementById('dia5').addEventListener('click', () => avanzar(5));
   document.getElementById('bitacora').addEventListener('click', () => { G.bitacoraAbierta = !G.bitacoraAbierta; mision(); });
+  document.getElementById('cerrarBitacora').addEventListener('click', () => { G.bitacoraAbierta = false; mision(); });
   $app.querySelectorAll('[data-dec]').forEach((b) => b.addEventListener('click', () => { G.hoy[b.dataset.dec] = !G.hoy[b.dataset.dec]; mision(); }));
   $app.querySelectorAll('[data-dia]').forEach((b) => b.addEventListener('click', () => rebobinar(+b.dataset.dia)));
   const hoy = $app.querySelector('.linea-tiempo .hoy');
@@ -368,7 +381,7 @@ function final() {
   pintar({
     config: e.config, luz: ultimo?.luz ?? true, carga: Math.max(0, e.energia) / Math.max(1, e.config.bateria * G.juego.modulos.bateria.capacidad_kwh),
     danados: e.panelesDanados, apagados: res.exito ? [] : ultimo?.apagados?.length ? ultimo.apagados : ['soporte'], tormenta: res.motivo === 'radiacion',
-    refugio: false, tripulacion: res.exito ? m.tripulacion : 0,
+    refugio: false, tripulacion: res.exito ? m.tripulacion : 0, polvo: Boolean(e.polvo), planeta: m.planeta || 'luna',
   }, 'resultado');
   const estrellas = res.exito ? (G.rebobinados === 0 ? 3 : G.rebobinados <= 2 ? 2 : 1) : 0;
   api.enviarPartida({
@@ -395,7 +408,7 @@ function final() {
       ${nebula(esc(m.nebula.exito), 'feliz')}
       <div class="fila">
         ${siguiente ? `<button class="primario" id="sig">Siguiente: ${esc(siguiente.titulo.replace(/^Misión \d · /, ''))} ▶</button>` : ''}
-        ${!siguiente && !G.eval.caso ? '<button class="primario" id="evalfinal">📝 Prueba final y caso Artemis-7</button>' : ''}
+        ${m.evaluacion && !G.eval.caso ? `<button class="primario" id="evalfinal">${I('prueba')} Prueba final y caso Artemis-7</button>` : ''}
         <button class="secundario" id="inicio">Menú</button>
       </div>`;
     document.getElementById('evalfinal')?.addEventListener('click', G.eval.final ? casoArtemis : pruebaFinal);
@@ -408,21 +421,21 @@ function final() {
   const diaRebobinar = Math.max(0, Math.min(a.dia, G.estados.length - 2));
   c.innerHTML = `
     <div class="sello">FALLA · DÍA ${e.dia}</div>
-    <h2>💥 ${esc(a.titulo)}</h2>
+    <h2>${I('alerta', 'rojo')} ${esc(a.titulo)}</h2>
     <p class="suave">Así ocurrió:</p>
     <ol class="cadena">${a.cadena.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
     ${a.datos.map(cifraNasa).join('')}
     ${nebula(esc(a.consejo), 'pensando')}
     <div class="fila">
-      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">⏪ Rebobinar al día ${diaRebobinar + 1}</button>
-      <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">🔧 Rediseñar la base</button>
+      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('rebobinar')} Rebobinar al día ${diaRebobinar + 1}</button>
+      <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} Rediseñar la base</button>
     </div>`;
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
   document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; construir(); });
 }
 
 // ───────────────────────── Evaluación del aprendizaje ─────────────────────────
-const ultimaMision = () => G.misiones[G.misiones.length - 1];
+const ultimaMision = () => G.misiones.find((m) => m.evaluacion) || G.misiones[G.misiones.length - 1];
 const finalDesbloqueada = () => Boolean(G.progreso[ultimaMision().id]);
 
 function guardarEval(tipo, r) {
@@ -436,13 +449,13 @@ function tarjetaAprendizaje() {
   const fila = (icono, nombre, hecho, texto, boton, bloqueado) => `
     <div class="fila-eval ${hecho ? 'hecho' : ''}"><span class="ico">${icono}</span>
       <span class="info"><b>${nombre}</b><small class="suave">${texto}</small></span>
-      ${boton && !bloqueado ? `<button class="${hecho ? 'fantasma' : 'secundario'}" data-eval="${boton}">${hecho ? 'Repetir' : 'Hacer'}</button>` : `<span class="pastilla">${bloqueado ? '🔒' : '✓'}</span>`}</div>`;
+      ${boton && !bloqueado ? `<button class="${hecho ? 'fantasma' : 'secundario'}" data-eval="${boton}">${hecho ? 'Repetir' : 'Hacer'}</button>` : `<span class="pastilla">${bloqueado ? I('candado') : I('check')}</span>`}</div>`;
   const bloqueadaFinal = !finalDesbloqueada();
   return `<div class="aprendizaje">
     <div class="entre"><h2 class="titulo-seccion">Tu aprendizaje</h2>${ev.inicial && ev.final && ev.caso ? '<button class="fantasma" data-eval="resumen">Resumen →</button>' : ''}</div>
-    ${fila('📝', 'Prueba inicial', ev.inicial, ev.inicial ? `${ev.inicial.puntaje}/${ev.inicial.maximo}` : 'Antes de jugar · 2 min', ev.inicial ? null : 'inicial')}
-    ${fila('🎯', 'Prueba final', ev.final, ev.final ? `${ev.final.puntaje}/${ev.final.maximo}` : bloqueadaFinal ? `Completa “${esc(ultimaMision().titulo.replace(/^Misión \d · /, ''))}”` : 'Lista para hacer', 'final', bloqueadaFinal)}
-    ${fila('🧑‍🚀', 'Caso Artemis-7', ev.caso, ev.caso ? `${ev.caso.puntaje}/8 · ${ev.caso.nivel}` : 'Rúbrica 0–8 · después de la final', 'caso', !ev.final)}
+    ${fila(I('prueba'), 'Prueba inicial', ev.inicial, ev.inicial ? `${ev.inicial.puntaje}/${ev.inicial.maximo}` : 'Antes de jugar · 2 min', ev.inicial ? null : 'inicial')}
+    ${fila(I('final'), 'Prueba final', ev.final, ev.final ? `${ev.final.puntaje}/${ev.final.maximo}` : bloqueadaFinal ? `Completa “${esc(ultimaMision().titulo.replace(/^Misión \d · /, ''))}”` : 'Lista para hacer', 'final', bloqueadaFinal)}
+    ${fila(I('caso'), 'Caso Artemis-7', ev.caso, ev.caso ? `${ev.caso.puntaje}/8 · ${ev.caso.nivel}` : 'Rúbrica 0–8 · después de la final', 'caso', !ev.final)}
   </div>`;
 }
 
@@ -497,7 +510,7 @@ function fuentes() {
   const c = modal({ ancho: true, cerrable: true });
   c.innerHTML = `
     <p class="lema">Fuentes</p>
-    <h2>📚 Datos NASA usados</h2>
+    <h2>${I('datos')} Datos NASA usados</h2>
     <p class="suave">Cada número de la simulación tiene una fuente. Los valores de equilibrio del juego (masa de los paneles, energía del invernadero…) están aparte en <code>data/juego.json</code> y no se presentan como datos NASA.</p>
     <table class="tabla-fuentes"><tbody>${filas}</tbody></table>`;
 }

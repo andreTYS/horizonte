@@ -6,7 +6,9 @@ import * as S from '../js/sim.js';
 const leer = (f) => JSON.parse(fs.readFileSync(new URL(`../data/${f}`, import.meta.url)));
 const nasa = leer('nasa.json');
 const juego = leer('juego.json');
-const [amanecer, noche, tormenta] = leer('misiones.json');
+const misiones = leer('misiones.json');
+const [amanecer, noche, tormenta] = misiones;
+const M = Object.fromEntries(misiones.map((m) => [m.id, m]));
 const refugioEn = (dias) => (d) => ({ ...S.decisionesPorDefecto(), refugio: dias.includes(d) });
 
 test('cada cifra NASA tiene valor, fuente y url', () => {
@@ -61,4 +63,43 @@ test('electrólisis: fabricar O₂ consume 1,125 kg de agua por kg', () => {
   const esperado = e0.agua - n * 0.82 * 1.125 - n * nasa.cifras.agua_persona_dia.valor;
   assert.ok(Math.abs(estado.agua - esperado) < 0.02);
   assert.equal(estado.o2, e0.o2);
+});
+
+test('misión 4 (hielo): sin extractor se acaba el agua; con extractor se gana', () => {
+  const sin = S.simular(M.hielo, M.hielo.sugerido, nasa, juego);
+  assert.equal(sin.resultado.exito, false);
+  const a = S.analizarFalla(sin.resultado.motivo, sin.historial, sin.estado, M.hielo, nasa);
+  assert.match(a.consejo, /extractor/);
+  const con = { ...M.hielo.sugerido, extractor: true };
+  assert.ok(S.masa(con, juego, nasa) <= M.hielo.presupuesto_t);
+  assert.equal(S.simular(M.hielo, con, nasa, juego).resultado.exito, true);
+});
+
+test('misión 5 (todo sale mal): hace falta energía para la noche y refugio en la tormenta', () => {
+  assert.equal(S.simular(M.cadena, M.cadena.sugerido, nasa, juego).resultado.motivo, 'energia');
+  const cfg = { ...M.cadena.sugerido, reactor: true, panel: 2, bateria: 0, agua: 200 };
+  assert.ok(S.masa(cfg, juego, nasa) <= M.cadena.presupuesto_t);
+  assert.equal(S.simular(M.cadena, cfg, nasa, juego).resultado.motivo, 'radiacion');
+  assert.equal(S.simular(M.cadena, cfg, nasa, juego, refugioEn([17])).resultado.exito, true);
+});
+
+test('misión 6 (Marte): el polvo deja sin energía; reactor o paneles+baterías ganan; MOXIE ahorra agua', () => {
+  const sin = S.simular(M.marte, M.marte.sugerido, nasa, juego);
+  assert.equal(sin.resultado.motivo, 'energia');
+  assert.match(S.analizarFalla('energia', sin.historial, sin.estado, M.marte, nasa).titulo, /polvo/);
+  for (const cfg of [{ ...M.marte.sugerido, reactor: true, panel: 2, bateria: 0 }, { ...M.marte.sugerido, panel: 12, bateria: 10 }]) {
+    assert.ok(S.masa(cfg, juego, nasa) <= M.marte.presupuesto_t);
+    assert.equal(S.simular(M.marte, cfg, nasa, juego).resultado.exito, true);
+  }
+  const pocaAgua = { ...M.marte.sugerido, panel: 12, bateria: 9, agua: 90 };
+  assert.equal(S.simular(M.marte, pocaAgua, nasa, juego).resultado.exito, false);
+  assert.equal(S.simular(M.marte, { ...pocaAgua, moxie: true }, nasa, juego).resultado.exito, true);
+});
+
+test('todas las misiones: diseño sugerido dentro del presupuesto y datos NASA existentes', () => {
+  for (const m of misiones) {
+    assert.ok(S.masa(m.sugerido, juego, nasa) <= m.presupuesto_t, m.id);
+    for (const ev of m.eventos) if (ev.dato) assert.ok(nasa.cifras[ev.dato], `${m.id}: ${ev.dato}`);
+    if (m.dosis_dato) assert.ok(nasa.cifras[m.dosis_dato], m.id);
+  }
 });

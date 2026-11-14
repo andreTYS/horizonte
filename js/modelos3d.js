@@ -224,4 +224,46 @@ export function astronauta() {
   return g;
 }
 
-export const FABRICAS = { habitat, panel, bateria, reactor, reciclador, invernadero, lander, astronauta };
+// ── Extractor de hielo (perfora y calienta el regolito para sacar agua) ──
+export function extractor() {
+  const g = new THREE.Group();
+  g.name = 'extractor';
+  const base = caja(2.6, 0.4, 2.6, M.grisOscuro); base.position.y = 0.2;
+  const tolva = cil(1.0, 0.5, 1.2, M.gris, 24); tolva.position.set(-0.5, 1.0, 0.5);
+  const horno = cil(0.55, 0.55, 1.5, M.blanco, 24); horno.position.set(0.6, 1.15, -0.5);
+  const brillo = malla(new THREE.TorusGeometry(0.57, 0.06, 8, 24), emisivo(0xff7a2a, 3), { sombra: false });
+  brillo.rotation.x = Math.PI / 2; brillo.position.set(0.6, 1.4, -0.5);
+  g.add(base, tolva, horno, brillo);
+  // Torre de perforación
+  for (const [x, z] of [[0.9, 0.9], [-0.9, 0.9], [0.9, -0.9], [-0.9, -0.9]]) {
+    const pata = cil(0.06, 0.06, 4.2, M.amarillo, 8);
+    pata.position.set(x * 0.55, 2.4, z * 0.55);
+    pata.rotation.set(z * 0.12, 0, -x * 0.12);
+    g.add(pata);
+  }
+  for (const y of [1.4, 2.6, 3.8]) { const anillo = caja(1.1 - y * 0.08, 0.06, 1.1 - y * 0.08, M.amarillo); anillo.position.y = y; g.add(anillo); }
+  const broca = cil(0.12, 0.02, 1.2, M.metal, 12); broca.position.y = 0.2;
+  const eje = cil(0.08, 0.08, 3.8, M.metal, 12); eje.position.y = 2.6;
+  const motor = caja(0.5, 0.4, 0.5, M.grisOscuro); motor.position.y = 4.5;
+  g.add(broca, eje, motor);
+  const tubo = cil(0.08, 0.08, 1.4, M.agua, 12); tubo.rotation.z = Math.PI / 2; tubo.position.set(0, 1.9, -0.5);
+  g.add(tubo);
+  return g;
+}
+
+// ── Planta MOXIE ampliada (oxígeno a partir del CO₂ de Marte) ──
+export function moxie() {
+  const g = new THREE.Group();
+  g.name = 'moxie';
+  const cuerpo = caja(1.8, 1.2, 1.3, M.blanco); cuerpo.position.y = 0.6;
+  const franja = caja(1.82, 0.12, 1.32, M.oro); franja.position.y = 0.95;
+  const toma = cil(0.38, 0.38, 0.25, M.grisOscuro, 24); toma.rotation.z = Math.PI / 2; toma.position.set(-1.0, 0.7, 0);
+  const rejilla = malla(new THREE.TorusGeometry(0.3, 0.04, 6, 20), M.metal); rejilla.rotation.y = Math.PI / 2; rejilla.position.set(-1.13, 0.7, 0);
+  const tanque = malla(new THREE.SphereGeometry(0.45, 24, 16), M.blanco); tanque.position.set(0.55, 1.55, 0);
+  const anillo = malla(new THREE.TorusGeometry(0.46, 0.04, 8, 24), M.naranja); anillo.rotation.x = Math.PI / 2; anillo.position.set(0.55, 1.55, 0);
+  const luz = caja(0.6, 0.1, 0.04, emisivo(0x9be7ff, 2.5)); luz.position.set(0.3, 0.45, 0.66);
+  g.add(cuerpo, franja, toma, rejilla, tanque, anillo, luz);
+  return g;
+}
+
+export const FABRICAS = { habitat, panel, bateria, reactor, reciclador, invernadero, lander, astronauta, extractor, moxie };

@@ -1,19 +1,78 @@
 {
   "_nota": "Valores de equilibrio del juego (NO son cifras NASA). Se separan de nasa.json para ser honestos sobre qué es dato real y qué es ajuste de juego.",
   "modulos": {
-    "panel": { "nombre": "Panel solar", "masa_t": 0.4, "kwh_dia_luz": 120, "max": 20 },
-    "bateria": { "nombre": "Batería", "masa_t": 0.5, "capacidad_kwh": 400, "max": 20 },
-    "reactor": { "nombre": "Reactor de fisión", "max": 1 },
-    "reciclador": { "nombre": "Reciclador de agua", "masa_t": 1.0, "kwh_dia": 40 },
-    "invernadero": { "nombre": "Invernadero", "masa_t": 2.0, "kwh_dia": 150, "agua_kg_dia": 4, "fraccion_comida": 0.4, "ciencia_extra": 1 },
-    "blindaje": { "nombre": "Blindaje de regolito", "niveles": [
-      { "masa_t": 0, "reduccion": 0 },
-      { "masa_t": 1.5, "reduccion": 0.35 },
-      { "masa_t": 3.0, "reduccion": 0.6 }
-    ] }
+    "panel": {
+      "nombre": "Panel solar",
+      "masa_t": 0.4,
+      "kwh_dia_luz": 120,
+      "max": 20
+    },
+    "bateria": {
+      "nombre": "Batería",
+      "masa_t": 0.5,
+      "capacidad_kwh": 400,
+      "max": 20
+    },
+    "reactor": {
+      "nombre": "Reactor de fisión",
+      "max": 1
+    },
+    "reciclador": {
+      "nombre": "Reciclador de agua",
+      "masa_t": 1.0,
+      "kwh_dia": 40
+    },
+    "invernadero": {
+      "nombre": "Invernadero",
+      "masa_t": 2.0,
+      "kwh_dia": 150,
+      "agua_kg_dia": 4,
+      "fraccion_comida": 0.4,
+      "ciencia_extra": 1
+    },
+    "blindaje": {
+      "nombre": "Blindaje de regolito",
+      "niveles": [
+        {
+          "masa_t": 0,
+          "reduccion": 0
+        },
+        {
+          "masa_t": 1.5,
+          "reduccion": 0.35
+        },
+        {
+          "masa_t": 3.0,
+          "reduccion": 0.6
+        }
+      ]
+    },
+    "extractor": {
+      "nombre": "Extractor de hielo",
+      "masa_t": 2.5,
+      "kwh_dia": 120,
+      "agua_kg_dia": 12
+    },
+    "moxie": {
+      "nombre": "Planta MOXIE ampliada",
+      "masa_t": 1.0,
+      "kwh_dia": 60,
+      "o2_kg_dia": 2.0
+    }
   },
-  "habitat": { "masa_t": 2.0, "kwh_dia_base": 100, "kwh_dia_persona": 15, "kwh_por_kg_o2": 10 },
-  "refugio": { "reduccion_tormenta": 0.9 },
-  "racion": { "reducida": 0.8, "salud_dia": -8, "salud_recupera_dia": 4 },
+  "habitat": {
+    "masa_t": 2.0,
+    "kwh_dia_base": 100,
+    "kwh_dia_persona": 15,
+    "kwh_por_kg_o2": 10
+  },
+  "refugio": {
+    "reduccion_tormenta": 0.9
+  },
+  "racion": {
+    "reducida": 0.8,
+    "salud_dia": -8,
+    "salud_recupera_dia": 4
+  },
   "ciencia_dia": 1
 }

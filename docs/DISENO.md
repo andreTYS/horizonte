@@ -118,9 +118,11 @@ Al fallar, `analizarFalla()` recorre el historial y construye una **cadena causa
 | 1 | Primer amanecer | Polo sur (luz permanente) | 2 · 7 | 8 t | Energía → O₂ → agua | El diseño sugerido gana (tutorial) |
 | 2 | La larga noche | Mar de la Tranquilidad | 4 · 30 | 13 t | Noche lunar de ~15 días | Reactor **o** muchas baterías, más agua para el electrolizador |
 | 3 | Tormenta solar | Cráter Shackleton | 4 · 20 | 11 t | Radiación: blindaje vs. refugio | Refugio en los días de tormenta **o** blindaje 2. Eventos con fechas reales de DONKI, mayo 2024 |
-| 4* | Marte: el polvo | Jezero | 4 · 30 | — | Tormentas de polvo, MOXIE, RAD | Por diseñar |
+| 4 | Hielo en la sombra *(avanzada)* | Borde de Cabeus | 4 · 40 | 12 t | ISRU: sacar agua del hielo lunar (LCROSS) | El **extractor de hielo** produce agua; sin él, la electrólisis agota el agua |
+| 5 | Todo sale mal *(avanzada)* | Mar de las Lluvias | 4 · 30 | 14 t | Integración: micrometeorito + noche + tormenta + avería | Reactor (o baterías) + agua de reserva + refugio el día de la tormenta |
+| 6 | Polvo en Marte *(avanzada)* | Cráter Jezero | 4 · 30 soles | 14 t | Marte recibe 43 % de luz; tormenta de polvo como la de 2018 (Opportunity); MOXIE | Reactor, o más paneles y baterías; con poca agua, **MOXIE** (O₂ del CO₂) |
 
-\* Después de la hackatón.
+Las misiones avanzadas no tienen pistas de Nebula. Módulos nuevos: **extractor de hielo** (2,5 t, +12 kg agua/día, 120 kWh/día) y **planta MOXIE ampliada** (1 t, 2 kg O₂/día sin agua, 60 kWh/día); ambos valores son de equilibrio del juego, inspirados en LCROSS y MOXIE.
 
 **Nebula** da pistas en las misiones 1–2. En la misión final no da pistas: el estudiante decide solo, y eso sirve como evaluación.
 
@@ -245,4 +247,5 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P2 | Modelos finales en Blender (`assets/modelos`) | ⏳ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
 | P2 | Servidor VPS: Docker + Traefik, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
-| P3 | Misión 4: Marte | ⏳ |
+| P1 | Misiones avanzadas 4–6 (hielo, cadena de fallas, Marte) | ✅ |
+| P1 | Plataforma estilo videojuego, rocas, íconos Lucide, bitácora flotante | ✅ |
