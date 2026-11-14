@@ -1,1 +1,5 @@
-{}
+{
+  "habitat": "habitat.glb",
+  "reactor": "reactor.glb",
+  "panel": "panel.glb"
+}

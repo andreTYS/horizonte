@@ -1,5 +1,14 @@
 # Modelos de Blender para HORIZONTE
 
+**Activos ahora** (hechos en Blender con `tools/blender/modelos.py`): `habitat.glb`, `reactor.glb`, `panel.glb`.
+Para regenerarlos o cambiarlos desde el código (también funciona dentro del contenedor de Blender del VPS):
+
+```bash
+blender -b --python tools/blender/modelos.py -- --glb assets/modelos --previas /tmp/previas
+```
+
+Opciones: `--solo habitat,reactor` para hacer solo algunos; `--previas` renderiza imágenes PNG con Cycles para revisarlos.
+
 El juego dibuja cada módulo con modelos hechos por código (`js/modelos3d.js`).
 Para reemplazar uno por un modelo hecho en Blender:
 

@@ -55,6 +55,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `js/mundo3d.js` | Mapa 3D: terreno lunar, cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas |
 | `js/modelos3d.js` | Modelos 3D de cada módulo (exportables a `.glb` para Blender) |
 | `js/escena.js` | Escena isométrica SVG de respaldo (equipos sin WebGL) |
+| `tools/blender/modelos.py` | Script de Blender: modela hábitat, reactor y panel, exporta `.glb` y renderiza previas |
 | `tools/visor.html` | Visor 3D: prueba estados y exporta modelos a `.glb` |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
 | `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
