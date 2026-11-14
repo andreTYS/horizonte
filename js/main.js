@@ -58,11 +58,32 @@ async function iniciarMundo() {
     if (!soportaWebGL()) throw new Error('sin WebGL');
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
   } catch (err) {
-    console.warn('Modo 2D:', err.message);
+    console.warn('Modo 2D:', err);
+    G.motivo2D = err.message || String(err);
     document.getElementById('mundo').hidden = true;
     document.body.classList.add('modo-2d');
   }
 }
+
+// Si el 3D no arranca (o la tarjeta gráfica lo pierde), se explica por qué y se ofrece reintentar.
+function avisoModo2D() {
+  if (!document.body.classList.contains('modo-2d') || document.getElementById('aviso-2d')) return;
+  const sinWebGL = /WebGL/i.test(G.motivo2D || '');
+  const a = document.createElement('div');
+  a.id = 'aviso-2d';
+  a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
+    <button class="secundario" id="reintentar3d">${t('Reintentar 3D')}</button><button class="fantasma" id="cerrar2d" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
+  document.body.appendChild(a);
+  a.querySelector('#reintentar3d').addEventListener('click', () => location.reload());
+  a.querySelector('#cerrar2d').addEventListener('click', () => a.remove());
+}
+window.addEventListener('mundo-perdido', () => {
+  G.motivo2D = t('la tarjeta gráfica se reinició');
+  document.body.classList.add('modo-2d');
+  document.getElementById('mundo').hidden = true;
+  G.mundo = null;
+  avisoModo2D();
+});
 
 async function cargar() {
   const [nasa, juego, misiones, evaluacion] = await Promise.all([
@@ -74,6 +95,7 @@ async function cargar() {
   leerEnlaceDocente();
   api.detectar().then(vigilarPausa); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
   landing();
+  avisoModo2D();
 }
 
 // ───────────────────────── Landing (primera pantalla) ─────────────────────────

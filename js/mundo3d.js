@@ -135,8 +135,10 @@ export class Mundo {
 
     this.escena = new THREE.Scene();
     this.escena.background = new THREE.Color(0x02030a);
-    this.escena.environment = this.pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.escena.environmentIntensity = 0.14;
+    try {
+      this.escena.environment = this.pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      this.escena.environmentIntensity = 0.14;
+    } catch (err) { console.warn('Sin reflejos de entorno:', err.message); } // algunas tarjetas gráficas no lo soportan
     this.camara = new THREE.PerspectiveCamera(38, 1, 0.5, 2000);
     this.camara.position.set(40, 30, 40);
 
@@ -170,7 +172,7 @@ export class Mundo {
     this.base = new THREE.Group();
     this.escena.add(this.base);
 
-    if (this.calidad === 'alta') {
+    if (this.calidad === 'alta') try {
       // Antialias (MSAA) dentro del compositor: sin esto los bordes se ven dentados con el bloom
       const destino = new THREE.WebGLRenderTarget(256, 256, { type: THREE.HalfFloatType, samples: 4 });
       this.composer = new EffectComposer(this.renderer, destino);
@@ -188,6 +190,10 @@ export class Mundo {
             c.rgb *= mix(1. - fuerza, 1., v); c.rgb += (azar(vUv * 913.) - .5) * .025; gl_FragColor = c; }`,
       });
       this.composer.addPass(this.cine);
+    } catch (err) {
+      console.warn('Sin posprocesado:', err.message); // se dibuja directo, sin bloom ni viñeta
+      this.composer = null;
+      this.cine = null;
     }
 
     this.#cargarModelosBlender();
@@ -196,6 +202,8 @@ export class Mundo {
     this.redimensionar();
     this.animar = this.animar.bind(this);
     this.renderer.setAnimationLoop(this.animar);
+    canvas.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); window.dispatchEvent(new CustomEvent('mundo-perdido')); });
+    canvas.addEventListener('webglcontextrestored', () => location.reload());
     document.addEventListener('visibilitychange', () => this.renderer.setAnimationLoop(document.hidden ? null : this.animar));
   }
 
@@ -274,7 +282,7 @@ export class Mundo {
     this.solVisible.position.set(this.dirSol.x, 0.28, this.dirSol.z).normalize().multiplyScalar(800);
     this.escena.add(this.solVisible);
     // Destello de lente del Sol
-    if (this.calidad !== 'baja') {
+    if (this.calidad !== 'baja') try {
       const luzDestello = new THREE.PointLight(0xffffff, 0, 1);
       luzDestello.position.copy(this.solVisible.position);
       const halo = texturaHalo(['rgba(255,255,255,1)', 'rgba(255,220,160,.3)']);
@@ -286,7 +294,7 @@ export class Mundo {
       }
       luzDestello.add(this.destello);
       this.escena.add(luzDestello);
-    }
+    } catch (err) { console.warn('Sin destello de lente:', err.message); this.destello = null; }
     // Un satélite cruza el cielo con su luz parpadeante
     this.satelite = crearSatelite();
     this.escena.add(this.satelite);
