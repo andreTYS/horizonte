@@ -13,7 +13,7 @@ export const normalizar = (html) => html.replace(/<br\s*\/?>/gi, ' ').replace(/<
 const PISTAS = [
   'Viene una tormenta de polvo: los paneles casi no producirán. Ahorra energía: apaga el invernadero.',
   '¡Una llamarada! Las partículas llegan mañana. Activa el <strong>refugio</strong> antes de avanzar.',
-  'Cada <strong>Avanzar</strong> pasa un día. Si una barra llega a cero, la base falla. Toca un día pasado en la línea de tiempo para <strong>rebobinar</strong>.',
+  'Cada <strong>Avanzar</strong> pasa un día. Si una barra llega a cero, la base falla. En el <strong>Cronoscopio</strong> toca un día pasado para <strong>rebobinar</strong>.',
   'Se puso el Sol: los paneles ya no producen. Solo cuentan las baterías y el reactor.',
   '¡Aprendiste cómo se conectan los sistemas de una base! Eso es lo que hacen los ingenieros de la NASA.',
   'Cada falla que entiendes te acerca a ser comandante. ¡Vuelve a jugar!',

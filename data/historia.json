@@ -1,0 +1,109 @@
+{
+ "capitulos": {
+  "exp": "La expedición",
+  "m1": "Misión 1 · La noche larga",
+  "m2": "Misión 2 · Aire y agua",
+  "m3": "Misión 3 · Primera cosecha",
+  "m4": "Misión 4 · Tormenta solar",
+  "diario": "Diario de misión"
+ },
+ "nota": "Storyboard v2 del equipo Stellar Experience. Ilustraciones generadas con IA para validación.",
+ "cuadros": [
+  {
+   "capitulo": "exp",
+   "titulo": "Inicio",
+   "narracion": "El astronauta peruano pilota la nave hacia la Luna. Desde su consola ves el destino por primera vez.",
+   "dialogo": "«Entrena para dirigir una base en la Luna y Marte»."
+  },
+  {
+   "capitulo": "exp",
+   "titulo": "Carta de vuelo",
+   "narracion": "El astronauta revisa la ruta con la guía de misión. Cuatro paradas conectan la Luna con Marte.",
+   "dialogo": "«Primera parada: la Luna»."
+  },
+  {
+   "capitulo": "m1",
+   "titulo": "Preparación",
+   "narracion": "El astronauta inspecciona la batería y el sistema de aire. La guía le señala el equipo auxiliar.",
+   "dialogo": "«Cuando falte luz, la batería mantendrá el aire en marcha»."
+  },
+  {
+   "capitulo": "m1",
+   "titulo": "Decisión y predicción",
+   "narracion": "El jugador ajusta el reparto y ve cuánto queda de reserva antes de simular.",
+   "dialogo": "«¿La batería llegará al amanecer con este plan?»."
+  },
+  {
+   "capitulo": "m1",
+   "titulo": "Diagnóstico",
+   "narracion": "El astronauta revisa su primer plan en el Cronoscopio. La batería está vacía y el ventilador se detuvo en el turno 3.",
+   "dialogo": "«La batería se agotó antes del amanecer». Contexto: «Tu plan dejó encendido el equipo auxiliar». Acción: «Rebobinar y ajustar»."
+  },
+  {
+   "capitulo": "m1",
+   "titulo": "Comparación e informe",
+   "narracion": "Mismo encuadre con el plan ajustado. El aire llega al amanecer. Se confirma la reserva que pasa a M2.",
+   "dialogo": "«Guardaste energía para mantener el aire». «¿Qué dejaste de usar para lograrlo?»."
+  },
+  {
+   "capitulo": "m2",
+   "titulo": "Preparación",
+   "narracion": "El astronauta revisa el depósito y el reciclador con la reserva que guardó en la primera misión.",
+   "dialogo": "«El aire necesita energía. El agua también cuesta recuperarla»."
+  },
+  {
+   "capitulo": "m2",
+   "titulo": "Decisión y diagnóstico",
+   "narracion": "Reparte energía al aire y elige cuándo reciclar. El Cronoscopio muestra el agua bajando si se aplaza o la batería bajando si se activa.",
+   "dialogo": "«Si esperas para reciclar, usarás más agua del depósito»."
+  },
+  {
+   "capitulo": "m2",
+   "titulo": "Informe",
+   "narracion": "El astronauta anota qué recurso quedó más justo y qué haría distinto.",
+   "dialogo": "«¿Qué protegiste primero? ¿Qué quedó con menos reserva?»."
+  },
+  {
+   "capitulo": "m3",
+   "titulo": "Viaje a Marte",
+   "narracion": "El gato piloto anuncia la llegada. La consola muestra el inventario de Marte y recupera la nota lunar como recordatorio.",
+   "dialogo": "«Nueva base. Antes de decidir, revisa tus reservas»."
+  },
+  {
+   "capitulo": "m3",
+   "titulo": "Decisión y diagnóstico",
+   "narracion": "Una tormenta de polvo reduce la generación. El jugador reparte energía. Se iluminan las lámparas y cambia la cosecha prevista.",
+   "dialogo": "«Más energía para el cultivo deja menos para después»."
+  },
+  {
+   "capitulo": "m3",
+   "titulo": "Informe",
+   "narracion": "El astronauta dirige la recolección y prepara las reservas para la próxima misión.",
+   "dialogo": "«Esta cosecha queda para la próxima misión»."
+  },
+  {
+   "capitulo": "m4",
+   "titulo": "Preparación y decisión",
+   "narracion": "El astronauta recibe una alerta solar por radio. Tiene que decidir qué zona blindar y si espera a la Tierra.",
+   "dialogo": "«La Tierra aún no responde. ¿Empiezas a preparar el refugio?»."
+  },
+  {
+   "capitulo": "m4",
+   "titulo": "Diagnóstico y ajuste",
+   "narracion": "El Cronoscopio compara la protección y el tiempo disponible. Esperar aporta confirmación y consume tiempo. El jugador puede rebobinar.",
+   "dialogo": "«Recibiste la respuesta. Ahora tienes menos tiempo para preparar el refugio»."
+  },
+  {
+   "capitulo": "m4",
+   "titulo": "Informe final",
+   "narracion": "El refugio reúne a la tripulación cuando se confirma un plan viable. El jugador explica qué protegió y qué costo aceptó.",
+   "dialogo": "«¿Qué protegiste y qué cambiarías si quedara menos tiempo?»."
+  },
+  {
+   "capitulo": "diario",
+   "titulo": "Diario de misión",
+   "narracion": "El astronauta cierra su bitácora con la llamita y una vicuña de Moquegua. Las dos mascotas acompañan la ficha sobre la fauna altoandina.",
+   "dialogo": "«Tu bitácora». Secciones «Qué decidiste» y «Qué aprendiste»."
+  }
+ ]
+}

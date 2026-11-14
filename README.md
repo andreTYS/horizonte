@@ -1,11 +1,15 @@
-# HORIZONTE · Ensaya el futuro de tu base
+# ASU STELLAR · Horizonte
+
+> Entrena para dirigir una base en la Luna y Marte.
 
 Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 **Build a Junior Astronaut Mission Trainer** del NASA Space Apps Challenge 2026.
 
 **▶ Jugar:** https://andretys.github.io/horizonte/ (en el celular: menú → *Agregar a pantalla de inicio*)
 
-> El estudiante dirige una base en la Luna, ve fallar su base, **entiende por qué** y **vuelve atrás en el tiempo** para corregirla.
+> Eres el astronauta peruano al mando de la expedición: diseñas la base, **predices** qué fallará, adelantas el tiempo con el **Cronoscopio**, ves **la causa** de cada falla y **rebobinas** para corregirla.
+
+**ASU STELLAR** es la marca del producto (manual de marca 2026-01 y storyboard v2 del Product Owner, [asu-stellar.vercel.app](https://asu-stellar.vercel.app/)). **Horizonte** es este juego: el motor de simulación, el mapa 3D y las misiones.
 
 ## Cómo jugar
 
@@ -14,14 +18,20 @@ Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 3. Si la base falla, HORIZONTE muestra **la cadena causa → efecto** y el **dato NASA** que la explica.
 4. **Rebobina** a cualquier día pasado (toca la línea de tiempo) o rediseña la base. Menos rebobinados = más estrellas.
 
-| Misión | Qué enseña |
-|---|---|
-| 1 · Primer amanecer | Equilibrio básico: energía → oxígeno → agua (tutorial guiado por Nebula) |
-| 2 · La larga noche | La noche lunar dura ~15 días: baterías vs. reactor de fisión |
-| 3 · Tormenta solar | Basada en la tormenta real de mayo de 2024: blindaje vs. refugio (sin pistas; abre la prueba final) |
-| 4 · Hielo en la sombra | Sacar agua del hielo lunar (LCROSS) con el extractor |
-| 5 · Todo sale mal | Micrometeorito, noche, tormenta y avería seguidos |
-| 6 · Polvo en Marte | Menos luz solar, tormenta de polvo (como la que apagó a Opportunity) y MOXIE |
+**Campaña · de la Luna a Marte** (lo que sobra de cada misión pasa como reserva a la siguiente):
+
+| Misión | Qué enseña | Caso real |
+|---|---|---|
+| 1 · La noche larga (Luna) | Energía: la noche lunar dura ~15 días; baterías vs. reactor de fisión | Ciclo lunar, Fission Surface Power |
+| 2 · Aire y agua (Luna) | Soporte vital: el oxígeno se fabrica con agua y energía; reciclar agua | La ISS recupera ~98 % del agua |
+| 3 · Primera cosecha (Marte) | Alimentos y energía: menos luz, invernadero, tormenta de polvo, MOXIE | Tormenta de 2018 que apagó a Opportunity |
+| 4 · Tormenta solar (Marte) | Radiación y retraso de comunicaciones: la alerta llega tarde, tú decides el refugio (sin pistas; abre la prueba final) | Evento del 20 de mayo de 2024 medido por Curiosity |
+
+**Misiones extra** (sin pistas): Tormenta solar en la Luna (mayo 2024, DONKI), Hielo en la sombra (LCROSS), Todo sale mal.
+
+**Ciclo de cada misión** (de ASU STELLAR): explora y decide → **predice** → adelanta con el Cronoscopio → mira la causa → rebobina → **cuéntalo** en la bitácora.
+
+**Personajes:** Nebula es el gato piloto (voz y pistas); la astronauta peruana guía con preguntas (paso *Predice*); la llama presenta las fichas de ciencia y los logros.
 
 ## Datos NASA
 
@@ -89,6 +99,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 - Voz de Nebula en español latino: [Piper TTS](https://github.com/rhasspy/piper) (MIT) con la voz `es_MX-claude-high` (Apache 2.0, fonética latinoamericana es-419).
 - Voz de Nebula en inglés americano: [Kokoro-82M](https://github.com/hexgrad/kokoro) (Apache 2.0), voz `af_heart`, ejecutada con [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0).
 - Íconos: [Lucide](https://lucide.dev) (ISC).
+- Logo, personajes e ilustraciones del storyboard: manual de marca ASU STELLAR 2026-01 y storyboard v2 del equipo (ilustraciones generadas con IA). Tipografías Unbounded, Baloo 2, Noto Sans y Space Mono (SIL OFL).
 
 Para regenerar la voz tras cambiar textos de Nebula:
 

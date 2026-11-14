@@ -1,4 +1,4 @@
-// Interfaz de HORIZONTE: HUD de juego sobre el mapa 3D a pantalla completa.
+// Interfaz de ASU STELLAR · Horizonte: HUD de juego sobre el mapa 3D a pantalla completa.
 // La lógica del juego vive en sim.js; aquí solo se dibujan pantallas y se pasan decisiones.
 import * as S from './sim.js';
 import { escena as escenaSVG } from './escena.js';
@@ -23,6 +23,9 @@ const G = {
   progreso: leer('horizonte.progreso', {}),
   jugador: leer('horizonte.jugador', { nombre: '', aula: '' }),
   eval: leer('horizonte.evaluacion', {}),
+  reservas: leer('horizonte.reservas', {}), // lo que sobra de una misión de la campaña pasa a la siguiente
+  notas: leer('horizonte.notas', {}),       // bitácora del estudiante («Cuéntalo»)
+  prediccion: null,
   mundo: null,
 };
 
@@ -71,7 +74,7 @@ async function cargar() {
 }
 
 const leerJson = (f) => fetch(`data/${f}`).then((r) => r.json());
-const sinNumero = (titulo) => titulo.replace(/^(Misión|Mission) \d · /, '');
+const sinNumero = (titulo) => titulo.replace(/^(Misión \d|Mission \d|Extra) · /, '');
 
 /** Aplica el idioma: en inglés superpone las traducciones de data/en/ sobre los datos en español. */
 async function cargarIdioma() {
@@ -134,14 +137,19 @@ function enlazarSonido() {
 }
 
 // ───────────────────────── Piezas de interfaz ─────────────────────────
+// Personajes del manual de marca ASU STELLAR: Nebula es el gato piloto; la astronauta peruana guía con preguntas;
+// la llama presenta las fichas de ciencia y los logros.
+const CARA_NEBULA = '<img src="assets/marca/nebula-cara.webp" alt="" width="96" height="96">';
+const personaje = (archivo, clase = '') => `<img class="personaje ${clase}" src="assets/marca/${archivo}.webp" alt="" loading="lazy">`;
+
 function nebula(texto, animo = 'normal', extra = '') {
-  return `<div class="nebula ${extra}"><div class="cara ${animo}" aria-hidden="true">${I('nebula')}</div><div class="globo"><span class="quien">Nebula</span>${texto}</div></div>`;
+  return `<div class="nebula ${extra}"><div class="cara ${animo}" aria-hidden="true">${CARA_NEBULA}</div><div class="globo"><span class="quien">Nebula · ${t('gato piloto')}</span>${texto}</div></div>`;
 }
 
 function cifraNasa(clave) {
   const c = G.nasa.cifras[clave];
   if (!c) return '';
-  return `<div class="cifra-nasa"><div class="etiqueta">${t('DATO NASA')}</div><p>${esc(c.texto)}</p>
+  return `<div class="cifra-nasa">${personaje('llama-astronauta', 'llama-ficha')}<div class="etiqueta">${t('FICHA DE CIENCIA · DATOS DE NASA')}</div><p>${esc(c.texto)}</p>
     <a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${t('Fuente: {x}', { x: esc(c.fuente) })}</a></div>`;
 }
 
@@ -162,11 +170,13 @@ function inicio() {
   callar();
   olvidarUltimo();
   pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  let nCampana = 0, nExtra = 0;
   const boton = (m, i) => {
     const p = G.progreso[m.id] || 0;
+    const num = m.avanzada ? `+${++nExtra}` : `0${++nCampana}`;
     return `<button class="mision-btn ${m.avanzada ? 'avanzada' : ''} ${m.planeta === 'marte' ? 'marte' : ''}" data-mision="${i}">
-      <span class="num">0${i + 1}</span>
-      <span class="info"><b>${esc(sinNumero(m.titulo))}</b><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small></span>
+      <span class="num">${num}</span>
+      <span class="info"><b>${esc(sinNumero(m.titulo))}</b><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small>${G.reservas[m.id] ? `<small class="con-reserva">${I('caja')} ${t('Con reserva de la misión anterior')}</small>` : ''}</span>
       <span class="estrellas-mini" aria-label="${t('{n} de 3 estrellas', { n: p })}">${'★'.repeat(p)}<span>${'★'.repeat(3 - p)}</span></span></button>`;
   };
   const campana = G.misiones.map((m, i) => (m.avanzada ? '' : boton(m, i))).join('');
@@ -178,22 +188,22 @@ function inicio() {
       ${botonVoz()}
     </div>
     <header class="marca">
-      <p class="lema">${t('Ensaya el futuro de tu base')}</p>
-      <h1>HORIZONTE</h1>
-      <p class="sub">${t('Diseña una base en la Luna, adelanta el tiempo y descubre si tu tripulación llega al día final. Si falla, <strong>rebobina</strong> y corrige.')}</p>
+      <h1 class="logo"><img src="assets/marca/logo-color.webp" alt="ASU STELLAR" width="1200" height="800"><span class="sub-logo">Horizonte</span></h1>
+      <p class="lema">${t('Entrena para dirigir una base en la Luna y Marte')}</p>
+      <p class="sub">${t('Eres el astronauta peruano al mando de la expedición. Diseña tu base, adelanta el tiempo con el <strong>Cronoscopio</strong> y, si algo falla, mira la causa y <strong>rebobina</strong>.')}</p>
     </header>
     <aside class="menu-principal panel-vidrio">
-      <h2 class="titulo-seccion">${t('Misiones')}</h2>
+      <h2 class="titulo-seccion">${t('Expedición · de la Luna a Marte')}</h2>
       <div class="lista-misiones">${campana}</div>
-      ${avanzadas ? `<h2 class="titulo-seccion">${t('Misiones avanzadas')} <span class="pastilla">${t('sin pistas')}</span></h2><div class="lista-misiones">${avanzadas}</div>` : ''}
+      ${avanzadas ? `<h2 class="titulo-seccion">${t('Misiones extra')} <span class="pastilla">${t('sin pistas')}</span></h2><div class="lista-misiones">${avanzadas}</div>` : ''}
       ${tarjetaAprendizaje()}
       <details class="jugador"><summary>${I('persona')} ${G.jugador.nombre ? esc(G.jugador.nombre) : t('Tu nombre y aula (opcional)')}</summary>
         <label>${t('Nombre')} <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
         <label>${t('Código de aula')} <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="${t('p. ej. 3B-2026')}"></label>
         <p class="chico suave">${t('Si tu docente te dio un código, escríbelo para que vea tu avance.')}</p>
       </details>
-      <div class="fila"><button id="fuentes" class="secundario">${I('datos')} ${t('Datos NASA')}</button></div>
-      <p class="chico suave pie">Stellar Experience · Moquegua, Perú · NASA Space Apps 2026</p>
+      <div class="fila"><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
+      <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
     </aside>
     <p class="pista-gesto">${I('mano')} ${t('Arrastra para girar la base · pellizca para acercar')}</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
@@ -205,8 +215,10 @@ function inicio() {
     document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
   }
   document.getElementById('fuentes').addEventListener('click', fuentes);
+  document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('idioma').addEventListener('click', async () => {
     setIdioma(getIdioma() === 'es' ? 'en' : 'es');
+    G.historia = null;
     await cargarIdioma();
     inicio();
   });
@@ -215,7 +227,9 @@ function inicio() {
 
 // ───────────────────────── Construcción ─────────────────────────
 function estimaciones() {
-  const { config: c, mision: m, juego: j, nasa } = G;
+  const { mision: m, juego: j, nasa } = G;
+  const r = G.reservas[m.id] || {};
+  const c = { ...G.config, o2: G.config.o2 + (r.o2 || 0), agua: G.config.agua + (r.agua || 0), comida: G.config.comida + (r.comida || 0) };
   const n = m.tripulacion;
   const v = (k) => nasa.cifras[k].valor;
   const o2Dia = n * v('o2_persona_dia');
@@ -273,9 +287,10 @@ function construir() {
       <div class="widget ${estado(e.diasAgua >= m.dias)}"><span>${I('agua')}</span><div><b>${dias(e.diasAgua)} ${t('días')}</b><small>${t('de agua')}</small></div></div>
       <div class="widget ${estado(e.diasComida >= m.dias)}"><span>${I('comida')}</span><div><b>${dias(e.diasComida)} ${t('días')}</b><small>${t('de comida')}</small></div></div>
       <div class="widget ${estado(e.dosis <= m.limite_dosis_msv)}"><span>${I('radiacion')}</span><div><b>${fmt(e.dosis, 1)} mSv</b><small>${t('límite {n}', { n: m.limite_dosis_msv })}</small></div></div>
+      ${G.reservas[m.id] ? `<div class="widget reserva"><span>${I('caja')}</span><div><b>+${fmt(G.reservas[m.id].o2, 1)} O₂ · +${fmt(G.reservas[m.id].agua)} ${t('agua')} · +${fmt(G.reservas[m.id].comida)} ${t('comida')}</b><small>${t('kg de reserva de la misión anterior (no pesan)')}</small></div></div>` : ''}
     </aside>
 
-    <button class="nebula-mini" id="ayuda" aria-label="${t('Ver la pista de Nebula')}">${I('nebula')}</button>
+    <button class="nebula-mini" id="ayuda" aria-label="${t('Ver la pista de Nebula')}">${CARA_NEBULA}</button>
     ${G.briefingVisto[m.id] ? '' : `<div class="briefing">${nebula(esc(m.nebula.briefing) + '<br><br>' + esc(m.nebula.construir), 'pensando')}<button class="primario" id="entendido">${t('¡Entendido!')}</button></div>`}
     ${excedido ? `<div class="toasts"><div class="toast peligro">${t('El cohete no puede despegar: quita masa.')}</div></div>` : ''}
 
@@ -316,8 +331,33 @@ function construir() {
 }
 
 // ───────────────────────── Misión ─────────────────────────
+// Paso «Predice» (ciclo de ASU STELLAR): antes de lanzar, el estudiante dice qué cree que fallará primero.
+const PREDICCIONES = [['exito', 'Llegamos al final', 'ok'], ['energia', 'Se acaba la energía', 'energia'], ['o2', 'Se acaba el oxígeno', 'o2'],
+  ['agua', 'Se acaba el agua', 'agua'], ['comida', 'Se acaba la comida', 'comida'], ['radiacion', 'Demasiada radiación', 'radiacion']];
+const OTROS_MOTIVOS = { salud: 'La tripulación se debilitó', ciencia: 'No se completó la ciencia' };
+const nombreMotivo = (k) => t(PREDICCIONES.find((p) => p[0] === k)?.[1] || OTROS_MOTIVOS[k] || k);
+
 function lanzar() {
-  G.estados = [S.crearEstado(G.mision, G.config, G.juego)];
+  const c = modal();
+  c.innerHTML = `
+    <div class="guia-pregunta">${personaje('astronauta-peruana', 'retrato')}
+      <div><p class="lema">${I('predecir')} ${t('Predice')}</p><h2>${t('¿Qué crees que pasará con este plan?')}</h2>
+      <p class="suave">${t('Elige antes de lanzar. Al final verás si acertaste.')}</p></div></div>
+    <div class="opciones">${PREDICCIONES.map(([k, txt, ic]) => `<button class="opcion" data-pred="${k}"><span class="letra">${I(ic)}</span>${t(txt)}</button>`).join('')}</div>
+    <div class="fila"><button class="fantasma" id="cambiarPlan">${I('volver')} ${t('Cambiar mi plan')}</button></div>`;
+  c.querySelectorAll('[data-pred]').forEach((b) => b.addEventListener('click', () => { G.prediccion = b.dataset.pred; empezarMision(); }));
+  c.querySelector('#cambiarPlan').addEventListener('click', construir);
+}
+
+function resultadoPrediccion(motivo) {
+  if (!G.prediccion) return '';
+  const real = motivo || 'exito';
+  const acierto = G.prediccion === real;
+  return `<div class="prediccion ${acierto ? 'bien' : 'mal'}">${I(acierto ? 'check' : 'predecir')}<span>${t('Tu predicción: {x}.', { x: `<b>${nombreMotivo(G.prediccion)}</b>` })} ${acierto ? t('¡Acertaste!') : t('Pasó: {x}.', { x: `<b>${nombreMotivo(real)}</b>` })}</span></div>`;
+}
+
+function empezarMision() {
+  G.estados = [S.crearEstado(G.mision, G.config, G.juego, G.reservas[G.mision.id] || {})];
   G.registros = [];
   G.decisiones = [];
   G.hoy = S.decisionesPorDefecto();
@@ -366,7 +406,7 @@ function pistaNebula(e, ultimo) {
   if (!guiada()) return '';
   if (ultimo?.eventos.some((x) => x.tipo === 'alerta_polvo')) return nebula(t('Viene una tormenta de polvo: los paneles casi no producirán. Ahorra energía: apaga el invernadero.'), 'alerta');
   if (ultimo?.eventos.some((x) => x.tipo === 'alerta_solar')) return nebula(t('¡Una llamarada! Las partículas llegan mañana. Activa el <strong>refugio</strong> antes de avanzar.'), 'alerta');
-  if (e.dia === 0) return nebula(t('Cada <strong>Avanzar</strong> pasa un día. Si una barra llega a cero, la base falla. Toca un día pasado en la línea de tiempo para <strong>rebobinar</strong>.'));
+  if (e.dia === 0) return nebula(t('Cada <strong>Avanzar</strong> pasa un día. Si una barra llega a cero, la base falla. En el <strong>Cronoscopio</strong> toca un día pasado para <strong>rebobinar</strong>.'));
   if (ultimo?.apagados.length) return nebula(t('Hoy se apagó <strong>{x}</strong>. ¿Qué puedes cambiar?', { x: esc(trLista(ultimo.apagados).join(', ')) }), 'alerta');
   if (ultimo && ultimo.luz && !S.hayLuz(G.mision, e.dia, G.nasa)) return nebula(t('Se puso el Sol: los paneles ya no producen. Solo cuentan las baterías y el reactor.'), 'pensando');
   return '';
@@ -404,7 +444,7 @@ function mision() {
   }).join('');
 
   const avisos = [];
-  if (G.avisoRebobinado !== null) avisos.push(`<div class="toast info">${I('rebobinar')} ${t('Volviste al día {n}. Cambia tus decisiones y avanza.', { n: G.avisoRebobinado + 1 })}</div>`);
+  if (G.avisoRebobinado !== null) avisos.push(`<div class="toast info">${I('cronoscopio')} ${t('El Cronoscopio te llevó al día {n}. Cambia tus decisiones y avanza.', { n: G.avisoRebobinado + 1 })}</div>`);
   if (ultimo) for (const ev of ultimo.eventos) avisos.push(`<div class="toast ${ev.tipo === 'tormenta_solar' ? 'peligro' : 'alerta'}"><b>${t('Día {n}', { n: ultimo.dia + 1 })}</b> · ${esc(ev.texto)}${ev.url ? ` <a href="${esc(ev.url)}" target="_blank" rel="noopener">DONKI ↗</a>` : ''}</div>`);
   if (ultimo?.apagados.length) avisos.push(`<div class="toast peligro"><b>${t('Día {n}', { n: ultimo.dia + 1 })}</b> · ${t('Se apagó: {x}', { x: esc(trLista(ultimo.apagados).join(', ')) })}</div>`);
 
@@ -445,7 +485,8 @@ function mision() {
     <aside class="cajon ${G.bitacoraAbierta ? 'abierto' : ''}" aria-label="${t('Bitácora')}"><div class="entre"><h3>${I('bitacora')} ${t('Bitácora')}</h3><button class="boton-icono chico-btn" id="cerrarBitacora" aria-label="${t('Cerrar bitácora')}">${I('cerrar')}</button></div>${bitacora ? `<ul class="bitacora">${bitacora}</ul>` : `<p class="suave chico">${t('Aún no pasa ningún día.')}</p>`}</aside>
 
     <footer class="hud-inferior">
-      <div class="linea-tiempo" aria-label="${t('Línea de tiempo: toca un día pasado para rebobinar')}">${linea}</div>
+      <div class="cronoscopio"><span class="cronoscopio-titulo">${I('cronoscopio')} ${t('Cronoscopio')}</span>
+      <div class="linea-tiempo" aria-label="${t('Cronoscopio: toca un día pasado para rebobinar')}">${linea}</div></div>
       <div class="acciones">
         <button class="boton-avanzar" id="dia1">${I('avanzar')} ${t('AVANZAR')} <small>${t('1 día')}</small></button>
         <button class="boton-rapido" id="dia5" aria-label="${t('Avanzar 5 días')}">${I('rapido')}<small>×5</small></button>
@@ -470,7 +511,7 @@ function final() {
   document.body.dataset.pantalla = 'resultado';
   const m = G.mision, e = actual();
   const res = S.resultado(e, m);
-  const siguiente = G.misiones[G.misiones.indexOf(m) + 1];
+  const siguiente = G.misiones.slice(G.misiones.indexOf(m) + 1).find((x) => Boolean(x.avanzada) === Boolean(m.avanzada));
   const ultimo = G.registros[G.registros.length - 1];
   pintar({
     config: e.config, luz: ultimo?.luz ?? true, carga: Math.max(0, e.energia) / Math.max(1, e.config.bateria * G.juego.modulos.bateria.capacidad_kwh),
@@ -480,7 +521,7 @@ function final() {
   const estrellas = res.exito ? (G.rebobinados === 0 ? 3 : G.rebobinados <= 2 ? 2 : 1) : 0;
   api.enviarPartida({
     mision: m.id, exito: res.exito, motivo: res.motivo || null, dias: e.dia, ciencia: e.ciencia,
-    rebobinados: G.rebobinados, estrellas, config: e.config, nombre: G.jugador.nombre, aula: G.jugador.aula,
+    rebobinados: G.rebobinados, estrellas, config: e.config, nombre: G.jugador.nombre, aula: G.jugador.aula, prediccion: G.prediccion,
   });
 
   const c = modal();
@@ -488,27 +529,47 @@ function final() {
   if (res.exito) {
     G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
     guardar('horizonte.progreso', G.progreso);
+    // Lo que sobró pasa como reserva a la siguiente misión de la campaña (la mitad, redondeada)
+    const destino = m.reserva_a && G.misiones.find((x) => x.id === m.reserva_a);
+    if (destino) {
+      G.reservas[destino.id] = { o2: Math.round(Math.max(0, e.o2) * 5) / 10, agua: Math.round(Math.max(0, e.agua) / 2), comida: Math.round(Math.max(0, e.comida) / 2) };
+      guardar('horizonte.reservas', G.reservas);
+    }
+    const reserva = destino && G.reservas[destino.id];
     c.innerHTML = `
-      <div class="centrado">
+      <div class="centrado celebracion">
+        ${personaje('llama-astronauta', 'llama-logro')}
         <p class="lema">${t('Misión cumplida')}</p>
         <h2>${esc(m.titulo)}</h2>
         <div class="estrellas-res" aria-label="${t('{n} de 3 estrellas', { n: estrellas })}">${'★'.repeat(estrellas)}<span>${'★'.repeat(3 - estrellas)}</span></div>
       </div>
+      ${resultadoPrediccion(null)}
       <div class="resumen-diseno">
         <div class="dato bien"><small>${t('Sobrevivieron')}</small><b>${t('{a} de {b}', { a: m.tripulacion, b: m.tripulacion })}</b></div>
         <div class="dato"><small>${t('Días')}</small><b>${m.dias}</b></div>
         <div class="dato"><small>${t('Ciencia')}</small><b>${e.ciencia} / ${m.objetivo_ciencia}</b></div>
         <div class="dato"><small>${t('Rebobinados')}</small><b>${G.rebobinados}</b></div>
       </div>
+      ${reserva ? `<div class="aviso-reserva">${I('caja')}<span>${t('Reserva para «{x}»:', { x: esc(sinNumero(destino.titulo)) })} <b>+${fmt(reserva.o2, 1)} kg O₂ · +${fmt(reserva.agua)} kg ${t('agua')} · +${fmt(reserva.comida)} kg ${t('comida')}</b></span></div>` : ''}
       ${nebula(esc(m.nebula.exito), 'feliz')}
+      <label class="cuentalo">${I('lapiz')} ${t('Tu bitácora: ¿qué cambiaste o qué protegiste para lograrlo?')}
+        <textarea id="nota" maxlength="200" rows="2" placeholder="${t('Una frase basta')}">${esc(G.notas[m.id] || '')}</textarea></label>
       <div class="fila">
         ${siguiente ? `<button class="primario" id="sig">${t('Siguiente: {x}', { x: esc(sinNumero(siguiente.titulo)) })} ▶</button>` : ''}
         ${m.evaluacion && !G.eval.caso ? `<button class="primario" id="evalfinal">${I('prueba')} ${t('Prueba final y caso Artemis-7')}</button>` : ''}
         <button class="secundario" id="inicio">${t('Menú')}</button>
       </div>`;
     document.getElementById('evalfinal')?.addEventListener('click', G.eval.final ? casoArtemis : pruebaFinal);
-    document.getElementById('sig')?.addEventListener('click', () => { G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; construir(); });
-    document.getElementById('inicio').addEventListener('click', inicio);
+    const guardarNota = () => {
+      const nota = document.getElementById('nota')?.value.trim();
+      if (!nota || nota === G.notas[m.id]) return;
+      G.notas[m.id] = nota;
+      guardar('horizonte.notas', G.notas);
+      api.enviarNota({ mision: m.id, nota, nombre: G.jugador.nombre, aula: G.jugador.aula });
+    };
+    document.getElementById('nota').addEventListener('change', guardarNota);
+    document.getElementById('sig')?.addEventListener('click', () => { guardarNota(); G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; construir(); });
+    document.getElementById('inicio').addEventListener('click', () => { guardarNota(); inicio(); });
     setTimeout(decirNebula, 1600); // después de la fanfarria
     return;
   }
@@ -518,12 +579,13 @@ function final() {
   c.innerHTML = `
     <div class="sello">${t('FALLA · DÍA {n}', { n: e.dia })}</div>
     <h2>${I('alerta', 'rojo')} ${esc(a.titulo)}</h2>
+    ${resultadoPrediccion(res.motivo)}
     <p class="suave">${t('Así ocurrió:')}</p>
     <ol class="cadena">${a.cadena.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
     ${a.datos.map(cifraNasa).join('')}
     ${nebula(esc(a.consejo), 'pensando')}
     <div class="fila">
-      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('rebobinar')} ${t('Rebobinar al día {n}', { n: diaRebobinar + 1 })}</button>
+      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('cronoscopio')} ${t('Rebobinar al día {n}', { n: diaRebobinar + 1 })}</button>
       <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} ${t('Rediseñar la base')}</button>
     </div>`;
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
@@ -599,6 +661,50 @@ function resumenAprendizaje() {
   decirNebula();
 }
 
+// ───────────────────────── Historia (storyboard v2 de ASU STELLAR) ─────────────────────────
+async function historia(i = 0) {
+  if (!G.historia) {
+    const base = await leerJson('historia.json');
+    if (getIdioma() === 'en') {
+      const en = await fetch('data/en/historia.json').then((r) => r.json()).catch(() => null);
+      if (en) { base.capitulos = en.capitulos; base.nota = en.nota; base.cuadros = base.cuadros.map((c, k) => ({ ...c, ...en.cuadros[k] })); }
+    }
+    G.historia = base;
+  }
+  const H = G.historia, n = H.cuadros.length;
+  i = Math.max(0, Math.min(n - 1, i));
+  const f = H.cuadros[i];
+  const c = modal({ ancho: true, cerrable: true });
+  c.innerHTML = `
+    <div class="historia cap-${f.capitulo}">
+      <figure><img src="assets/historia/cuadro-${String(i + 1).padStart(2, '0')}.webp" alt="${esc(f.narracion)}" width="627" height="627"></figure>
+      <div class="historia-texto">
+        <p class="lema">${esc(H.capitulos[f.capitulo])} · ${t('{a} de {b}', { a: i + 1, b: n })}</p>
+        <h2>${esc(f.titulo)}</h2>
+        <p>${esc(f.narracion)}</p>
+        <p class="dialogo">${esc(f.dialogo)}</p>
+        <div class="puntos-historia" aria-hidden="true">${H.cuadros.map((_, k) => `<span class="${k === i ? 'actual' : ''}"></span>`).join('')}</div>
+        <div class="fila">
+          <button class="secundario" id="hAnt" ${i === 0 ? 'disabled' : ''}>← ${t('Anterior')}</button>
+          <button class="primario" id="hSig">${i === n - 1 ? t('¡A jugar!') : t('Siguiente') + ' →'}</button>
+        </div>
+        <p class="chico suave">${esc(H.nota)}</p>
+      </div>
+    </div>`;
+  c.querySelector('#hAnt').addEventListener('click', () => historia(i - 1));
+  c.querySelector('#hSig').addEventListener('click', () => (i === n - 1 ? inicio() : historia(i + 1)));
+  const fig = c.querySelector('figure');
+  let x0 = null;
+  fig.addEventListener('pointerdown', (ev) => { x0 = ev.clientX; });
+  fig.addEventListener('pointerup', (ev) => { if (x0 !== null && Math.abs(ev.clientX - x0) > 40) historia(i + (ev.clientX < x0 ? 1 : -1)); x0 = null; });
+  document.onkeydown = (ev) => {
+    if (!c.isConnected) { document.onkeydown = null; return; }
+    if (ev.key === 'ArrowRight' && i < n - 1) historia(i + 1);
+    if (ev.key === 'ArrowLeft' && i > 0) historia(i - 1);
+    if (ev.key === 'Escape') inicio();
+  };
+}
+
 // ───────────────────────── Fuentes ─────────────────────────
 function fuentes() {
   document.body.dataset.pantalla = 'modal';
@@ -615,7 +721,8 @@ function fuentes() {
     <ul class="creditos chico">
       <li>${t('Efectos de sonido')}: “Oculus Audio Pack 01” — Oculus VR, LLC (Meta), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>
       <li>${t('Voz de Nebula')}: <a href="https://github.com/rhasspy/piper" target="_blank" rel="noopener">Piper TTS</a> (MIT). ${t('Voz en español')}: es_MX claude (Apache 2.0). ${t('Voz en inglés')}: <a href="https://github.com/hexgrad/kokoro" target="_blank" rel="noopener">Kokoro</a> af_heart (Apache 2.0).</li>
-      <li>${t('Íconos')}: <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> (ISC). ${t('Tipografías')}: Orbitron, Exo 2 (SIL OFL). ${t('Motor 3D')}: Three.js (MIT).</li>
+      <li>${t('Personajes, logo e ilustraciones')}: ${t('manual de marca ASU STELLAR 2026-01 y storyboard v2 del equipo Stellar Experience (ilustraciones generadas con IA).')}</li>
+      <li>${t('Íconos')}: <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> (ISC). ${t('Tipografías')}: Unbounded, Baloo 2, Noto Sans, Space Mono (SIL OFL). ${t('Motor 3D')}: Three.js (MIT).</li>
     </ul>`;
 }
 

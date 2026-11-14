@@ -41,9 +41,18 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS evaluaciones_aula ON evaluaciones(aula);
   CREATE TABLE IF NOT EXISTS cache_nasa (clave TEXT PRIMARY KEY, guardado INTEGER NOT NULL, cuerpo TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS notas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recibido TEXT NOT NULL DEFAULT (datetime('now')),
+    fecha TEXT, aula TEXT, nombre TEXT, mision TEXT NOT NULL, nota TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS notas_aula ON notas(aula);
 `);
-const insertar = db.prepare(`INSERT INTO partidas (fecha, aula, nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, config)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+// Columna nueva en bases creadas antes (predicción del paso «Predice»)
+if (!db.prepare('PRAGMA table_info(partidas)').all().some((c) => c.name === 'prediccion')) db.exec('ALTER TABLE partidas ADD COLUMN prediccion TEXT');
+const insertar = db.prepare(`INSERT INTO partidas (fecha, aula, nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, config, prediccion)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+const insertarNota = db.prepare('INSERT INTO notas (fecha, aula, nombre, mision, nota) VALUES (?, ?, ?, ?, ?)');
 
 const insertarEval = db.prepare(`INSERT INTO evaluaciones (fecha, aula, nombre, tipo, puntaje, maximo, nivel, respuestas)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
@@ -110,8 +119,19 @@ async function api(req, res, url) {
     insertar.run(
       texto(p.fecha, 30), texto(p.aula, 20)?.toUpperCase() || null, texto(p.nombre, 40), mision, p.exito ? 1 : 0,
       texto(p.motivo, 20), entero(p.dias, 0, 365), entero(p.ciencia, 0, 1000), entero(p.rebobinados, 0, 1000),
-      entero(p.estrellas, 0, 3), JSON.stringify(p.config ?? null).slice(0, 2000),
+      entero(p.estrellas, 0, 3), JSON.stringify(p.config ?? null).slice(0, 2000), texto(p.prediccion, 20),
     );
+    return json(res, 201, { ok: true });
+  }
+
+  if (url.pathname === '/api/notas' && req.method === 'POST') {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+    if (!permitido(ip)) return json(res, 429, { error: 'demasiadas solicitudes' });
+    let n;
+    try { n = JSON.parse(await leerCuerpo(req)); } catch { return json(res, 400, { error: 'JSON inválido' }); }
+    const mision = texto(n.mision, 30), nota = texto(n.nota, 200);
+    if (!mision || !nota) return json(res, 400, { error: 'faltan datos' });
+    insertarNota.run(texto(n.fecha, 30), texto(n.aula, 20)?.toUpperCase() || null, texto(n.nombre, 40), mision, nota);
     return json(res, 201, { ok: true });
   }
 

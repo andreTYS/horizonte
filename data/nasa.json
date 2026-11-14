@@ -145,6 +145,22 @@
       "fuente": "NASA NSSDC – Mars Fact Sheet",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
       "verificado": true
+    },
+    "tormenta_marte_mayo_2024": {
+      "valor": 8.1,
+      "unidad": "mGy",
+      "texto": "El 20 de mayo de 2024 una tormenta solar llegó a Marte. El instrumento RAD del rover Curiosity midió 8,1 miligrays: la dosis más alta desde que llegó a Marte, como unas 30 radiografías de tórax.",
+      "fuente": "NASA · Curiosity RAD (mayo 2024)",
+      "url": "https://www.nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasa-watches-mars-light-up-during-epic-solar-storm/",
+      "verificado": false
+    },
+    "retraso_tierra_marte": {
+      "valor": "3–22",
+      "unidad": "min",
+      "texto": "Una señal de radio tarda entre unos 3 y 22 minutos en viajar entre la Tierra y Marte, según dónde estén los dos planetas en su órbita.",
+      "fuente": "NASA · Comunicaciones con Marte",
+      "url": "https://science.nasa.gov/mars/",
+      "verificado": false
     }
   }
 }

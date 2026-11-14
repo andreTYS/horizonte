@@ -1,0 +1,93 @@
+{
+ "capitulos": {
+  "exp": "The expedition",
+  "m1": "Mission 1 · The long night",
+  "m2": "Mission 2 · Air and water",
+  "m3": "Mission 3 · First harvest",
+  "m4": "Mission 4 · Solar storm",
+  "diario": "Mission journal"
+ },
+ "nota": "Storyboard v2 by team Stellar Experience. AI-generated illustrations for validation.",
+ "cuadros": [
+  {
+   "titulo": "Start",
+   "narracion": "The Peruvian astronaut flies the ship toward the Moon. From the console you see the destination for the first time.",
+   "dialogo": "\"Train to run a base on the Moon and Mars.\""
+  },
+  {
+   "titulo": "Flight chart",
+   "narracion": "The astronaut checks the route with the mission guide. Four stops connect the Moon with Mars.",
+   "dialogo": "\"First stop: the Moon.\""
+  },
+  {
+   "titulo": "Preparation",
+   "narracion": "The astronaut inspects the battery and the air system. The guide points to the auxiliary equipment.",
+   "dialogo": "\"When there is no light, the battery will keep the air running.\""
+  },
+  {
+   "titulo": "Decision and prediction",
+   "narracion": "The player adjusts the plan and sees how much reserve is left before simulating.",
+   "dialogo": "\"Will the battery last until dawn with this plan?\""
+  },
+  {
+   "titulo": "Diagnosis",
+   "narracion": "The astronaut reviews the first plan in the Chronoscope. The battery is empty and the fan stopped on turn 3.",
+   "dialogo": "\"The battery ran out before dawn.\" Context: \"Your plan left the auxiliary equipment on.\" Action: \"Rewind and adjust.\""
+  },
+  {
+   "titulo": "Comparison and report",
+   "narracion": "Same scene with the adjusted plan. The air lasts until dawn. The reserve that carries over to M2 is confirmed.",
+   "dialogo": "\"You saved energy to keep the air running.\" \"What did you stop using to make it?\""
+  },
+  {
+   "titulo": "Preparation",
+   "narracion": "The astronaut checks the tank and the recycler with the reserve saved in the first mission.",
+   "dialogo": "\"Air needs energy. Recovering water costs energy too.\""
+  },
+  {
+   "titulo": "Decision and diagnosis",
+   "narracion": "Share energy with the air and choose when to recycle. The Chronoscope shows the water dropping if you wait, or the battery dropping if you turn it on.",
+   "dialogo": "\"If you wait to recycle, you will use more water from the tank.\""
+  },
+  {
+   "titulo": "Report",
+   "narracion": "The astronaut writes down which resource was tightest and what they would do differently.",
+   "dialogo": "\"What did you protect first? What ended with the smallest reserve?\""
+  },
+  {
+   "titulo": "Trip to Mars",
+   "narracion": "The pilot cat announces the arrival. The console shows the Mars inventory and brings back the lunar note as a reminder.",
+   "dialogo": "\"New base. Before you decide, check your reserves.\""
+  },
+  {
+   "titulo": "Decision and diagnosis",
+   "narracion": "A dust storm lowers power generation. The player shares out the energy. The lamps light up and the expected harvest changes.",
+   "dialogo": "\"More energy for the crops leaves less for later.\""
+  },
+  {
+   "titulo": "Report",
+   "narracion": "The astronaut leads the harvest and prepares the reserves for the next mission.",
+   "dialogo": "\"This harvest stays for the next mission.\""
+  },
+  {
+   "titulo": "Preparation and decision",
+   "narracion": "The astronaut gets a solar alert by radio. They must decide which area to shield and whether to wait for Earth.",
+   "dialogo": "\"Earth hasn't answered yet. Do you start preparing the shelter?\""
+  },
+  {
+   "titulo": "Diagnosis and adjustment",
+   "narracion": "The Chronoscope compares protection and the time available. Waiting brings confirmation but uses up time. The player can rewind.",
+   "dialogo": "\"You got the answer. Now you have less time to prepare the shelter.\""
+  },
+  {
+   "titulo": "Final report",
+   "narracion": "The shelter brings the crew together once a workable plan is confirmed. The player explains what they protected and what cost they accepted.",
+   "dialogo": "\"What did you protect, and what would you change if there were less time?\""
+  },
+  {
+   "titulo": "Mission journal",
+   "narracion": "The astronaut closes the journal with the little llama and a vicuña from Moquegua. Both mascots go with the card about high-Andean wildlife.",
+   "dialogo": "\"Your journal.\" Sections \"What you decided\" and \"What you learned\"."
+  }
+ ]
+}

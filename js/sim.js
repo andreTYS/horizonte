@@ -33,14 +33,15 @@ export function hayLuz(mision, dia, nasa) {
   return (mision.fase_inicial + dia) % ciclo < ciclo / 2;
 }
 
-export function crearEstado(mision, config, juego) {
+/** `reserva`: lo que sobró de la misión anterior de la campaña ({ o2, agua, comida } en kg). No pesa en el cohete. */
+export function crearEstado(mision, config, juego, reserva = {}) {
   return {
     dia: 0,
     config: clonar(config),
     energia: config.bateria * juego.modulos.bateria.capacidad_kwh,
-    o2: config.o2,
-    agua: config.agua,
-    comida: config.comida,
+    o2: config.o2 + (reserva.o2 || 0),
+    agua: config.agua + (reserva.agua || 0),
+    comida: config.comida + (reserva.comida || 0),
     dosis: 0,
     salud: 100,
     ciencia: 0,
@@ -258,14 +259,15 @@ export function analizarFalla(motivo, historial, estado, mision, nasa) {
       return {
         titulo: 'La tormenta solar atrapó a la tripulación fuera del refugio',
         cadena: [`Día ${tormenta.dia}: alerta de llamarada`, `Día ${tormenta.dia + 1}: llegaron las partículas y la tripulación no estaba en el refugio`, 'La dosis superó el límite de la misión'],
-        dia: tormenta.dia, datos: ['tormenta_mayo_2024', 'dosis_luna_msv_dia', 'limite_carrera_msv'],
+        dia: tormenta.dia,
+        datos: [tormenta.eventos.find((x) => x.tipo === 'tormenta_solar').dato || 'tormenta_mayo_2024', mision.dosis_dato || 'dosis_luna_msv_dia', 'limite_carrera_msv'],
         consejo: 'Cuando haya alerta solar, activa el refugio para el día siguiente.',
       };
     }
     return {
       titulo: 'Demasiada radiación acumulada',
-      cadena: ['La Luna no tiene atmósfera ni campo magnético', 'Cada día suma dosis', 'Se superó el límite de la misión'],
-      dia: estado.dia - 1, datos: ['dosis_luna_msv_dia', 'limite_carrera_msv'],
+      cadena: [mision.planeta === 'marte' ? 'Marte tiene una atmósfera muy delgada y no tiene campo magnético global' : 'La Luna no tiene atmósfera ni campo magnético', 'Cada día suma dosis', 'Se superó el límite de la misión'],
+      dia: estado.dia - 1, datos: [mision.dosis_dato || 'dosis_luna_msv_dia', 'limite_carrera_msv'],
       consejo: 'Añade blindaje de regolito.',
     };
   }

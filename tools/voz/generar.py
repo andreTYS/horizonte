@@ -67,11 +67,11 @@ def lexico_ampliado(original, textos_en):
         for w in re.findall(r"[A-Za-z']+", numeros_en(para_hablar(texto, 'en'))):
             w = w.lower()
             if w in lex or w in extra: continue
-            for fin, base_de in (("'s", lambda x: x[:-2]), ('es', lambda x: x[:-2]), ('s', lambda x: x[:-1]), ('ed', lambda x: x[:-2]), ('d', lambda x: x[:-1])):
+            for fin, base_de in (("'s", lambda x: x[:-2]), ('ies', lambda x: x[:-3] + 'y'), ('ied', lambda x: x[:-3] + 'y'), ('es', lambda x: x[:-2]), ('s', lambda x: x[:-1]), ('ed', lambda x: x[:-2]), ('d', lambda x: x[:-1])):
                 b = base_de(w) if w.endswith(fin) else None
                 if not b or b not in lex: continue
                 ult = lex[b].split()[-1]
-                if fin == 'ed' or fin == 'd':
+                if fin in ('ed', 'd', 'ied'):
                     extra[w] = lex[b] + (' ᵻ d' if ult in 'td' else ' t' if ult in SORDAS else ' d')
                 else:
                     extra[w] = lex[b] + (' ᵻ z' if ult in SIBILANTES else ' s' if ult in SORDAS else ' z')

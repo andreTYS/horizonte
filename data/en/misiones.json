@@ -1,23 +1,23 @@
 {
   "amanecer": {
-    "titulo": "Mission 1 · First sunrise",
+    "titulo": "Mission 2 · Air and water",
     "lugar": "Lunar south pole",
-    "resumen": "Two astronauts spend 7 days at the Moon's south pole with the Sun in the sky. Learn to balance energy, oxygen, water and food.",
+    "resumen": "At the Moon's south pole the Sun barely sets. Two astronauts, 7 days: air is made from water and energy, and recovering water also costs energy.",
     "nebula": {
-      "briefing": "Hi! I'm Nebula. Your base needs energy to make oxygen and clean water. Start with solar panels: here the Sun never sets during the mission.",
+      "briefing": "Air needs energy: oxygen is made by splitting water. And recovering water costs energy too. Here the Sun doesn't set for the whole mission.",
       "construir": "Watch the mass bar: every kilo you put on the rocket counts. The recycler is heavy, but it recovers almost all the water.",
-      "exito": "First mission done! Now try something harder: the lunar night."
+      "exito": "Mission complete! Now we travel to Mars. Your reserves come with you."
     },
     "eventos": []
   },
   "noche": {
-    "titulo": "Mission 2 · The long night",
+    "titulo": "Mission 1 · The long night",
     "lugar": "Sea of Tranquility",
-    "resumen": "Four astronauts, 30 days. A few days in, the Sun sets and the lunar night begins: almost 15 days without light.",
+    "resumen": "First stop: the Moon. Four astronauts, 30 days. After a few days the Sun sets and the lunar night arrives: almost 15 days without light. Keep the air running until dawn.",
     "nebula": {
-      "briefing": "This time the Sun sets. Without light, panels produce nothing. How will you store or generate energy during the night?",
+      "briefing": "Hi! I'm Nebula, the expedition's pilot cat. First stop: the Moon. Soon the Sun sets and the panels produce nothing. How will you keep the air running until dawn?",
       "construir": "Hint: count how much energy your base uses per day and multiply it by the nights.",
-      "exito": "You survived the lunar night! This is how NASA thinks when designing the Fission Surface Power reactor."
+      "exito": "You made it to dawn! Whatever you saved carries over as a reserve to the next mission. This is how NASA thinks when it designs the Fission Surface Power reactor."
     },
     "eventos": [
       "A micrometeorite damages 2 solar panels.",
@@ -25,7 +25,7 @@
     ]
   },
   "tormenta": {
-    "titulo": "Mission 3 · Solar storm",
+    "titulo": "Extra · Solar storm on the Moon",
     "lugar": "Shackleton crater",
     "resumen": "Based on the real storm of May 2024. On the rim of Shackleton crater there is almost always light, but the Sun is also a threat: four astronauts, 20 days, and a flare on the way.",
     "nebula": {
@@ -41,7 +41,7 @@
     ]
   },
   "hielo": {
-    "titulo": "Mission 4 · Ice in the shadow",
+    "titulo": "Extra · Ice in the shadow",
     "lugar": "Rim of Cabeus",
     "resumen": "Forty days next to a crater in eternal shadow, where LCROSS found ice. Bringing all the water from Earth weighs too much: can you get it from the ground?",
     "nebula": {
@@ -55,7 +55,7 @@
     ]
   },
   "cadena": {
-    "titulo": "Mission 5 · Everything goes wrong",
+    "titulo": "Extra · Everything goes wrong",
     "lugar": "Sea of Rains",
     "resumen": "Thirty days in the Sea of Rains. A micrometeorite, the lunar night, a solar storm and a breakdown, one after another. Design a base that can take it all.",
     "nebula": {
@@ -71,17 +71,32 @@
     ]
   },
   "marte": {
-    "titulo": "Mission 6 · Dust on Mars",
+    "titulo": "Mission 3 · First harvest",
     "lugar": "Jezero crater · Mars",
-    "resumen": "Thirty sols in Jezero crater, where Perseverance explores. Less than half the sunlight arrives, and a dust storm is coming like the one that shut down Opportunity.",
+    "resumen": "Thirty sols in Jezero crater, where Perseverance explores. Less than half the sunlight arrives, the greenhouse needs energy and a dust storm is coming, like the one that shut down Opportunity.",
     "nebula": {
-      "briefing": "Mars has a CO₂ atmosphere: MOXIE can turn it into oxygen without using water.",
-      "construir": "Panels produce less than half of what they do on the Moon, and dust can cover them for days.",
-      "exito": "You survived on Mars! That is where NASA wants to send astronauts after Artemis."
+      "briefing": "We made it to Mars! New base: before you decide, check your reserves. Mars has a CO₂ atmosphere: MOXIE can turn it into oxygen without using water.",
+      "construir": "Panels produce less than half of what they do on the Moon, and dust can cover them for days. More energy for the crops leaves less for later.",
+      "exito": "First harvest on Mars! This harvest stays as a reserve for the next mission."
     },
     "eventos": [
       "Mars satellites see a dust storm growing.",
       "Dust storm! Only a quarter of the sunlight arrives for 10 sols."
+    ]
+  },
+  "tormenta_marte": {
+    "titulo": "Mission 4 · Solar storm",
+    "lugar": "Gale crater · Mars",
+    "resumen": "Based on the real event of May 20, 2024, which the Curiosity rover measured on Mars. A solar alert arrives by radio, but Earth is slow to answer: this time, you make the plan.",
+    "nebula": {
+      "briefing": "From Mars, a signal takes between 3 and 22 minutes to arrive from Earth. If a solar alert arrives, you can't wait for an answer: you decide when to go into the shelter.",
+      "construir": "Shielding protects every day, but it is heavy. The shelter protects a lot, but no science is done while inside.",
+      "exito": "You protected your crew! This is how the astronauts who reach Mars will prepare."
+    },
+    "eventos": [
+      "Message from Earth, received 12 minutes late: DONKI saw a big flare heading to Mars (May 20, 2024). The particles arrive tomorrow.",
+      "The solar particles arrive! The Curiosity rover measured the highest dose since it landed on Mars.",
+      "The particle shower continues."
     ]
   }
 }

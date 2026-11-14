@@ -1,5 +1,5 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v8';
+const CACHE = 'horizonte-v9';
 const ARCHIVOS = [
   './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js', 'js/mundo3d.js', 'js/terreno3d.js', 'js/modelos3d.js', 'js/plataforma3d.js', 'js/i18n.js', 'js/sonido.js', 'js/voz.js',
   'data/en/misiones.json', 'data/en/nasa.json', 'data/en/evaluacion.json',
@@ -8,7 +8,9 @@ const ARCHIVOS = [
   'vendor/three/addons/postprocessing/UnrealBloomPass.js', 'vendor/three/addons/postprocessing/OutputPass.js', 'vendor/three/addons/postprocessing/ShaderPass.js',
   'vendor/three/addons/postprocessing/MaskPass.js', 'vendor/three/addons/postprocessing/Pass.js', 'vendor/three/addons/shaders/CopyShader.js',
   'vendor/three/addons/shaders/LuminosityHighPassShader.js', 'vendor/three/addons/shaders/OutputShader.js',
-  'assets/fuentes/orbitron-latin-700-normal.woff2', 'assets/fuentes/orbitron-latin-900-normal.woff2', 'assets/fuentes/exo-2-latin-400-normal.woff2', 'assets/fuentes/exo-2-latin-600-normal.woff2',
+  'assets/fuentes/unbounded-latin-800-normal.woff2', 'assets/fuentes/baloo-2-latin-800-normal.woff2', 'assets/fuentes/noto-sans-latin-400-normal.woff2', 'assets/fuentes/noto-sans-latin-700-normal.woff2', 'assets/fuentes/space-mono-latin-700-normal.woff2',
+  'assets/marca/logo-color.webp', 'assets/marca/nebula-cara.webp', 'assets/marca/astronauta-peruana.webp', 'assets/marca/llama-astronauta.webp',
+  'data/historia.json', 'data/en/historia.json',
   'data/nasa.json', 'data/juego.json', 'data/misiones.json', 'data/evaluacion.json',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/sprite.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];

@@ -1,48 +1,8 @@
 [
   {
-    "id": "amanecer",
-    "titulo": "Misión 1 · Primer amanecer",
-    "resumen": "Dos astronautas pasan 7 días en el polo sur de la Luna, con el Sol en el cielo. Aprende a equilibrar energía, oxígeno, agua y comida.",
-    "lugar": "Polo sur lunar",
-    "tripulacion": 2,
-    "dias": 7,
-    "fase_inicial": 2,
-    "presupuesto_t": 8,
-    "limite_dosis_msv": 50,
-    "objetivo_ciencia": 5,
-    "eventos": [],
-    "sugerido": {
-      "panel": 3,
-      "bateria": 1,
-      "reactor": false,
-      "reciclador": true,
-      "invernadero": false,
-      "blindaje": 0,
-      "o2": 12,
-      "agua": 30,
-      "comida": 22,
-      "extractor": false,
-      "moxie": false
-    },
-    "nebula": {
-      "briefing": "¡Hola! Soy Nebula 🐱. Tu base necesita energía para fabricar oxígeno y limpiar el agua. Empieza con paneles solares: aquí el Sol no se pone en toda la misión.",
-      "construir": "Mira la barra de masa: cada kilo que subes al cohete cuenta. El reciclador pesa, pero recupera casi toda el agua.",
-      "exito": "¡Primera misión cumplida! Ahora prueba algo más difícil: la noche lunar."
-    },
-    "luz_permanente": true,
-    "modulos": [
-      "panel",
-      "bateria",
-      "reactor",
-      "reciclador",
-      "invernadero",
-      "blindaje"
-    ]
-  },
-  {
     "id": "noche",
-    "titulo": "Misión 2 · La larga noche",
-    "resumen": "Cuatro astronautas, 30 días. A los pocos días el Sol se pone y llega la noche lunar: casi 15 días sin luz.",
+    "titulo": "Misión 1 · La noche larga",
+    "resumen": "Primera parada: la Luna. Cuatro astronautas, 30 días. A los pocos días el Sol se pone y llega la noche lunar: casi 15 días sin luz. Mantén el aire hasta el amanecer.",
     "lugar": "Mar de la Tranquilidad",
     "tripulacion": 4,
     "dias": 30,
@@ -78,9 +38,9 @@
       "moxie": false
     },
     "nebula": {
-      "briefing": "Esta vez el Sol se pone. Sin luz, los paneles no producen nada. ¿Cómo guardarás o generarás energía durante la noche?",
+      "briefing": "¡Hola! Soy Nebula, el gato piloto de la expedición. Primera parada: la Luna. Pronto el Sol se pone y los paneles no producen nada. ¿Cómo mantendrás el aire hasta el amanecer?",
       "construir": "Pista: cuenta cuánta energía gasta tu base por día y multiplícala por los días de noche.",
-      "exito": "¡Sobreviviste a la noche lunar! Así piensa la NASA cuando diseña el reactor Fission Surface Power."
+      "exito": "¡Llegaste al amanecer! Lo que te sobró pasa como reserva a la siguiente misión. Así piensa la NASA cuando diseña el reactor Fission Surface Power."
     },
     "modulos": [
       "panel",
@@ -89,11 +49,184 @@
       "reciclador",
       "invernadero",
       "blindaje"
-    ]
+    ],
+    "reserva_a": "amanecer"
+  },
+  {
+    "id": "amanecer",
+    "titulo": "Misión 2 · Aire y agua",
+    "resumen": "En el polo sur de la Luna el Sol casi no se pone. Dos astronautas, 7 días: el aire se fabrica con agua y energía, y recuperar el agua también cuesta energía.",
+    "lugar": "Polo sur lunar",
+    "tripulacion": 2,
+    "dias": 7,
+    "fase_inicial": 2,
+    "presupuesto_t": 8,
+    "limite_dosis_msv": 50,
+    "objetivo_ciencia": 5,
+    "eventos": [],
+    "sugerido": {
+      "panel": 3,
+      "bateria": 1,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "o2": 12,
+      "agua": 30,
+      "comida": 22,
+      "extractor": false,
+      "moxie": false
+    },
+    "nebula": {
+      "briefing": "El aire necesita energía: el oxígeno se fabrica partiendo agua. Y el agua también cuesta recuperarla. Aquí el Sol no se pone en toda la misión.",
+      "construir": "Mira la barra de masa: cada kilo que subes al cohete cuenta. El reciclador pesa, pero recupera casi toda el agua.",
+      "exito": "¡Misión cumplida! Ahora viajamos a Marte. Tus reservas te acompañan."
+    },
+    "luz_permanente": true,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje"
+    ],
+    "reserva_a": "marte"
+  },
+  {
+    "id": "marte",
+    "titulo": "Misión 3 · Primera cosecha",
+    "resumen": "Treinta soles en el cráter Jezero, donde explora Perseverance. Llega menos de la mitad de luz solar, el invernadero necesita energía y se acerca una tormenta de polvo como la que apagó a Opportunity.",
+    "lugar": "Cráter Jezero · Marte",
+    "planeta": "marte",
+    "tripulacion": 4,
+    "dias": 30,
+    "fase_inicial": 0,
+    "luz_permanente": true,
+    "factor_solar": 0.43,
+    "dosis_dato": "dosis_marte_msv_dia",
+    "presupuesto_t": 14,
+    "limite_dosis_msv": 50,
+    "objetivo_ciencia": 22,
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje",
+      "moxie"
+    ],
+    "eventos": [
+      {
+        "dia": 9,
+        "tipo": "alerta_polvo",
+        "texto": "Los satélites de Marte ven crecer una tormenta de polvo."
+      },
+      {
+        "dia": 10,
+        "tipo": "tormenta_polvo",
+        "texto": "¡Tormenta de polvo! Llega solo un cuarto de la luz solar durante 10 soles.",
+        "duracion": 10,
+        "factor_solar": 0.25,
+        "dato": "polvo_marte_2018"
+      }
+    ],
+    "sugerido": {
+      "panel": 8,
+      "bateria": 2,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "extractor": false,
+      "moxie": false,
+      "o2": 20,
+      "agua": 150,
+      "comida": 185
+    },
+    "nebula": {
+      "briefing": "¡Llegamos a Marte! Nueva base: antes de decidir, revisa tus reservas. En Marte hay atmósfera de CO₂: MOXIE puede convertirla en oxígeno sin gastar agua.",
+      "construir": "Los paneles rinden menos de la mitad que en la Luna, y el polvo los puede tapar por días. Más energía para el cultivo deja menos para después.",
+      "exito": "¡Primera cosecha en Marte! Esta cosecha queda como reserva para la próxima misión."
+    },
+    "reserva_a": "tormenta_marte"
+  },
+  {
+    "id": "tormenta_marte",
+    "titulo": "Misión 4 · Tormenta solar",
+    "sin_pistas": true,
+    "evaluacion": true,
+    "resumen": "Basada en el evento real del 20 de mayo de 2024, que el rover Curiosity midió en Marte. Llega una alerta solar por radio, pero la Tierra tarda en responder: esta vez el plan lo decides tú.",
+    "lugar": "Cráter Gale · Marte",
+    "planeta": "marte",
+    "tripulacion": 4,
+    "dias": 20,
+    "fase_inicial": 0,
+    "luz_permanente": true,
+    "factor_solar": 0.43,
+    "dosis_dato": "dosis_marte_msv_dia",
+    "presupuesto_t": 14,
+    "limite_dosis_msv": 25,
+    "objetivo_ciencia": 15,
+    "fecha_inicio_real": "2024-05-13",
+    "modulos": [
+      "panel",
+      "bateria",
+      "reactor",
+      "reciclador",
+      "invernadero",
+      "blindaje",
+      "moxie"
+    ],
+    "eventos": [
+      {
+        "dia": 6,
+        "tipo": "alerta_solar",
+        "fecha_real": "2024-05-20",
+        "texto": "Mensaje de la Tierra, recibido con 12 minutos de retraso: DONKI vio una gran llamarada rumbo a Marte (20 may 2024). Las partículas llegan mañana.",
+        "dato": "retraso_tierra_marte",
+        "url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/"
+      },
+      {
+        "dia": 7,
+        "tipo": "tormenta_solar",
+        "fecha_real": "2024-05-20",
+        "texto": "¡Llegan las partículas solares! El rover Curiosity midió la dosis más alta desde que llegó a Marte.",
+        "dosis_msv": 9,
+        "dato": "tormenta_marte_mayo_2024"
+      },
+      {
+        "dia": 8,
+        "tipo": "tormenta_solar",
+        "fecha_real": "2024-05-21",
+        "texto": "La lluvia de partículas continúa.",
+        "dosis_msv": 6,
+        "dato": "tormenta_marte_mayo_2024"
+      }
+    ],
+    "sugerido": {
+      "panel": 8,
+      "bateria": 2,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "extractor": false,
+      "moxie": false,
+      "o2": 15,
+      "agua": 110,
+      "comida": 125
+    },
+    "nebula": {
+      "briefing": "En Marte una señal tarda entre 3 y 22 minutos en llegar de la Tierra. Si llega una alerta solar, no podrás esperar la respuesta: tú decides cuándo entrar al refugio.",
+      "construir": "El blindaje protege todos los días, pero pesa. El refugio protege mucho, pero mientras estén dentro no se hace ciencia.",
+      "exito": "¡Protegiste a tu tripulación! Así se prepararán los astronautas que lleguen a Marte."
+    }
   },
   {
     "id": "tormenta",
-    "titulo": "Misión 3 · Tormenta solar",
+    "titulo": "Extra · Tormenta solar en la Luna",
     "resumen": "Basada en la tormenta real de mayo de 2024. En el borde del cráter Shackleton casi siempre hay luz, pero el Sol también es una amenaza: cuatro astronautas, 20 días, y una llamarada en camino.",
     "lugar": "Cráter Shackleton",
     "tripulacion": 4,
@@ -166,11 +299,11 @@
       "blindaje"
     ],
     "sin_pistas": true,
-    "evaluacion": true
+    "avanzada": true
   },
   {
     "id": "hielo",
-    "titulo": "Misión 4 · Hielo en la sombra",
+    "titulo": "Extra · Hielo en la sombra",
     "avanzada": true,
     "sin_pistas": true,
     "resumen": "Cuarenta días junto a un cráter en sombra eterna, donde LCROSS encontró hielo. Llevar toda el agua desde la Tierra pesa demasiado: ¿podrás sacarla del suelo?",
@@ -226,7 +359,7 @@
   },
   {
     "id": "cadena",
-    "titulo": "Misión 5 · Todo sale mal",
+    "titulo": "Extra · Todo sale mal",
     "avanzada": true,
     "sin_pistas": true,
     "resumen": "Treinta días en el Mar de las Lluvias. Un micrometeorito, la noche lunar, una tormenta solar y una avería, uno detrás de otro. Diseña una base que aguante todo.",
@@ -288,66 +421,6 @@
       "briefing": "Esta misión junta todo lo que aprendiste. No te daré pistas durante el viaje.",
       "construir": "Piensa en el peor día: de noche, con paneles rotos y el reciclador averiado.",
       "exito": "¡Comandante de verdad! Tu base resistió una cadena de problemas, como en una misión real."
-    }
-  },
-  {
-    "id": "marte",
-    "titulo": "Misión 6 · Polvo en Marte",
-    "avanzada": true,
-    "sin_pistas": true,
-    "resumen": "Treinta soles en el cráter Jezero, donde explora Perseverance. Llega menos de la mitad de luz solar y se acerca una tormenta de polvo como la que apagó a Opportunity.",
-    "lugar": "Cráter Jezero · Marte",
-    "planeta": "marte",
-    "tripulacion": 4,
-    "dias": 30,
-    "fase_inicial": 0,
-    "luz_permanente": true,
-    "factor_solar": 0.43,
-    "dosis_dato": "dosis_marte_msv_dia",
-    "presupuesto_t": 14,
-    "limite_dosis_msv": 50,
-    "objetivo_ciencia": 22,
-    "modulos": [
-      "panel",
-      "bateria",
-      "reactor",
-      "reciclador",
-      "invernadero",
-      "blindaje",
-      "moxie"
-    ],
-    "eventos": [
-      {
-        "dia": 9,
-        "tipo": "alerta_polvo",
-        "texto": "Los satélites de Marte ven crecer una tormenta de polvo."
-      },
-      {
-        "dia": 10,
-        "tipo": "tormenta_polvo",
-        "texto": "¡Tormenta de polvo! Llega solo un cuarto de la luz solar durante 10 soles.",
-        "duracion": 10,
-        "factor_solar": 0.25,
-        "dato": "polvo_marte_2018"
-      }
-    ],
-    "sugerido": {
-      "panel": 8,
-      "bateria": 2,
-      "reactor": false,
-      "reciclador": true,
-      "invernadero": false,
-      "blindaje": 0,
-      "extractor": false,
-      "moxie": false,
-      "o2": 20,
-      "agua": 150,
-      "comida": 185
-    },
-    "nebula": {
-      "briefing": "En Marte hay atmósfera de CO₂: MOXIE puede convertirla en oxígeno sin gastar agua.",
-      "construir": "Los paneles rinden menos de la mitad que en la Luna, y el polvo los puede tapar por días.",
-      "exito": "¡Sobreviviste en Marte! Ahí es adonde la NASA quiere llevar astronautas después de Artemis."
     }
   }
 ]
