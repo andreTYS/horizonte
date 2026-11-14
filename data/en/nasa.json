@@ -1,0 +1,20 @@
+{
+  "o2_persona_dia": "An astronaut breathes about 0.82 kg of oxygen per day.",
+  "agua_persona_dia": "Each astronaut uses several liters of water per day for drinking, food preparation and hygiene.",
+  "comida_persona_dia": "Each astronaut needs about 1.5 kg of food per day.",
+  "recuperacion_agua": "The International Space Station recovers 98 % of the water the crew uses.",
+  "agua_por_kg_o2": "To make 1 kg of oxygen by splitting water (2H₂O → 2H₂ + O₂), 1.125 kg of water is used.",
+  "fsp_kw": "NASA's Fission Surface Power reactor is designed to deliver 40 kW continuously, day and night.",
+  "fsp_masa_t": "NASA asked for the surface reactor to weigh less than 6 tonnes.",
+  "ciclo_lunar_dias": "A full day on the Moon (sunrise to sunrise) lasts about 29.5 Earth days: almost 15 days of light and almost 15 of night.",
+  "dosis_luna_msv_dia": "On the Moon's surface, without protection, you receive about 1.37 mSv of radiation per day: about 200 times more than on Earth.",
+  "dosis_marte_msv_dia": "Curiosity's RAD instrument measured about 0.64 mSv per day on the surface of Mars.",
+  "limite_carrera_msv": "NASA limits the radiation an astronaut can receive over their whole career to 600 mSv.",
+  "tormenta_mayo_2024": "Between May 9 and 13, 2024, NASA recorded 14 solar particle events and a Kp 9 geomagnetic storm, the strongest in 20 years. On the Moon there is no atmosphere or magnetic field for protection: the crew must go to the shelter.",
+  "gravedad_luna": "The Moon's gravity is 1.62 m/s², one sixth of Earth's.",
+  "veggie": "On the ISS, the Veggie system has already grown lettuce, radishes and peppers that astronauts ate.",
+  "lcross_hielo": "In 2009 NASA's LCROSS mission impacted Cabeus crater, at the lunar south pole, and measured that its soil contains about 5.6 % water ice.",
+  "moxie_o2": "MOXIE, aboard the Perseverance rover, made oxygen from Martian CO₂: up to 12 g per hour and 122 g in total. A plant for astronauts would need to be hundreds of times larger.",
+  "polvo_marte_2018": "In 2018 a dust storm covered all of Mars for weeks and blocked the Sun so much that the Opportunity rover, which ran on solar panels, lost power forever.",
+  "luz_marte": "Mars is 1.5 times farther from the Sun than Earth, so it gets less than half the sunlight: panels produce much less."
+}

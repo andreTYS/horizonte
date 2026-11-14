@@ -1,0 +1,87 @@
+{
+  "amanecer": {
+    "titulo": "Mission 1 · First sunrise",
+    "lugar": "Lunar south pole",
+    "resumen": "Two astronauts spend 7 days at the Moon's south pole with the Sun in the sky. Learn to balance energy, oxygen, water and food.",
+    "nebula": {
+      "briefing": "Hi! I'm Nebula. Your base needs energy to make oxygen and clean water. Start with solar panels: here the Sun never sets during the mission.",
+      "construir": "Watch the mass bar: every kilo you put on the rocket counts. The recycler is heavy, but it recovers almost all the water.",
+      "exito": "First mission done! Now try something harder: the lunar night."
+    },
+    "eventos": []
+  },
+  "noche": {
+    "titulo": "Mission 2 · The long night",
+    "lugar": "Sea of Tranquility",
+    "resumen": "Four astronauts, 30 days. A few days in, the Sun sets and the lunar night begins: almost 15 days without light.",
+    "nebula": {
+      "briefing": "This time the Sun sets. Without light, panels produce nothing. How will you store or generate energy during the night?",
+      "construir": "Hint: count how much energy your base uses per day and multiply it by the nights.",
+      "exito": "You survived the lunar night! This is how NASA thinks when designing the Fission Surface Power reactor."
+    },
+    "eventos": [
+      "A micrometeorite damages 2 solar panels.",
+      "The water recycler breaks down for 3 days."
+    ]
+  },
+  "tormenta": {
+    "titulo": "Mission 3 · Solar storm",
+    "lugar": "Shackleton crater",
+    "resumen": "Based on the real storm of May 2024. On the rim of Shackleton crater there is almost always light, but the Sun is also a threat: four astronauts, 20 days, and a flare on the way.",
+    "nebula": {
+      "briefing": "NASA satellites watch the Sun. When they warn of a flare, you will have one day to react.",
+      "construir": "Shielding protects every day, but it is heavy. The shelter protects a lot, but no science is done while inside.",
+      "exito": "Well done! This is how Artemis astronauts will protect themselves on the Moon."
+    },
+    "eventos": [
+      "DONKI alert: solar particles detected near Earth (May 9, 2024). They will arrive in force tomorrow.",
+      "The solar particles arrive! (May 10, 2024, Kp 9 storm: the strongest in 20 years)",
+      "The storm continues (May 11, 2024).",
+      "New burst of particles: DONKI records 6 events this day (May 13, 2024)."
+    ]
+  },
+  "hielo": {
+    "titulo": "Mission 4 · Ice in the shadow",
+    "lugar": "Rim of Cabeus",
+    "resumen": "Forty days next to a crater in eternal shadow, where LCROSS found ice. Bringing all the water from Earth weighs too much: can you get it from the ground?",
+    "nebula": {
+      "briefing": "Making oxygen uses water every day. Over 40 days that is a lot of water to lift on a rocket.",
+      "construir": "The extractor heats the regolith to release the ice, but it is heavy and uses energy.",
+      "exito": "You used the Moon's own resources! That is called ISRU and it is key to the Artemis program."
+    },
+    "eventos": [
+      "The water recycler breaks down for 3 days.",
+      "A micrometeorite damages 2 solar panels."
+    ]
+  },
+  "cadena": {
+    "titulo": "Mission 5 · Everything goes wrong",
+    "lugar": "Sea of Rains",
+    "resumen": "Thirty days in the Sea of Rains. A micrometeorite, the lunar night, a solar storm and a breakdown, one after another. Design a base that can take it all.",
+    "nebula": {
+      "briefing": "This mission combines everything you have learned. I will not give hints during the trip.",
+      "construir": "Think about the worst day: at night, with broken panels and the recycler down.",
+      "exito": "A real commander! Your base survived a chain of problems, just like in a real mission."
+    },
+    "eventos": [
+      "A micrometeorite damages 3 solar panels.",
+      "Alert: solar flare detected. The particles will arrive tomorrow.",
+      "The solar particles arrive!",
+      "The water recycler breaks down for 4 days."
+    ]
+  },
+  "marte": {
+    "titulo": "Mission 6 · Dust on Mars",
+    "lugar": "Jezero crater · Mars",
+    "resumen": "Thirty sols in Jezero crater, where Perseverance explores. Less than half the sunlight arrives, and a dust storm is coming like the one that shut down Opportunity.",
+    "nebula": {
+      "briefing": "Mars has a CO₂ atmosphere: MOXIE can turn it into oxygen without using water.",
+      "construir": "Panels produce less than half of what they do on the Moon, and dust can cover them for days.",
+      "exito": "You survived on Mars! That is where NASA wants to send astronauts after Artemis."
+    },
+    "eventos": [
+      "Mars satellites see a dust storm growing.",
+      "Dust storm! Only a quarter of the sunlight arrives for 10 sols."
+    ]
+  }
+}

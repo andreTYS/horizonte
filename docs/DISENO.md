@@ -244,6 +244,7 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P1 | Nueva interfaz de la misión (§7.4) | ✅ |
 | P1 | Prueba inicial y final y rúbrica (§6) | ✅ |
 | P1 | Mapa 3D a pantalla completa + HUD de juego | ✅ |
+| P1 | Bilingüe ES/EN y sonido (Web Audio) | ✅ |
 | P2 | Modelos finales en Blender (`assets/modelos`) | ⏳ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
 | P2 | Servidor VPS: Docker + Traefik, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |

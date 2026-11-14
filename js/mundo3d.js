@@ -473,6 +473,12 @@ export class Mundo {
     this.escena.fog = marte ? new THREE.FogExp2(0xc08a62, 0.004) : null;
   }
 
+  /** Cambia los nombres de las etiquetas (idioma). */
+  nombres(dic) {
+    Object.assign(NOMBRES, dic);
+    if (this.ultimaConfig) this.#crearEtiquetas(this.ultimaConfig);
+  }
+
   /** Destaca un tipo de módulo (al agregarlo en el diseño). */
   resaltar(tipo) {
     const m = [...this.modulos].reverse().find((x) => x.userData.tipo === tipo);

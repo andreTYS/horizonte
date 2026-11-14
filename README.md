@@ -61,6 +61,8 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `tools/blender/modelos.py` | Script de Blender: modela hábitat, reactor y panel, exporta `.glb` y renderiza previas |
 | `tools/visor.html` | Visor 3D: prueba estados y exporta modelos a `.glb` |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
+| `js/i18n.js` | Español / inglés: textos de la interfaz y traducción del análisis de fallas (datos en `data/en/`) |
+| `js/sonido.js` | Sonido generado con Web Audio (ambiente, alarmas, tormentas, despegue), sin archivos de audio |
 | `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
 | `js/api.js` | Envía resultados al servidor si existe (en GitHub Pages el juego funciona sin él) |
 | `server/server.mjs` | Servidor del VPS: estáticos, partidas (SQLite), panel docente, proxy NASA DONKI |

@@ -1,4 +1,5 @@
 // Prueba inicial, prueba final y caso Artemis-7 (rúbrica 0–8).
+import { t } from './i18n.js';
 // Las funciones de puntaje son puras (se prueban con node --test); las de pantalla reciben el contenedor.
 
 /** Puntaje de una prueba de opción múltiple: 1 punto por respuesta correcta. */
@@ -35,7 +36,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const LETRAS = 'ABCD';
 
 function progreso(i, n) {
-  return `<div class="progreso-eval" aria-label="Pregunta ${i + 1} de ${n}">${Array.from({ length: n }, (_, k) => `<span class="${k < i ? 'hecho' : k === i ? 'actual' : ''}"></span>`).join('')}</div>`;
+  return `<div class="progreso-eval" aria-label="${i + 1} / ${n}">${Array.from({ length: n }, (_, k) => `<span class="${k < i ? 'hecho' : k === i ? 'actual' : ''}"></span>`).join('')}</div>`;
 }
 
 /**
@@ -54,12 +55,12 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
     $app.innerHTML = `
       <section class="tarjeta eval-intro">
         <p class="lema">${esc(prueba.titulo)}</p>
-        <h2>${n} preguntas · 2 minutos</h2>
+        <h2>${t('{n} preguntas · 2 minutos', { n })}</h2>
         <p class="suave">${esc(prueba.intro)}</p>
       </section>
       <div class="fila">
-        <button class="primario" id="empezar">Empezar</button>
-        ${alSaltar ? '<button class="fantasma" id="saltar">Ahora no</button>' : ''}
+        <button class="primario" id="empezar">${t('Empezar')}</button>
+        ${alSaltar ? `<button class="fantasma" id="saltar">${t('Ahora no')}</button>` : ''}
       </div>`;
     $app.querySelector('#empezar').addEventListener('click', () => pregunta(0));
     if (alSaltar) $app.querySelector('#saltar').addEventListener('click', alSaltar);
@@ -70,7 +71,7 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
     const p = prueba.preguntas[i];
     $app.innerHTML = `
       ${progreso(i, n)}
-      <p class="lema">${esc(prueba.titulo)} · ${i + 1} de ${n}</p>
+      <p class="lema">${t('{t} · {i} de {n}', { t: esc(prueba.titulo), i: i + 1, n })}</p>
       <h2 class="pregunta">${esc(p.texto)}</h2>
       <div class="opciones">${p.opciones.map((o, k) => `<button class="opcion" data-op="${k}"><span class="letra">${LETRAS[k]}</span>${esc(o)}</button>`).join('')}</div>`;
     $app.querySelectorAll('[data-op]').forEach((b) => b.addEventListener('click', () => {
@@ -87,18 +88,18 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
       const ok = r.detalle[i].correcta;
       const c = nasa?.cifras[p.dato];
       return `<div class="tarjeta revision ${ok ? 'bien' : 'mal'}">
-        <p class="chico">${ok ? '✅ Correcta' : '❌ Elegiste: ' + esc(p.opciones[respuestas[i]] ?? '—')}</p>
+        <p class="chico">${ok ? '✓ ' + t('Correcta') : '✗ ' + t('Elegiste: {x}', { x: esc(p.opciones[respuestas[i]] ?? '—') })}</p>
         <h3>${esc(p.texto)}</h3>
-        <p><b>Respuesta:</b> ${esc(p.opciones[p.correcta])}</p>
+        <p><b>${t('Respuesta:')}</b> ${esc(p.opciones[p.correcta])}</p>
         ${p.explicacion ? `<p class="suave">${esc(p.explicacion)}</p>` : ''}
-        ${c ? `<a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">Dato NASA: ${esc(c.fuente)}</a>` : ''}
+        ${c ? `<a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${t('Dato NASA: {x}', { x: esc(c.fuente) })}</a>` : ''}
       </div>`;
     }).join('');
     $app.innerHTML = `
       <section class="tarjeta centrado"><p class="lema">${esc(prueba.titulo)}</p>
         <div class="nivel-res"><b>${r.puntaje}</b><span>/ ${r.maximo}</span></div></section>
       ${items}
-      <div class="fila"><button class="primario" id="seguir">Continuar</button></div>`;
+      <div class="fila"><button class="primario" id="seguir">${t('Continuar')}</button></div>`;
     $app.querySelector('#seguir').addEventListener('click', () => alTerminar(r));
   }
 
@@ -124,7 +125,7 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
     $app.scrollTop = 0;
     $app.innerHTML = `${cabecera}
       <p class="suave">${esc(caso.intro)}</p>
-      <div class="fila"><button class="primario" id="empezar">Analizar la falla</button></div>`;
+      <div class="fila"><button class="primario" id="empezar">${t('Analizar la falla')}</button></div>`;
     $app.querySelector('#empezar').addEventListener('click', () => criterio(0));
   }
 
@@ -133,8 +134,8 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
     const c = caso.criterios[i];
     $app.innerHTML = `
       ${progreso(i, n)}
-      <details class="tarjeta"><summary>📜 Ver la bitácora de Artemis-7</summary><ol class="bitacora-caso">${caso.bitacora.map((b) => `<li>${esc(b)}</li>`).join('')}</ol></details>
-      <p class="lema">Criterio ${i + 1} de ${n} · ${esc(c.nombre)}</p>
+      <details class="tarjeta"><summary>${t('Ver la bitácora de Artemis-7')}</summary><ol class="bitacora-caso">${caso.bitacora.map((b) => `<li>${esc(b)}</li>`).join('')}</ol></details>
+      <p class="lema">${t('Criterio {i} de {n} · {x}', { i: i + 1, n, x: esc(c.nombre) })}</p>
       <h2 class="pregunta">${esc(c.texto)}</h2>
       <div class="opciones">${c.opciones.map((o, k) => `<button class="opcion" data-op="${k}"><span class="letra">${LETRAS[k]}</span>${esc(o.texto)}</button>`).join('')}</div>`;
     $app.querySelectorAll('[data-op]').forEach((b) => b.addEventListener('click', () => {
@@ -153,12 +154,12 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
     }).join('');
     $app.innerHTML = `
       <section class="tarjeta centrado">
-        <p class="lema">Rúbrica · ${esc(caso.titulo)}</p>
+        <p class="lema">${t('Rúbrica · {x}', { x: esc(caso.titulo) })}</p>
         <div class="nivel-res nivel-${r.nivel.codigo}"><b>${r.puntaje}</b><span>/ ${r.maximo}</span></div>
         <p><span class="pastilla">${r.nivel.codigo} · ${esc(r.nivel.nombre)}</span></p>
       </section>
       <section class="tarjeta">${filas}</section>
-      <div class="fila"><button class="primario" id="listo">Ver mi resumen</button></div>`;
+      <div class="fila"><button class="primario" id="listo">${t('Ver mi resumen')}</button></div>`;
     $app.querySelector('#listo').addEventListener('click', () => alTerminar({ ...r, respuestas: [...respuestas] }));
   }
 

@@ -1,0 +1,278 @@
+{
+  "_nota": "Prueba inicial y final: mismos 5 conceptos con preguntas distintas (pruebas paralelas). Caso Artemis-7: escenario nuevo calificado con rúbrica 0–8 (4 criterios × 0–2).",
+  "inicial": {
+    "titulo": "Pre-test",
+    "intro": "Before lift-off, we want to know what you already know. There are 5 questions and they don't count toward your grade: answer what you think.",
+    "preguntas": [
+      {
+        "concepto": "energia_o2",
+        "texto": "On a lunar base, oxygen is made by splitting water with electricity. If the electricity runs out, what happens first?",
+        "opciones": [
+          "The food freezes",
+          "Oxygen stops being made",
+          "Radiation increases",
+          "Nothing: oxygen makes itself"
+        ],
+        "correcta": 1
+      },
+      {
+        "concepto": "agua_o2",
+        "texto": "To make oxygen on the base, what is used up besides energy?",
+        "opciones": [
+          "Food",
+          "Regolith (lunar soil)",
+          "Water",
+          "Nothing else"
+        ],
+        "correcta": 2
+      },
+      {
+        "concepto": "reciclaje",
+        "texto": "The Space Station recycles almost all the water it uses. Without a recycler, a long mission would need…",
+        "opciones": [
+          "Much more reserve water",
+          "The same amount of water",
+          "Less water",
+          "Water only for drinking"
+        ],
+        "correcta": 0
+      },
+      {
+        "concepto": "noche_lunar",
+        "texto": "About how long is the night on the Moon (away from the poles)?",
+        "opciones": [
+          "12 hours",
+          "3 days",
+          "There is no night on the Moon",
+          "About 15 Earth days"
+        ],
+        "correcta": 3
+      },
+      {
+        "concepto": "radiacion",
+        "texto": "Satellites warn that a solar storm will reach the Moon tomorrow. What is safest for the crew?",
+        "opciones": [
+          "Go exploring today before it arrives",
+          "Turn off the solar panels",
+          "Go to the protected shelter",
+          "Nothing: the Moon has an atmosphere that protects"
+        ],
+        "correcta": 2
+      }
+    ]
+  },
+  "final": {
+    "titulo": "Final test",
+    "intro": "You completed the missions! Answer these 5 questions to see how much you learned. At the end you will see the answers with their NASA data.",
+    "preguntas": [
+      {
+        "concepto": "energia_o2",
+        "texto": "A base's electrolyzer has no power for 3 days. Which resource starts going down without being replaced?",
+        "opciones": [
+          "Oxygen",
+          "Food",
+          "Radiation",
+          "Science"
+        ],
+        "correcta": 0,
+        "explicacion": "The electrolyzer makes the oxygen the crew breathes. Without power it makes none, and each astronaut still breathes 0.82 kg per day.",
+        "dato": "o2_persona_dia"
+      },
+      {
+        "concepto": "agua_o2",
+        "texto": "A team needs to make 10 kg of oxygen by electrolysis. About how much water will it use?",
+        "opciones": [
+          "No water",
+          "About 11 kg of water",
+          "1 kg of water",
+          "100 kg of water"
+        ],
+        "correcta": 1,
+        "explicacion": "To make 1 kg of oxygen, 1.125 kg of water is split (2H₂O → 2H₂ + O₂). So 10 kg of O₂ costs about 11 kg of water.",
+        "dato": "agua_por_kg_o2"
+      },
+      {
+        "concepto": "reciclaje",
+        "texto": "The water recycler breaks down for 3 days. What happens to the water on those days?",
+        "opciones": [
+          "Nothing changes",
+          "The water increases",
+          "All the water used is lost",
+          "The water turns into oxygen"
+        ],
+        "correcta": 2,
+        "explicacion": "With the recycler, 98 % of used water is recovered; without it, 100 % is lost. That is why it is wise to carry a reserve for breakdowns.",
+        "dato": "recuperacion_agua"
+      },
+      {
+        "concepto": "noche_lunar",
+        "texto": "A base in the Sea of Tranquility has only solar panels and a few batteries. When is it in the most danger?",
+        "opciones": [
+          "At lunar noon",
+          "When the Earth looks full",
+          "Never: the panels are enough",
+          "During the lunar night, about 15 days long"
+        ],
+        "correcta": 3,
+        "explicacion": "At night the panels produce nothing, and the lunar night lasts almost 15 Earth days. You need to store a lot of energy or have a reactor that works day and night.",
+        "dato": "ciclo_lunar_dias"
+      },
+      {
+        "concepto": "radiacion",
+        "texto": "Regolith shielding protects every day, but it is very heavy. The shelter protects more during a solar storm, but…",
+        "opciones": [
+          "That day the crew does no science",
+          "It uses twice the oxygen",
+          "It breaks the solar panels",
+          "It uses up all the water"
+        ],
+        "correcta": 0,
+        "explicacion": "Every decision has a cost: inside the shelter the crew is protected, but they don't go out to explore. That is why it is used only when the storm arrives.",
+        "dato": "tormenta_mayo_2024"
+      }
+    ]
+  },
+  "caso": {
+    "titulo": "Artemis-7 case",
+    "intro": "You didn't design this base. Read its logbook and answer as a commander. Each answer is scored from 0 to 2 points.",
+    "descripcion": "A base at the Moon's equator with 4 astronauts. They brought 8 solar panels, 1 battery, a water recycler and 100 kg of water. No reactor.",
+    "bitacora": [
+      "Days 1–5: everything normal, the Sun is shining and there is spare energy.",
+      "Day 6: the Sun sets.",
+      "Day 7: the battery runs empty. The electrolyzer shuts down.",
+      "Day 10: the oxygen reserve runs out. The mission fails."
+    ],
+    "criterios": [
+      {
+        "id": "causa",
+        "nombre": "Identifies the cause",
+        "texto": "What was the main cause of the failure?",
+        "opciones": [
+          {
+            "texto": "The oxygen reserve ran out",
+            "puntos": 1,
+            "porque": "That is what happened at the end (the effect), but it doesn't explain why."
+          },
+          {
+            "texto": "They had no energy for the long lunar night",
+            "puntos": 2,
+            "porque": "Exactly: without energy at night the electrolyzer shut down and no new oxygen was made."
+          },
+          {
+            "texto": "They ran out of food",
+            "puntos": 0,
+            "porque": "Food doesn't appear in the logbook."
+          },
+          {
+            "texto": "Radiation",
+            "puntos": 0,
+            "porque": "There was no solar storm on this mission."
+          }
+        ]
+      },
+      {
+        "id": "correccion",
+        "nombre": "Proposes a fix",
+        "texto": "Which change fixes the problem best?",
+        "opciones": [
+          {
+            "texto": "Add more solar panels",
+            "puntos": 0,
+            "porque": "At night panels produce nothing, no matter how many you have."
+          },
+          {
+            "texto": "Bring more reserve oxygen",
+            "puntos": 1,
+            "porque": "It helps for a few days, but it's a patch: the base still has no power at night."
+          },
+          {
+            "texto": "Add a reactor or batteries for about 15 days of night",
+            "puntos": 2,
+            "porque": "It tackles the cause: the base has energy through the whole lunar night."
+          },
+          {
+            "texto": "Remove the water recycler",
+            "puntos": 0,
+            "porque": "It saves energy, but you would lose almost all your water."
+          }
+        ]
+      },
+      {
+        "id": "dato",
+        "nombre": "Justifies with data",
+        "texto": "Which NASA fact best supports your change?",
+        "opciones": [
+          {
+            "texto": "The Moon's gravity is one sixth of Earth's",
+            "puntos": 0,
+            "porque": "It's a real fact, but it has nothing to do with this failure."
+          },
+          {
+            "texto": "The ISS recycles 98 % of its water",
+            "puntos": 0,
+            "porque": "True, but water wasn't the problem."
+          },
+          {
+            "texto": "An astronaut breathes 0.82 kg of oxygen per day",
+            "puntos": 1,
+            "porque": "It explains how much oxygen is missing, but not why the reactor or batteries are the answer."
+          },
+          {
+            "texto": "The lunar night lasts ~15 days and NASA's reactor gives 40 kW day and night",
+            "puntos": 2,
+            "porque": "It directly justifies the change: you must cover 15 days without Sun."
+          }
+        ]
+      },
+      {
+        "id": "efecto",
+        "nombre": "Anticipates side effects",
+        "texto": "If you add the reactor (6 tonnes), what else do you have to consider?",
+        "opciones": [
+          {
+            "texto": "Nothing: the reactor only has advantages",
+            "puntos": 0,
+            "porque": "Everything has a cost on a space base."
+          },
+          {
+            "texto": "The mass: I may need to remove something else to stay under the rocket's limit",
+            "puntos": 2,
+            "porque": "Exactly: everything is connected. You gain energy, but lose room for other things."
+          },
+          {
+            "texto": "That the reactor needs sunlight",
+            "puntos": 0,
+            "porque": "The opposite: it works day and night."
+          },
+          {
+            "texto": "That its temperature and maintenance must be watched",
+            "puntos": 1,
+            "porque": "Reasonable, but the main effect on your design is the mass."
+          }
+        ]
+      }
+    ]
+  },
+  "niveles": [
+    {
+      "min": 7,
+      "codigo": "AD",
+      "nombre": "Outstanding achievement"
+    },
+    {
+      "min": 5,
+      "codigo": "A",
+      "nombre": "Expected achievement"
+    },
+    {
+      "min": 3,
+      "codigo": "B",
+      "nombre": "In progress"
+    },
+    {
+      "min": 0,
+      "codigo": "C",
+      "nombre": "Beginning"
+    }
+  ]
+}
