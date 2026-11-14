@@ -3,6 +3,8 @@
 Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 **Build a Junior Astronaut Mission Trainer** del NASA Space Apps Challenge 2026.
 
+**▶ Jugar:** https://andretys.github.io/horizonte/ (en el celular: menú → *Agregar a pantalla de inicio*)
+
 > El estudiante dirige una base en la Luna, ve fallar su base, **entiende por qué** y **vuelve atrás en el tiempo** para corregirla.
 
 ## Cómo jugar
