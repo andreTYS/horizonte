@@ -206,7 +206,7 @@ El arte es **100 % original**; no se copian personajes, unidades ni assets de ni
 ## 9. Despliegue en VPS (producción)
 
 - **Fase 1 (hackatón):** sitio estático en GitHub Pages, ya publicado.
-- **Fase 2 (piloto en colegios):** VPS con **Docker + Caddy** (HTTPS automático) sirviendo los archivos estáticos, más una API pequeña (Node) para:
+- **Fase 2 (piloto en colegios):** VPS Hostinger con **Docker detrás de Traefik** (HTTPS con Let's Encrypt) sirviendo los archivos estáticos, más una API pequeña (Node) para:
   - guardar partidas y bitácoras por estudiante (SQLite al inicio; MySQL si crece);
   - el panel docente: resultados de la prueba inicial y final y de la rúbrica;
   - un proxy de la API de la NASA, con la key solo en el servidor.
@@ -224,5 +224,5 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P1 | Nueva interfaz de la misión (§7.4) | ✅ |
 | P1 | Prueba inicial y final y rúbrica (§6) | ⏳ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
-| P2 | Servidor VPS: Docker + Caddy, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
+| P2 | Servidor VPS: Docker + Traefik, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
 | P3 | Misión 4: Marte | ⏳ |

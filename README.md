@@ -63,7 +63,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 ## Despliegue
 
 - **Demo:** GitHub Pages, automático en cada push a `main`.
-- **Producción (VPS):** Docker + Caddy (HTTPS automático). Guía paso a paso: [`deploy/VPS.md`](deploy/VPS.md).
+- **Producción (VPS):** Docker detrás de Traefik (el reverse proxy del VPS). Guía paso a paso: [`deploy/VPS.md`](deploy/VPS.md).
 
 ## Próximos pasos
 
