@@ -2,19 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>HORIZONTE · Ensaya el futuro de tu base</title>
-  <meta name="description" content="Juego educativo: dirige una base en la Luna, mira por qué falla y rebobina el tiempo para corregirla. Con datos de la NASA.">
-  <meta name="theme-color" content="#0b1026">
+  <meta name="description" content="Juego educativo en 3D: dirige una base en la Luna, mira por qué falla y rebobina el tiempo para corregirla. Con datos de la NASA.">
+  <meta name="theme-color" content="#02030a">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/estilos.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }</script>
 </head>
 <body>
-  <div class="estrellas" aria-hidden="true"></div>
+  <canvas id="mundo" aria-label="Mapa 3D de la base lunar. Arrastra para girar y pellizca para acercar."></canvas>
+  <div id="fondo-svg" hidden></div>
+  <div id="etiquetas" hidden></div>
   <main id="app" aria-live="polite">
-    <p class="cargando">Cargando HORIZONTE…</p>
+    <div class="pantalla-carga"><div class="logo-carga">HORIZONTE</div><div class="barra-carga"><span></span></div><p>Preparando la base lunar…</p></div>
   </main>
   <script type="module" src="js/main.js"></script>
 </body>

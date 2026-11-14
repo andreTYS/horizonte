@@ -1,6 +1,6 @@
 # HORIZONTE · Documento de diseño del juego (GDD)
 
-Versión 0.3 · 14 nov 2026 · Stellar Experience
+Versión 0.4 · 14 nov 2026 · Stellar Experience
 Este documento es la **fuente de verdad** del juego: si el código y este documento no coinciden, se corrige uno de los dos.
 
 ---
@@ -150,7 +150,9 @@ Alineado a la competencia de Ciencia y Tecnología *"Explica el mundo físico ba
 
 ### 7.1 Decisión
 
-**Estilo:** *ilustración vectorial plana en vista isométrica 2D*, con paleta luminosa sobre un fondo espacial oscuro.
+**Estilo (v0.4):** *mapa 3D en tiempo real a pantalla completa* (Three.js / WebGL) con materiales PBR, sombras, iluminación día/noche y brillo (bloom), con un **HUD de juego** encima: recursos arriba, botones de acción tipo habilidades a la derecha, línea de tiempo y botón de avance abajo, dock de construcción con cartas. Tipografías Orbitron (títulos y números) y Exo 2 (texto). Si el equipo no tiene WebGL, el juego usa la escena isométrica SVG de respaldo.
+
+Los modelos están hechos por código (`js/modelos3d.js`) y exportados a `.glb` en `assets/modelos/fuente/`: el diseñador los mejora en Blender y los activa en `assets/modelos/manifest.json` sin tocar código.
 
 | Opción considerada | Veredicto |
 |---|---|
@@ -213,7 +215,7 @@ El arte es **100 % original**; no se copian personajes, unidades ni assets de ni
 |---|---|---|
 | Simulación | `js/sim.js`, JavaScript puro, sin DOM | Determinista y probado con `node --test`; no se toca al cambiar el arte |
 | Datos | `data/*.json` | Editables sin programar; separan dato NASA y equilibrio |
-| Escena | **SVG isométrico** generado por código | Liviano, nítido en cualquier pantalla, sin motor externo |
+| Escena | **Three.js** (WebGL) servido desde `vendor/`, modelos `.glb` de Blender opcionales; SVG isométrico de respaldo | Calidad de juego en el navegador; se ajusta sola a la potencia del equipo (alta/media/baja) |
 | Interfaz | HTML + CSS | Accesible (lector de pantalla, teclado) y fácil de mantener |
 | Offline | Service worker (PWA) | Funciona en el aula sin internet |
 | Datos NASA en vivo | `tools/actualizar-donki.mjs` (API key de api.nasa.gov) | Se ejecuta al preparar datos, no en el navegador del alumno: así la key no queda expuesta |
@@ -239,6 +241,8 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P1 | Escena isométrica de la base (§7.3) | ✅ |
 | P1 | Nueva interfaz de la misión (§7.4) | ✅ |
 | P1 | Prueba inicial y final y rúbrica (§6) | ✅ |
+| P1 | Mapa 3D a pantalla completa + HUD de juego | ✅ |
+| P2 | Modelos finales en Blender (`assets/modelos`) | ⏳ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
 | P2 | Servidor VPS: Docker + Traefik, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
 | P3 | Misión 4: Marte | ⏳ |

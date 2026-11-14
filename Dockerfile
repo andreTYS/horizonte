@@ -7,6 +7,8 @@ COPY css ./css
 COPY js ./js
 COPY data ./data
 COPY icons ./icons
+COPY vendor ./vendor
+COPY assets ./assets
 COPY server ./server
 RUN mkdir -p /app/datos && chown -R node:node /app/datos
 USER node

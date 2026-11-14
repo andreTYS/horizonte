@@ -42,7 +42,7 @@ NASA_API_KEY=tu_clave node tools/actualizar-donki.mjs 2024-05-01 2024-05-31
 ## Desarrollo
 
 Sin frameworks ni compilación: HTML, CSS y JavaScript (módulos ES). Es una PWA instalable que funciona sin conexión.
-La escena isométrica de la base se dibuja en SVG desde código (`js/escena.js`), sin librerías.
+El mapa de la base es 3D en tiempo real con **Three.js** (servido desde `vendor/`, sin CDN). Los modelos se pueden reemplazar por `.glb` hechos en Blender: ver [`assets/modelos/LEEME.md`](assets/modelos/LEEME.md). Sin WebGL, el juego usa la escena SVG de respaldo.
 
 ```bash
 npm start      # juego + API en http://localhost:8080 (Node ≥ 22.5)
@@ -52,7 +52,10 @@ npm test       # pruebas del motor y del servidor (node --test)
 | Archivo | Qué hace |
 |---|---|
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
-| `js/escena.js` | Escena isométrica SVG: módulos, día/noche, tormenta, refugio, alarmas |
+| `js/mundo3d.js` | Mapa 3D: terreno lunar, cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas |
+| `js/modelos3d.js` | Modelos 3D de cada módulo (exportables a `.glb` para Blender) |
+| `js/escena.js` | Escena isométrica SVG de respaldo (equipos sin WebGL) |
+| `tools/visor.html` | Visor 3D: prueba estados y exporta modelos a `.glb` |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
 | `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
 | `js/api.js` | Envía resultados al servidor si existe (en GitHub Pages el juego funciona sin él) |

@@ -7,6 +7,7 @@
 // Sin dependencias: usa node:http y node:sqlite (Node ≥ 22.5).
 
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +18,7 @@ const PUERTO = Number(process.env.PORT || 8080);
 const DB_PATH = process.env.DB_PATH || path.join(RAIZ, 'datos', 'horizonte.db');
 const NASA_API_KEY = process.env.NASA_API_KEY || '';
 const DOCENTE_TOKEN = process.env.DOCENTE_TOKEN || '';
-const PUBLICO = ['index.html', 'manifest.webmanifest', 'sw.js', 'css/', 'js/', 'data/', 'icons/', 'docente.html'];
+const PUBLICO = ['index.html', 'manifest.webmanifest', 'sw.js', 'css/', 'js/', 'data/', 'icons/', 'vendor/', 'assets/', 'docente.html'];
 
 // ── Base de datos ──
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -52,11 +53,20 @@ const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml',
   '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2', '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.ktx2': 'image/ktx2',
 };
+// El importmap de index.html es un script en línea: se permite solo ese, por su hash.
+const hashesEnLinea = (() => {
+  try {
+    const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+    return [...html.matchAll(/<script type="importmap">([\s\S]*?)<\/script>/g)]
+      .map((m) => `'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`).join(' ');
+  } catch { return ''; }
+})();
 const SEGURIDAD = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'",
+  'Content-Security-Policy': `default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' ${hashesEnLinea}; connect-src 'self' blob: data:; font-src 'self'; worker-src 'self'`,
 };
 
 function json(res, codigo, datos) {
@@ -186,7 +196,7 @@ function estatico(req, res, url) {
     return res.end('No encontrado');
   }
   const ext = path.extname(absoluta);
-  const cache = ruta === 'sw.js' || ext === '.html' ? 'no-cache' : 'public, max-age=3600';
+  const cache = ruta === 'sw.js' || ext === '.html' ? 'no-cache' : ruta.startsWith('vendor/') || ruta.startsWith('assets/fuentes/') ? 'public, max-age=604800, immutable' : 'public, max-age=3600';
   res.writeHead(200, { 'Content-Type': TIPOS[ext] || 'application/octet-stream', 'Cache-Control': cache, ...SEGURIDAD });
   fs.createReadStream(absoluta).pipe(res);
 }

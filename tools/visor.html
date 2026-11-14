@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HORIZONTE · Visor 3D y exportador .glb</title>
+  <script type="importmap">{ "imports": { "three": "../vendor/three/three.module.min.js", "three/addons/": "../vendor/three/addons/" } }</script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #02030a; color: #eef1ff; font-family: system-ui, sans-serif; overflow: hidden; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #panel { position: fixed; top: 12px; left: 12px; background: rgba(10,14,40,.85); padding: 12px; border-radius: 12px; border: 1px solid #334; max-width: 320px; font-size: 14px; }
+    button { margin: 3px; padding: 6px 10px; border-radius: 8px; border: 1px solid #556; background: #182050; color: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="panel">
+    <b>Visor 3D de HORIZONTE</b>
+    <p>Prueba estados y exporta cada modelo a <code>.glb</code> para abrirlo y mejorarlo en Blender.</p>
+    <div>
+      <button data-e="dia">☀️ Día</button><button data-e="noche">🌑 Noche</button>
+      <button data-e="tormenta">💥 Tormenta</button><button data-e="refugio">🛡️ Refugio</button><button data-e="alarma">🚨 Alarma</button>
+    </div>
+    <div id="exportar"><b>Exportar .glb:</b><br></div>
+  </div>
+  <script type="module">
+    import { Mundo } from '../js/mundo3d.js';
+    import { FABRICAS } from '../js/modelos3d.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+    const mundo = new Mundo(document.getElementById('c'));
+    const config = { panel: 10, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 2 };
+    mundo.actualizar({ config, luz: true, tripulacion: 4, carga: 0.7 });
+    mundo.vista('portada');
+    window.mundo = mundo;
+    const estados = {
+      dia: { luz: true, tormenta: false, refugio: false, apagados: [] },
+      noche: { luz: false, tormenta: false, refugio: false, apagados: [] },
+      tormenta: { luz: true, tormenta: true, refugio: false },
+      refugio: { luz: true, tormenta: true, refugio: true },
+      alarma: { luz: false, apagados: ['electrolizador', 'invernadero'], carga: 0.05 },
+    };
+    document.querySelectorAll('[data-e]').forEach((b) => b.onclick = () => mundo.actualizar(estados[b.dataset.e]));
+    window.exportarGLB = (tipo) => new Promise((ok) => new GLTFExporter().parse(FABRICAS[tipo](), (buf) => ok(buf), console.error, { binary: true }));
+    for (const tipo of Object.keys(FABRICAS)) {
+      const b = document.createElement('button');
+      b.textContent = tipo;
+      b.onclick = async () => {
+        const url = URL.createObjectURL(new Blob([await window.exportarGLB(tipo)], { type: 'model/gltf-binary' }));
+        Object.assign(document.createElement('a'), { href: url, download: `${tipo}.glb` }).click();
+      };
+      document.getElementById('exportar').appendChild(b);
+    }
+  </script>
+</body>
+</html>

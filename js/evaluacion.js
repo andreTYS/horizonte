@@ -50,7 +50,7 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
   const n = prueba.preguntas.length;
 
   function intro() {
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     $app.innerHTML = `
       <section class="tarjeta eval-intro">
         <p class="lema">${esc(prueba.titulo)}</p>
@@ -66,7 +66,7 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
   }
 
   function pregunta(i) {
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     const p = prueba.preguntas[i];
     $app.innerHTML = `
       ${progreso(i, n)}
@@ -82,7 +82,7 @@ export function mostrarPrueba($app, prueba, { conRespuestas, nasa, alTerminar, a
   function fin() {
     const r = { ...puntuarPrueba(prueba, respuestas), respuestas: [...respuestas] };
     if (!conRespuestas) return alTerminar(r);
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     const items = prueba.preguntas.map((p, i) => {
       const ok = r.detalle[i].correcta;
       const c = nasa?.cifras[p.dato];
@@ -121,7 +121,7 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
     </section>`;
 
   function intro() {
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     $app.innerHTML = `${cabecera}
       <p class="suave">${esc(caso.intro)}</p>
       <div class="fila"><button class="primario" id="empezar">Analizar la falla</button></div>`;
@@ -129,7 +129,7 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
   }
 
   function criterio(i) {
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     const c = caso.criterios[i];
     $app.innerHTML = `
       ${progreso(i, n)}
@@ -145,7 +145,7 @@ export function mostrarCaso($app, caso, { niveles, alTerminar }) {
 
   function fin() {
     const r = puntuarRubrica(caso, respuestas, niveles);
-    window.scrollTo(0, 0);
+    $app.scrollTop = 0;
     const filas = caso.criterios.map((c, i) => {
       const op = c.opciones[respuestas[i]];
       return `<div class="criterio-res"><div class="entre"><b>${esc(c.nombre)}</b><span class="puntos p${op.puntos}">${op.puntos}/2</span></div>

@@ -1,7 +1,13 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v3';
+const CACHE = 'horizonte-v4';
 const ARCHIVOS = [
-  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js',
+  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js', 'js/mundo3d.js', 'js/modelos3d.js',
+  'vendor/three/three.module.min.js', 'vendor/three/addons/controls/OrbitControls.js', 'vendor/three/addons/loaders/GLTFLoader.js',
+  'vendor/three/addons/utils/BufferGeometryUtils.js', 'vendor/three/addons/postprocessing/EffectComposer.js', 'vendor/three/addons/postprocessing/RenderPass.js',
+  'vendor/three/addons/postprocessing/UnrealBloomPass.js', 'vendor/three/addons/postprocessing/OutputPass.js', 'vendor/three/addons/postprocessing/ShaderPass.js',
+  'vendor/three/addons/postprocessing/MaskPass.js', 'vendor/three/addons/postprocessing/Pass.js', 'vendor/three/addons/shaders/CopyShader.js',
+  'vendor/three/addons/shaders/LuminosityHighPassShader.js', 'vendor/three/addons/shaders/OutputShader.js',
+  'assets/fuentes/orbitron-latin-700-normal.woff2', 'assets/fuentes/orbitron-latin-900-normal.woff2', 'assets/fuentes/exo-2-latin-400-normal.woff2', 'assets/fuentes/exo-2-latin-600-normal.woff2',
   'data/nasa.json', 'data/juego.json', 'data/misiones.json', 'data/evaluacion.json',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
