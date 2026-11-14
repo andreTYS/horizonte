@@ -1,0 +1,43 @@
+# Blender en el navegador para diseñar los modelos 3D de HORIZONTE.
+# Ubicación en el VPS: /opt/blender · Levantar: docker compose up -d · Apagar cuando no se use: docker compose stop
+services:
+  blender:
+    image: lscr.io/linuxserver/blender:latest
+    container_name: blender
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+      - CUSTOM_USER=${BLENDER_USUARIO:?Define BLENDER_USUARIO en .env}
+      - PASSWORD=${BLENDER_CLAVE:?Define BLENDER_CLAVE en .env}
+    volumes:
+      - ./config:/config                                   # preferencias, complementos y archivos .blend
+      - /opt/horizonte/assets/modelos:/config/horizonte    # exportar aquí = el .glb queda en el juego
+    shm_size: "2gb"
+    deploy:
+      resources:
+        limits:
+          cpus: "3"
+          memory: 6g
+    ports:
+      # Blender MCP: solo accesible desde el propio VPS (se usa con un túnel SSH, nunca abierto a internet)
+      - "127.0.0.1:9876:9876"
+    networks:
+      - traefik-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.middlewares.blender-https.redirectscheme.scheme=https
+      - traefik.http.routers.blender-http.entrypoints=web
+      - traefik.http.routers.blender-http.rule=Host(`${DOMINIO:?Define DOMINIO en .env}`)
+      - traefik.http.routers.blender-http.middlewares=blender-https
+      - traefik.http.routers.blender.entrypoints=websecure
+      - traefik.http.routers.blender.rule=Host(`${DOMINIO}`)
+      - traefik.http.routers.blender.tls=true
+      - traefik.http.routers.blender.tls.certresolver=letsencrypt
+      - traefik.http.services.blender.loadbalancer.server.port=3000
+
+networks:
+  traefik-network:
+    external: true
