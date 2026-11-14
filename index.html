@@ -16,7 +16,9 @@
   <canvas id="mundo" aria-label="Mapa 3D de la base lunar. Arrastra para girar y pellizca para acercar."></canvas>
   <div id="fondo-svg" hidden></div>
   <div id="etiquetas" hidden></div>
-  <main id="app" aria-live="polite">
+  <div id="anuncios" class="solo-lector" aria-live="polite" aria-atomic="true"></div>
+  <div id="anuncios-urgentes" class="solo-lector" aria-live="assertive" aria-atomic="true"></div>
+  <main id="app">
     <div class="pantalla-carga"><div class="logo-carga">ASU STELLAR</div><div class="barra-carga"><span></span></div><p>Preparando la expedición…</p></div>
   </main>
   <script type="module" src="js/main.js"></script>

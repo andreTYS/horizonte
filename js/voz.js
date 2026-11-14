@@ -68,3 +68,10 @@ export function alternarVoz() {
   if (!activa) callar();
   return activa;
 }
+
+/** Lee un texto que cambia en cada partida (p. ej. el estado de la base), aunque la voz automática esté apagada. */
+export function leer(texto) {
+  callar();
+  ultimo = '';
+  vozNavegador(texto, getIdioma());
+}

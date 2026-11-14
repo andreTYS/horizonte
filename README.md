@@ -33,6 +33,14 @@ Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 
 **Personajes:** Nebula es el gato piloto (voz y pistas); la astronauta peruana guía con preguntas (paso *Predice*); la llama presenta las fichas de ciencia y los logros.
 
+## Accesibilidad
+
+- **Panel de accesibilidad** (botón con la figura o tecla `?`): texto más grande, alto contraste, menos movimiento, vibración en las alarmas y lectura del estado cada día.
+- **Lector de pantalla** (NVDA, TalkBack, VoiceOver): cada día se anuncia qué pasó; las alarmas interrumpen. Los recursos del HUD tienen nombre completo.
+- **Escuchar** (botón con la oreja o tecla `E`): Nebula lee en voz alta el estado de la base.
+- **Jugar con teclado**: `A` avanzar, `5` ×5, `R` refugio, `C` ración, `I` invernadero, `B` bitácora, `Z` rebobinar un día, `Esc` cerrar. El foco no se pierde al avanzar.
+- Las alarmas siempre tienen texto (y vibran en el celular); la voz de Nebula siempre tiene su globo escrito. Sin violaciones WCAG 2 A/AA en la auditoría automática de axe-core (landing, menú, diseño, Predice, misión, panel).
+
 ## Para docentes: panel y modo aula
 
 En el VPS, `docente.html` (con la clave `DOCENTE_TOKEN`) muestra por código de aula:

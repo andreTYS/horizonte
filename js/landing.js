@@ -1,6 +1,7 @@
 // Landing de ASU STELLAR · Horizonte: la primera pantalla. El mapa 3D de fondo hace un recorrido
 // de cámara que avanza con el scroll (la Tierra sobre el horizonte → la base → la antena → Marte).
 import { t, getIdioma } from './i18n.js';
+import { abrirPanel } from './accesibilidad.js';
 
 const I = (nombre) => `<svg class="i" aria-hidden="true"><use href="icons/sprite.svg#i-${nombre}"></use></svg>`;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -38,6 +39,7 @@ export function mostrarLanding({ app, mundo, misiones, nasa, alJugar, alHistoria
       <img src="assets/marca/logo-color.webp" alt="ASU STELLAR" class="landing-nav-logo" width="1200" height="800">
       <div class="landing-nav-acciones">
         <button class="boton-idioma" id="lIdioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
+        <button class="boton-icono" id="lAcc" aria-label="${t('Accesibilidad')}" aria-haspopup="dialog">${I('accesibilidad')}</button>
         <a class="boton-enlace fantasma" href="docente.html">${I('aula')} <span>${t('Soy docente')}</span></a>
       </div>
     </nav>
@@ -111,7 +113,7 @@ export function mostrarLanding({ app, mundo, misiones, nasa, alJugar, alHistoria
   </div>`;
 
   const raiz = app.querySelector('#landing');
-  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('menos-movimiento');
 
   // El scroll mueve la cámara 3D
   const alDesplazar = () => {
@@ -158,4 +160,5 @@ export function mostrarLanding({ app, mundo, misiones, nasa, alJugar, alHistoria
   app.querySelector('#lJugar2').addEventListener('click', jugar);
   app.querySelector('#lHistoria').addEventListener('click', () => { mundo?.terminarCinematografia('portada'); alHistoria(); });
   app.querySelector('#lIdioma').addEventListener('click', alCambiarIdioma);
+  app.querySelector('#lAcc').addEventListener('click', () => abrirPanel({ mundo, I }));
 }

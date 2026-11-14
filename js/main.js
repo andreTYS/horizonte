@@ -6,8 +6,9 @@ import * as api from './api.js';
 import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
 import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido } from './sonido.js';
-import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz } from './voz.js';
+import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz } from './voz.js';
 import { mostrarLanding } from './landing.js';
+import * as A from './accesibilidad.js';
 
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
@@ -57,6 +58,7 @@ async function iniciarMundo() {
     const { Mundo, soportaWebGL } = await import('./mundo3d.js');
     if (!soportaWebGL()) throw new Error(`sin WebGL${soportaWebGL.motivo ? ': ' + soportaWebGL.motivo : ''}`);
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
+    A.aplicar(G.mundo);
   } catch (err) {
     console.warn('Modo 2D:', err);
     G.motivo2D = err.message || String(err);
@@ -95,6 +97,7 @@ async function cargar() {
   await cargarIdioma();
   leerEnlaceDocente();
   api.detectar().then(vigilarPausa); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
+  A.aplicar(G.mundo);
   landing();
   avisoModo2D();
 }
@@ -109,6 +112,23 @@ function landing() {
     alCambiarIdioma: async () => { setIdioma(getIdioma() === 'es' ? 'en' : 'es'); G.historia = null; await cargarIdioma(); landing(); },
   });
 }
+
+// ───────────────────────── Teclado ─────────────────────────
+document.addEventListener('keydown', (ev) => {
+  if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('input, textarea, select') || document.getElementById('panel-acc') || document.getElementById('pausa-aula')) return;
+  const tecla = ev.key.toLowerCase();
+  if (tecla === '?') { ev.preventDefault(); A.abrirPanel({ mundo: G.mundo, I }); return; }
+  if (tecla === 'escape') { if (G.bitacoraAbierta) { G.bitacoraAbierta = false; mision(); } return; }
+  if (document.body.dataset.pantalla !== 'mision' || $app.querySelector('.modal')) return;
+  const accion = {
+    a: () => avanzar(1), 5: () => !G.aula.tranquilo && avanzar(5), e: escucharEstado, b: () => { G.bitacoraAbierta = !G.bitacoraAbierta; mision(); },
+    r: () => { G.hoy.refugio = !G.hoy.refugio; mision(); A.anunciar(G.hoy.refugio ? t('Refugio activado') : t('Refugio desactivado')); },
+    c: () => { G.hoy.racion = !G.hoy.racion; mision(); A.anunciar(G.hoy.racion ? t('Ración reducida activada') : t('Ración normal')); },
+    i: () => { if (!actual().config.invernadero) return; G.hoy.invernadero = !G.hoy.invernadero; mision(); A.anunciar(G.hoy.invernadero ? t('Invernadero encendido') : t('Invernadero apagado')); },
+    z: () => { const d = actual().dia; if (d > 0) rebobinar(d - 1); },
+  }[tecla];
+  if (accion) { ev.preventDefault(); accion(); }
+});
 
 // ───────────────────────── Modo aula ─────────────────────────
 // El enlace del docente (?aula=3B-2026&modo=aula[&ritmo=tranquilo]) llena el código de aula,
@@ -195,6 +215,8 @@ async function cargarIdioma() {
 }
 
 const botonSonido = () => `<button class="boton-icono" id="sonido" aria-label="${t('Sonido')}" aria-pressed="${sonidoActivo()}">${I(sonidoActivo() ? 'sonido' : 'mudo')}</button>`;
+const botonAcc = () => `<button class="boton-icono" id="accesibilidad" aria-label="${t('Accesibilidad')}" aria-haspopup="dialog">${I('accesibilidad')}</button>`;
+const botonEscuchar = () => `<button class="boton-icono" id="escuchar" aria-label="${t('Escuchar el estado de la base')} (E)">${I('escuchar')}</button>`;
 const botonVoz = () => `<button class="boton-icono" id="voz" aria-label="${t('Voz de Nebula')}" aria-pressed="${vozActiva()}">${I(vozActiva() ? 'voz' : 'sinvoz')}</button>`;
 
 /** Nebula lee en voz alta su globo de texto visible (si hay uno nuevo). */
@@ -207,6 +229,8 @@ function decirNebula() {
 }
 
 function enlazarSonido() {
+  document.getElementById('accesibilidad')?.addEventListener('click', () => A.abrirPanel({ mundo: G.mundo, I }));
+  document.getElementById('escuchar')?.addEventListener('click', escucharEstado);
   document.getElementById('voz')?.addEventListener('click', (ev) => {
     const on = alternarVoz();
     ev.currentTarget.innerHTML = I(on ? 'voz' : 'sinvoz');
@@ -272,6 +296,7 @@ function inicio() {
       <button class="boton-idioma" id="idioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
       ${botonSonido()}
       ${botonVoz()}
+      ${botonAcc()}
       ${chipAula()}
     </div>
     <header class="marca">
@@ -462,6 +487,23 @@ function empezarMision() {
 const actual = () => G.estados[G.estados.length - 1];
 const guiada = () => !G.mision.sin_pistas; // en las misiones de evaluación y avanzadas, Nebula no da pistas
 
+/** El estado de la base en una frase (para escucharlo o para el lector de pantalla). */
+function estadoEnPalabras() {
+  const m = G.mision, e = actual();
+  const luz = S.hayLuz(m, e.dia, G.nasa);
+  return t('Día {n} de {t}, {luz}. Energía {e} kilovatios hora, oxígeno {o} kilos, agua {a} kilos, comida {c} kilos. Radiación {r} de {l} milisieverts. Salud {s} por ciento. Ciencia {k} de {kt}.', {
+    n: Math.min(e.dia + 1, m.dias), t: m.dias, luz: luz ? t('de día') : t('de noche'), e: fmt(e.energia), o: fmt(e.o2, 1), a: fmt(e.agua), c: fmt(e.comida),
+    r: fmt(e.dosis, 1), l: m.limite_dosis_msv, s: fmt(e.salud), k: e.ciencia, kt: m.objetivo_ciencia,
+  });
+}
+
+function escucharEstado() {
+  if (document.body.dataset.pantalla !== 'mision') return;
+  const texto = estadoEnPalabras();
+  A.anunciar(texto);
+  leerEnVoz(texto);
+}
+
 function avanzar(maxDias) {
   for (let i = 0; i < maxDias; i++) {
     const e = actual();
@@ -475,12 +517,16 @@ function avanzar(maxDias) {
   }
   G.avisoRebobinado = null;
   const r = G.registros[G.registros.length - 1];
-  if (actual().terminado) { final(); return; }
-  if (r?.eventos.some((x) => x.tipo === 'tormenta_solar')) sfx.tormenta();
-  else if (r?.eventos.some((x) => x.tipo === 'tormenta_polvo')) sfx.polvo();
-  else if (r?.apagados.length || r?.eventos.length) sfx.alarma();
+  if (actual().terminado) { A.vibrar([300, 120, 300, 120, 300]); final(); return; }
+  if (r?.eventos.some((x) => x.tipo === 'tormenta_solar')) { sfx.tormenta(); A.vibrar([400, 150, 400]); }
+  else if (r?.eventos.some((x) => x.tipo === 'tormenta_polvo')) { sfx.polvo(); A.vibrar([250, 100, 250]); }
+  else if (r?.apagados.length || r?.eventos.length) { sfx.alarma(); A.vibrar([200, 100, 200]); }
   else sfx.paso();
   mision();
+  // Lector de pantalla: qué pasó hoy (las alarmas interrumpen)
+  const avisos = [...(r?.eventos || []).map((x) => x.texto), ...(r?.apagados?.length ? [t('Se apagó: {x}', { x: trLista(r.apagados).join(', ') })] : [])];
+  A.anunciar(`${t('Día {n}', { n: actual().dia + 1 })}. ${avisos.join(' ')}`, avisos.length > 0);
+  if (A.pref.leerEstado) leerEnVoz(`${avisos.join(' ')} ${estadoEnPalabras()}`);
 }
 
 function rebobinar(dia) {
@@ -492,6 +538,7 @@ function rebobinar(dia) {
   G.avisoRebobinado = dia;
   sfx.rebobinar();
   mision();
+  A.anunciar(t('El Cronoscopio te llevó al día {n}. Cambia tus decisiones y avanza.', { n: dia + 1 }));
 }
 
 function pistaNebula(e, ultimo) {
@@ -507,11 +554,13 @@ function pistaNebula(e, ultimo) {
 function recurso(icono, nombre, valor, max, texto, invertir = false) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (valor / max) * 100)) : 0;
   const clase = invertir ? (pct > 80 ? 'peligro' : pct > 55 ? 'alerta' : '') : (pct < 20 ? 'peligro' : pct < 40 ? 'alerta' : '');
-  return `<div class="recurso ${clase}" title="${nombre}"><span class="ico" aria-hidden="true">${icono}</span>
+  return `<div class="recurso ${clase}" title="${nombre}" role="img" aria-label="${texto} ${nombre}"><span class="ico" aria-hidden="true">${icono}</span>
     <span class="val"><b>${texto}</b><small>${nombre}</small></span><i style="width:${pct}%"></i></div>`;
 }
 
 function mision() {
+  const foco = document.activeElement?.id || (document.activeElement?.dataset?.dec && `[data-dec="${document.activeElement.dataset.dec}"]`);
+  queueMicrotask(() => { if (!foco) return; (foco.startsWith('[') ? $app.querySelector(foco) : document.getElementById(foco))?.focus(); });
   document.body.dataset.pantalla = 'mision';
   const m = G.mision, e = actual(), c = e.config, j = G.juego;
   const ultimo = G.registros[G.registros.length - 1];
@@ -547,7 +596,7 @@ function mision() {
 
   $app.innerHTML = `
     <header class="hud-superior">
-      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}${botonVoz()}</div>
+      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}${botonVoz()}${botonEscuchar()}${botonAcc()}</div>
       <div class="recursos">
         ${recurso(I('energia'), 'kWh', e.energia, capacidad || 1, fmt(e.energia))}
         ${recurso(I('o2'), t('kg O₂'), e.o2, Math.max(ini.o2, 1), fmt(e.o2, 1))}
@@ -578,7 +627,7 @@ function mision() {
 
     <footer class="hud-inferior">
       <div class="cronoscopio"><span class="cronoscopio-titulo">${I('cronoscopio')} ${t('Cronoscopio')}</span>
-      <div class="linea-tiempo" aria-label="${t('Cronoscopio: toca un día pasado para rebobinar')}">${linea}</div></div>
+      <div class="linea-tiempo" tabindex="0" role="group" aria-label="${t('Cronoscopio: toca un día pasado para rebobinar')}">${linea}</div></div>
       <div class="acciones">
         <button class="boton-avanzar" id="dia1">${I('avanzar')} ${t('AVANZAR')} <small>${t('1 día')}</small></button>
         ${G.aula.tranquilo ? '' : `<button class="boton-rapido" id="dia5" aria-label="${t('Avanzar 5 días')}">${I('rapido')}<small>×5</small></button>`}

@@ -550,10 +550,17 @@ export class Mundo {
   }
 
   /** portada: gira sola · diseno: vista alta · mision: más cerca */
+  /** Accesibilidad: sin cámara que gira sola ni balanceo de la cámara cinematográfica. */
+  movimientoReducido(on) {
+    this.quieto = on;
+    if (on) this.controles.autoRotate = false;
+    else if (this.modo === 'portada' && !this.cinematica) this.controles.autoRotate = true;
+  }
+
   vista(modo) {
     if (this.cinematica) { this.cinematica = null; this.controles.enabled = true; }
     this.modo = modo;
-    this.controles.autoRotate = modo === 'portada';
+    this.controles.autoRotate = modo === 'portada' && !this.quieto;
     const destino = { portada: [44, 26, 44], diseno: [30, 40, 34], mision: [32, 24, 30], resultado: [26, 18, 28] }[modo] || [40, 30, 40];
     this.#volar(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...destino));
     if (this.capaEtiquetas) this.capaEtiquetas.hidden = modo !== 'diseno';
@@ -628,8 +635,10 @@ export class Mundo {
     const s = c.actual;
     this.camara.position.copy(this.curvaPos.getPoint(s));
     // Respiración leve de la cámara (se siente viva aunque no se haga scroll)
-    this.camara.position.x += Math.sin(t * 0.25) * 2;
-    this.camara.position.y += Math.sin(t * 0.33) * 1.2;
+    if (!this.quieto) {
+      this.camara.position.x += Math.sin(t * 0.25) * 2;
+      this.camara.position.y += Math.sin(t * 0.33) * 1.2;
+    }
     const objetivo = this.curvaMira.getPoint(s);
     this.controles.target.copy(objetivo);
     this.camara.lookAt(objetivo);

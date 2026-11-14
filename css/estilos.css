@@ -735,3 +735,41 @@ body[data-pantalla="landing"] #puntos, body[data-pantalla="landing"] #etiquetas 
 #aviso-2d b { color: var(--acento); font-family: var(--boton); }
 #aviso-2d span { flex: 1 1 260px; }
 #aviso-2d #cerrar2d { min-height: 36px; width: 36px; padding: 0; }
+
+/* ═══════════ Accesibilidad ═══════════ */
+.solo-lector { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#panel-acc { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(14, 6, 36, .75); }
+.panel-acc-caja { width: min(520px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px; border-radius: 22px; background: var(--fondo-2); border: 2px solid var(--borde-fuerte); box-shadow: var(--sombra); }
+.panel-acc-caja h2 { display: flex; gap: 10px; align-items: center; font-size: 1.3rem; margin: 0; }
+.panel-acc-caja h3 { display: flex; gap: 8px; align-items: center; font-size: 1rem; margin: 18px 0 8px; }
+.panel-acc-caja h2 .i, .panel-acc-caja h3 .i { width: 22px; height: 22px; color: var(--acento-2); }
+.opcion-acc { display: flex; gap: 12px; align-items: center; padding: 12px; margin-top: 10px; border-radius: 14px; border: 1px solid var(--borde); background: rgba(255, 255, 255, .04); cursor: pointer; min-height: 56px; }
+.opcion-acc:has(input:checked) { border-color: var(--acento); background: rgba(255, 214, 0, .08); }
+.opcion-acc input { width: 24px; height: 24px; accent-color: var(--acento); flex: none; }
+.opcion-acc .ico .i { width: 22px; height: 22px; color: var(--acento-2); }
+.opcion-acc b { display: block; font: 800 1rem var(--boton); }
+.opcion-acc small { color: var(--suave); }
+.atajos { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 6px 14px; margin: 0 0 12px; }
+.atajos div { display: flex; gap: 10px; align-items: center; }
+.atajos dd { margin: 0; font-size: .9rem; }
+kbd { display: inline-grid; place-items: center; min-width: 30px; height: 28px; padding: 0 6px; border-radius: 7px; border: 1px solid var(--borde-fuerte); border-bottom-width: 3px; background: var(--fondo); font: 700 .85rem var(--numeros); color: var(--acento); }
+
+html.texto-grande { font-size: 118%; }
+html.texto-grande body { font-size: 18px; }
+html.texto-grande .recurso b, html.texto-grande .widget b { font-size: 1rem; }
+html.texto-grande .recurso small, html.texto-grande .widget small, html.texto-grande .chico { font-size: .9rem; }
+html.texto-grande .habilidad .txt { font-size: .85rem; }
+
+html.alto-contraste { --vidrio: #0e0624; --vidrio-fuerte: #0b0420; --tarjeta: #1b0f38; --borde: rgba(255, 255, 255, .55); --borde-fuerte: #ffffff; --suave: #f1ecff; --texto: #ffffff; }
+html.alto-contraste .recurso, html.alto-contraste .widget, html.alto-contraste .nebula .globo, html.alto-contraste .toast, html.alto-contraste .modal, html.alto-contraste .habilidad,
+html.alto-contraste .landing-seccion, html.alto-contraste .menu-principal, html.alto-contraste .carta { background: #0b0420 !important; border: 2px solid #fff !important; backdrop-filter: none !important; }
+html.alto-contraste a { text-decoration: underline; }
+html.alto-contraste .suave, html.alto-contraste small { color: #fff !important; }
+
+html.menos-movimiento *, html.menos-movimiento *::before, html.menos-movimiento *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+html.menos-movimiento .revelar { opacity: 1; transform: none; }
+html.alto-contraste .habilidad .ico { background: #0b0420 !important; border: 2px solid #fff !important; }
+html.alto-contraste .habilidad .txt, html.alto-contraste .habilidades > small { background: #0b0420; color: #fff; padding: 1px 6px; border-radius: 6px; text-shadow: none; }
+html.alto-contraste .linea-tiempo .futuro { opacity: .75; }
+html.alto-contraste .linea-tiempo button { border: 2px solid #fff; color: #fff; }
+html.alto-contraste #puntos .pin-nombre { background: #0b0420; border: 1px solid #fff; }
