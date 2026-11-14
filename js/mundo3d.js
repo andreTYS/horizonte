@@ -1,4 +1,4 @@
-// Mundo 3D de HORIZONTE: terreno lunar, cielo, luces, base y efectos.
+// Mundo 3D de ASU STELLAR · Horizonte: terreno lunar, cielo, luces, base, efectos y cámara cinematográfica de la portada.
 // La simulación (sim.js) no sabe nada de esto: la interfaz le pasa el estado con mundo.actualizar({...}).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -7,9 +7,12 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
-import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR } from './terreno3d.js';
+import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
 
 export function soportaWebGL() {
   try {
@@ -63,6 +66,48 @@ function texturaTierra() {
   return t;
 }
 
+function texturaNubes() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const g = c.getContext('2d');
+  for (let i = 0; i < 140; i++) {
+    const x = hash(i, 31) * 512, y = 20 + hash(i, 32) * 216, r = 6 + hash(i, 33) * 26;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.beginPath(); g.ellipse(x, y, r * 1.8, r * 0.7, hash(i, 34), 0, Math.PI * 2); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function texturaAro() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(64, 64, 30, 64, 64, 62);
+  r.addColorStop(0, 'rgba(255,255,255,0)'); r.addColorStop(0.75, 'rgba(255,255,255,.18)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+function crearSatelite() {
+  const g = new THREE.Group();
+  const luz = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshStandardMaterial({ color: 0xff5555, emissive: 0xff3030, emissiveIntensity: 1 }));
+  luz.position.y = 2.2;
+  g.add(luz);
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 2.4), new THREE.MeshStandardMaterial({ color: 0xd8c27a, metalness: 0.8, roughness: 0.3 })));
+  const panel = new THREE.MeshStandardMaterial({ color: 0x1b2a6b, emissive: 0x0a1440, emissiveIntensity: 0.6, metalness: 0.5, roughness: 0.3 });
+  for (const s of [-1, 1]) {
+    const p = new THREE.Mesh(new THREE.BoxGeometry(9, 0.15, 3), panel);
+    p.position.x = s * 6.2;
+    g.add(p);
+  }
+  g.scale.setScalar(1.6);
+  return g;
+}
+
 function texturaHalo(color) {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -85,9 +130,13 @@ export class Mundo {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Reflejos suaves de un "estudio" en los metales y paneles (PBR más rico, sin descargar mapas HDR)
+    this.pmrem = new THREE.PMREMGenerator(this.renderer);
 
     this.escena = new THREE.Scene();
     this.escena.background = new THREE.Color(0x02030a);
+    this.escena.environment = this.pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.escena.environmentIntensity = 0.14;
     this.camara = new THREE.PerspectiveCamera(38, 1, 0.5, 2000);
     this.camara.position.set(40, 30, 40);
 
@@ -122,11 +171,23 @@ export class Mundo {
     this.escena.add(this.base);
 
     if (this.calidad === 'alta') {
-      this.composer = new EffectComposer(this.renderer);
+      // Antialias (MSAA) dentro del compositor: sin esto los bordes se ven dentados con el bloom
+      const destino = new THREE.WebGLRenderTarget(256, 256, { type: THREE.HalfFloatType, samples: 4 });
+      this.composer = new EffectComposer(this.renderer, destino);
       this.composer.addPass(new RenderPass(this.escena, this.camara));
       this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.5, 0.82);
       this.composer.addPass(this.bloom);
       this.composer.addPass(new OutputPass());
+      // Viñeta y grano de película: acabado de cine
+      this.cine = new ShaderPass({
+        uniforms: { tDiffuse: { value: null }, t: { value: 0 }, fuerza: { value: 0.35 } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+        fragmentShader: `uniform sampler2D tDiffuse; uniform float t; uniform float fuerza; varying vec2 vUv;
+          float azar(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + t) * 43758.5453); }
+          void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5; float v = smoothstep(.85, .25, length(d * vec2(1.1, 1.))); 
+            c.rgb *= mix(1. - fuerza, 1., v); c.rgb += (azar(vUv * 913.) - .5) * .025; gl_FragColor = c; }`,
+      });
+      this.composer.addPass(this.cine);
     }
 
     this.#cargarModelosBlender();
@@ -191,6 +252,15 @@ export class Mundo {
     const tierra = new THREE.Mesh(new THREE.SphereGeometry(22, 48, 32), new THREE.MeshStandardMaterial({ map: texturaTierra(), roughness: 0.8, emissive: 0x0a1a40, emissiveIntensity: 0.4 }));
     tierra.position.set(-300, 75, -380);
     tierra.rotation.z = 0.4;
+    // Nubes y atmósfera (brillo en el borde, efecto Fresnel)
+    const nubes = new THREE.Mesh(new THREE.SphereGeometry(22.4, 48, 32), new THREE.MeshStandardMaterial({ map: texturaNubes(), transparent: true, depthWrite: false, roughness: 1 }));
+    tierra.add(nubes);
+    this.nubes = nubes;
+    tierra.add(new THREE.Mesh(new THREE.SphereGeometry(25, 48, 32), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.BackSide,
+      vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
+      fragmentShader: 'varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1. - abs(dot(vN, vV)), 3.); gl_FragColor = vec4(.35, .65, 1., 1.) * f * 1.6; }',
+    })));
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaHalo(['rgba(120,180,255,.9)', 'rgba(80,140,255,.35)']), blending: THREE.AdditiveBlending, depthWrite: false }));
     halo.scale.setScalar(70); halo.position.copy(tierra.position);
     this.tierra = tierra;
@@ -203,6 +273,23 @@ export class Mundo {
     // El Sol visible va en el mismo rumbo que la luz, más bajo en el cielo para que entre en cuadro
     this.solVisible.position.set(this.dirSol.x, 0.28, this.dirSol.z).normalize().multiplyScalar(800);
     this.escena.add(this.solVisible);
+    // Destello de lente del Sol
+    if (this.calidad !== 'baja') {
+      const luzDestello = new THREE.PointLight(0xffffff, 0, 1);
+      luzDestello.position.copy(this.solVisible.position);
+      const halo = texturaHalo(['rgba(255,255,255,1)', 'rgba(255,220,160,.3)']);
+      const aro = texturaAro();
+      this.destello = new Lensflare();
+      this.destello.addElement(new LensflareElement(halo, 260, 0, new THREE.Color(1, 0.95, 0.85)));
+      for (const [tam, dist, col] of [[60, 0.4, [0.6, 0.8, 1]], [90, 0.6, [1, 0.6, 1]], [140, 0.85, [0.5, 1, 0.9]], [50, 1, [1, 0.9, 0.5]]]) {
+        this.destello.addElement(new LensflareElement(aro, tam, dist, new THREE.Color(...col)));
+      }
+      luzDestello.add(this.destello);
+      this.escena.add(luzDestello);
+    }
+    // Un satélite cruza el cielo con su luz parpadeante
+    this.satelite = crearSatelite();
+    this.escena.add(this.satelite);
   }
 
   #terreno() {
@@ -210,6 +297,15 @@ export class Mundo {
     this.escena.add(this.suelo);
     this.exploracion = crearExploracion(this.calidad);
     this.escena.add(this.exploracion.grupo);
+    // Rover de patrulla: da vueltas alrededor de la base levantando polvo
+    this.patrulla = crearRover();
+    this.patrulla.scale.setScalar(0.8);
+    this.escena.add(this.patrulla);
+    const nPolvo = 60, pp = new Float32Array(nPolvo * 3);
+    this.polvoRover = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pp, 3)),
+      new THREE.PointsMaterial({ color: 0xb8b2a8, size: 0.35, transparent: true, opacity: 0.55, depthWrite: false }));
+    this.polvoRover.userData = { vida: new Float32Array(nPolvo), i: 0 };
+    this.escena.add(this.polvoRover);
     // Plataforma de la base (losas, caminos, pista y luces) y rocas alrededor
     this.plataforma = crearPlataforma();
     this.escena.add(this.plataforma.grupo);
@@ -444,6 +540,7 @@ export class Mundo {
 
   /** portada: gira sola · diseno: vista alta · mision: más cerca */
   vista(modo) {
+    if (this.cinematica) { this.cinematica = null; this.controles.enabled = true; }
     this.modo = modo;
     this.controles.autoRotate = modo === 'portada';
     const destino = { portada: [44, 26, 44], diseno: [30, 40, 34], mision: [32, 24, 30], resultado: [26, 18, 28] }[modo] || [40, 30, 40];
@@ -452,6 +549,79 @@ export class Mundo {
     this.#cerrarFicha();
     if (this.capaPuntos) this.capaPuntos.hidden = !(modo === 'mision' || modo === 'diseno');
     if (modo === 'mision') this.#mostrarAyuda();
+  }
+
+  #animarSatelite(t) {
+    const a = (t / 70) % 1 * Math.PI * 1.2 - 0.1; // cruza el cielo cada 70 s
+    this.satelite.position.set(Math.cos(a) * 640 - 120, 180 + Math.sin(a) * 260, -420 + Math.sin(a * 0.7) * 120);
+    this.satelite.rotation.set(t * 0.2, t * 0.3, 0);
+    this.satelite.children[0].material.emissiveIntensity = (t % 1.4) < 0.12 ? 6 : 0.2;
+  }
+
+  #animarPatrulla(t, dt) {
+    const r = 40, w = 0.045, ang = t * w;
+    const x = Math.cos(ang) * r, z = Math.sin(ang) * r * 0.85;
+    const y = Math.max(altura(x, z), 0.12);
+    this.patrulla.position.set(x, y, z);
+    this.patrulla.rotation.y = -ang - Math.PI / 2 + (Math.sin(t * 0.7) * 0.05);
+    // Polvo detrás de las ruedas
+    const p = this.polvoRover.geometry.attributes.position, v = this.polvoRover.userData.vida;
+    const u = this.polvoRover.userData;
+    u.acum = (u.acum || 0) + dt;
+    while (u.acum > 0.06) {
+      u.acum -= 0.06;
+      const i = u.i++ % v.length;
+      p.setXYZ(i, x + (Math.random() - 0.5) * 1.2, y + 0.2, z + (Math.random() - 0.5) * 1.2);
+      v[i] = 1;
+    }
+    for (let i = 0; i < v.length; i++) {
+      if (v[i] <= 0) { p.setY(i, -50); continue; }
+      v[i] -= dt * 0.6;
+      p.setY(i, p.getY(i) + dt * 0.5);
+    }
+    p.needsUpdate = true;
+  }
+
+  // ── Cámara cinematográfica (portada / landing) ──
+  /** Activa el recorrido de cámara; p (0–1) es el avance del scroll de la landing. */
+  cinematografia(p) {
+    if (!this.cinematica) {
+      this.cinematica = { p: 0, actual: 0 };
+      this.controles.enabled = false;
+      this.transicion = null;
+      if (this.capaEtiquetas) this.capaEtiquetas.hidden = true;
+      if (this.capaPuntos) this.capaPuntos.hidden = true;
+      this.#cerrarFicha();
+    }
+    this.cinematica.p = Math.max(0, Math.min(1, p));
+  }
+
+  /** Vuelve a la cámara normal (el jugador la controla). */
+  terminarCinematografia(modo = 'portada') {
+    if (!this.cinematica) return;
+    this.cinematica = null;
+    this.controles.enabled = true;
+    this.vista(modo);
+  }
+
+  #moverCinematica(dt) {
+    const c = this.cinematica;
+    c.actual += (c.p - c.actual) * (1 - Math.exp(-dt * 3)); // suaviza el scroll
+    const t = this.reloj.elapsedTime;
+    // Recorrido: la Tierra sobre el horizonte → la base desde lo alto → de cerca → la antena y el rover → vista final
+    const pos = [[-60, 60, 230], [150, 110, 170], [52, 22, 58], [88, 18, 70], [-20, 70, 120]];
+    const mira = [[-300, 75, -380], [0, 0, 0], [0, 3, 0], [PUNTOS.antena.x, 8, PUNTOS.antena.z], [0, 2, 0]];
+    const curva = (lista) => new THREE.CatmullRomCurve3(lista.map((x) => new THREE.Vector3(...x)));
+    this.curvaPos ||= curva(pos);
+    this.curvaMira ||= curva(mira);
+    const s = c.actual;
+    this.camara.position.copy(this.curvaPos.getPoint(s));
+    // Respiración leve de la cámara (se siente viva aunque no se haga scroll)
+    this.camara.position.x += Math.sin(t * 0.25) * 2;
+    this.camara.position.y += Math.sin(t * 0.33) * 1.2;
+    const objetivo = this.curvaMira.getPoint(s);
+    this.controles.target.copy(objetivo);
+    this.camara.lookAt(objetivo);
   }
 
   redimensionar() {
@@ -473,6 +643,12 @@ export class Mundo {
 
     this.sol.intensity = a.sol;
     this.hemi.intensity = a.hemi;
+    this.escena.environmentIntensity = 0.04 + Math.min(1, a.sol / 3.4) * 0.1;
+    if (this.destello) this.destello.visible = this.planeta === 'luna' && a.sol > 1.5;
+    if (this.cine) this.cine.uniforms.t.value = t % 10;
+    this.nubes.rotation.y += dt * 0.012;
+    this.#animarSatelite(t);
+    this.#animarPatrulla(t, dt);
     this.luzTierra.intensity = a.tierra;
     this.solVisible.material.opacity = Math.min(1, a.sol / 3.4);
     this.luzHabitat.intensity = a.noche * 90;
@@ -549,7 +725,8 @@ export class Mundo {
     this.sol.target.position.copy(this.controles.target);
     this.sol.position.copy(this.controles.target).addScaledVector(this.dirSol, 80);
     this.tierra.rotation.y += dt * 0.02;
-    this.controles.update(dt);
+    if (this.cinematica) this.#moverCinematica(dt);
+    else this.controles.update(dt);
 
     // Etiquetas HTML sobre los módulos
     if (this.capaEtiquetas && !this.capaEtiquetas.hidden) {

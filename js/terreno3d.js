@@ -260,7 +260,7 @@ function huella(puntos, calidad, ancho = 1.6) {
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.3, ...extra });
 
-function rover() {
+export function rover() {
   const g = new THREE.Group();
   const cuerpo = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.9, 2), mat(0xe8e8ec));
   cuerpo.position.y = 1.3; g.add(cuerpo);

@@ -7,6 +7,7 @@ import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
 import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido } from './sonido.js';
 import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz } from './voz.js';
+import { mostrarLanding } from './landing.js';
 
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
@@ -72,7 +73,18 @@ async function cargar() {
   await cargarIdioma();
   leerEnlaceDocente();
   api.detectar().then(vigilarPausa); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
-  inicio();
+  landing();
+}
+
+// ───────────────────────── Landing (primera pantalla) ─────────────────────────
+function landing() {
+  callar();
+  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  mostrarLanding({
+    app: $app, mundo: G.mundo, misiones: G.misiones, nasa: G.nasa,
+    alJugar: inicio, alHistoria: () => historia(),
+    alCambiarIdioma: async () => { setIdioma(getIdioma() === 'es' ? 'en' : 'es'); G.historia = null; await cargarIdioma(); landing(); },
+  });
 }
 
 // ───────────────────────── Modo aula ─────────────────────────
@@ -233,6 +245,7 @@ function inicio() {
   const avanzadas = G.misiones.map((m, i) => (m.avanzada ? boton(m, i) : '')).join('');
   $app.innerHTML = `
     <div class="barra-rapida">
+      <button class="boton-icono" id="aLanding" aria-label="${t('Inicio')}">${I('base')}</button>
       <button class="boton-idioma" id="idioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
       ${botonSonido()}
       ${botonVoz()}
@@ -271,6 +284,7 @@ function inicio() {
   document.getElementById('ritmoTranquilo').addEventListener('change', (ev) => { G.aula.tranquilo = ev.target.checked; guardar('horizonte.modoAula', G.aula); });
   document.getElementById('fuentes').addEventListener('click', fuentes);
   document.getElementById('historia').addEventListener('click', () => historia());
+  document.getElementById('aLanding').addEventListener('click', landing);
   document.getElementById('idioma').addEventListener('click', async () => {
     setIdioma(getIdioma() === 'es' ? 'en' : 'es');
     G.historia = null;
