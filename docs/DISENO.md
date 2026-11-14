@@ -126,9 +126,25 @@ Al fallar, `analizarFalla()` recorre el historial y construye una **cadena causa
 
 ## 6. Medición del aprendizaje
 
-- **Prueba inicial y final** (5 preguntas, 2 min) sobre relaciones entre sistemas, por ejemplo: "¿qué pasa con el oxígeno si se acaba la energía?".
-- **Escenario nuevo:** la misión final sin pistas.
-- **Rúbrica individual 0–8:** identifica la causa (0–2), propone una corrección (0–2), justifica con un dato (0–2) y anticipa efectos secundarios (0–2).
+Implementado en `js/evaluacion.js` con las preguntas en `data/evaluacion.json`. Todo se califica automáticamente y llega al panel docente.
+
+| Instrumento | Cuándo | Qué mide | Puntaje |
+|---|---|---|---|
+| **Prueba inicial** | Al tocar la primera misión (se puede posponer) | Ideas previas sobre 5 conceptos. **No muestra respuestas**, para no enseñar antes de jugar | 0–5 |
+| **Prueba final** | Al completar la misión 3 | Los mismos 5 conceptos con preguntas distintas (prueba paralela). Al final muestra respuestas y dato NASA | 0–5 |
+| **Caso Artemis-7** | Después de la prueba final | Transferencia a una base que el estudiante **no diseñó**: lee una bitácora con falla y la analiza | Rúbrica 0–8 |
+
+**Conceptos evaluados:** energía → oxígeno · agua → oxígeno (electrólisis) · reciclaje de agua · noche lunar · radiación y refugio.
+
+**Rúbrica (4 criterios × 0–2):** identifica la causa · propone una corrección · justifica con un dato NASA · anticipa efectos secundarios.
+Cada criterio tiene una respuesta de 2 puntos (correcta), al menos una de 1 punto (parcial: un efecto en vez de la causa, un parche en vez de la solución, un dato relevante pero que no justifica) y distractores de 0.
+
+**Nivel (escala MINEDU):** 7–8 **AD** logro destacado · 5–6 **A** logro esperado · 3–4 **B** en proceso · 0–2 **C** en inicio.
+Alineado a la competencia de Ciencia y Tecnología *"Explica el mundo físico basándose en conocimientos sobre los seres vivos, materia y energía, biodiversidad, Tierra y universo"*.
+
+**Ganancia de aprendizaje normalizada (Hake):** `(final − inicial) / (5 − inicial)`. Mide cuánto avanzó el estudiante de lo que le faltaba aprender. Es la métrica de impacto para el jurado.
+
+**Panel docente:** promedios inicial y final, ganancia del aula, promedio de rúbrica, cantidad de estudiantes por nivel y tabla por estudiante.
 
 ## 7. Dirección de arte
 
@@ -222,7 +238,7 @@ Requisitos mínimos del VPS: 1 vCPU, 1 GB RAM, Ubuntu 24.04, dominio apuntando a
 | P0 | Datos DONKI reales en la misión 3 | ✅ |
 | P1 | Escena isométrica de la base (§7.3) | ✅ |
 | P1 | Nueva interfaz de la misión (§7.4) | ✅ |
-| P1 | Prueba inicial y final y rúbrica (§6) | ⏳ |
+| P1 | Prueba inicial y final y rúbrica (§6) | ✅ |
 | P2 | Arte de Nebula (4 expresiones) | ⏳ |
 | P2 | Servidor VPS: Docker + Traefik, partidas, panel docente, proxy NASA | ✅ (falta el VPS real) |
 | P3 | Misión 4: Marte | ⏳ |

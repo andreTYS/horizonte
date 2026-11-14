@@ -25,7 +25,7 @@ function guardarPendientes(lista) {
 }
 
 async function enviar(partida) {
-  const r = await fetch('api/partidas', {
+  const r = await fetch(partida.tipo ? 'api/evaluaciones' : 'api/partidas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(partida),
@@ -53,3 +53,6 @@ async function reenviarPendientes() {
   }
   guardarPendientes(restantes);
 }
+
+/** Guarda el resultado de una prueba (inicial, final) o del caso con rúbrica. */
+export const enviarEvaluacion = (evaluacion) => enviarPartida(evaluacion);

@@ -15,9 +15,22 @@ $('form').addEventListener('submit', async (ev) => {
     if (r.status === 401) throw new Error('Clave docente incorrecta.');
     if (!r.ok) throw new Error(`El servidor respondió ${r.status}.`);
     const d = await r.json();
-    const tabla = (filas, cols) => `<table class="tabla-fuentes"><tbody><tr>${cols.map(([, t]) => `<td><b>${t}</b></td>`).join('')}</tr>${
-      filas.map((f) => `<tr>${cols.map(([k, , fmt]) => `<td>${esc(fmt ? fmt(f[k]) : f[k])}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-    $('salida').innerHTML = `
+    const tabla = (filas, cols) => `<div class="tabla-scroll"><table class="tabla-fuentes"><tbody><tr>${cols.map(([, t]) => `<td><b>${t}</b></td>`).join('')}</tr>${
+      filas.map((f) => `<tr>${cols.map(([k, , fmt]) => `<td>${esc(fmt ? fmt(f[k]) : f[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const ap = d.aprendizaje;
+    const nota = (x) => (x ? `${x.puntaje}/${x.maximo}${x.nivel ? ' · ' + x.nivel : ''}` : '—');
+    const aprendizaje = ap && ap.estudiantes.length ? `
+      <section class="tarjeta"><h3>📈 Aprendizaje</h3>
+        <div class="resumen-diseno">
+          <div class="dato"><small>Prueba inicial (prom.)</small><b>${ap.inicial ?? '—'} / 5</b></div>
+          <div class="dato bien"><small>Prueba final (prom.)</small><b>${ap.final ?? '—'} / 5</b></div>
+          <div class="dato"><small>Ganancia normalizada</small><b>${ap.ganancia != null ? Math.round(ap.ganancia * 100) + ' %' : '—'}</b></div>
+          <div class="dato"><small>Rúbrica Artemis-7 (prom.)</small><b>${ap.caso ?? '—'} / 8</b></div>
+        </div>
+        <p class="chico suave" style="margin-top:10px">Niveles en la rúbrica: AD ${ap.niveles.AD} · A ${ap.niveles.A} · B ${ap.niveles.B} · C ${ap.niveles.C}</p>
+        ${tabla(ap.estudiantes, [['nombre', 'Estudiante'], ['inicial', 'Inicial', nota], ['final', 'Final', nota], ['caso', 'Rúbrica', nota]])}
+      </section>` : '';
+    $('salida').innerHTML = `${aprendizaje}
       <section class="tarjeta"><h3>Resumen · ${esc(d.aula)}</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión'], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
       <section class="tarjeta"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión'], ['motivo', 'Causa', (m) => MOTIVOS[m] || m], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
       <section class="tarjeta"><h3>Partidas</h3>${tabla(d.partidas.slice(0, 200), [['nombre', 'Estudiante'], ['mision', 'Misión'], ['exito', 'Resultado', (x) => (x ? '✅' : '❌')], ['motivo', 'Causa', (m) => MOTIVOS[m] || ''], ['estrellas', '★'], ['rebobinados', '⏪'], ['fecha', 'Fecha', (f) => (f ? new Date(f).toLocaleString('es-PE') : '')]])}</section>`;

@@ -2,6 +2,7 @@
 import * as S from './sim.js';
 import { escena } from './escena.js';
 import * as api from './api.js';
+import * as E from './evaluacion.js';
 
 const $app = document.getElementById('app');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,6 +15,8 @@ const G = {
   rebobinados: 0, avisoRebobinado: null,
   progreso: leer('horizonte.progreso', {}),
   jugador: leer('horizonte.jugador', { nombre: '', aula: '' }),
+  evaluacion: null,
+  eval: leer('horizonte.evaluacion', {}), // { inicial, final, caso, saltoInicial }
 };
 
 function leer(clave, porDefecto) {
@@ -25,7 +28,7 @@ function guardar(clave, valor) {
 
 async function cargar() {
   const leerJson = (f) => fetch(`data/${f}`).then((r) => r.json());
-  [G.nasa, G.juego, G.misiones] = await Promise.all([leerJson('nasa.json'), leerJson('juego.json'), leerJson('misiones.json')]);
+  [G.nasa, G.juego, G.misiones, G.evaluacion] = await Promise.all([leerJson('nasa.json'), leerJson('juego.json'), leerJson('misiones.json'), leerJson('evaluacion.json')]);
   api.detectar(); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
   inicio();
 }
@@ -66,6 +69,7 @@ function inicio() {
     ${nebula('¡Hola, comandante! Todos los números de este juego vienen de la NASA, y te diré de dónde. ¿Empezamos?', 'feliz')}
     <h2 class="titulo-seccion">Misiones</h2>
     <div class="lista-misiones">${misiones}</div>
+    ${tarjetaAprendizaje()}
     <details class="tarjeta jugador"><summary>👩‍🚀 ${G.jugador.nombre ? esc(G.jugador.nombre) : 'Tu nombre y aula (opcional)'}</summary>
       <label>Nombre <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
       <label>Código de aula <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="p. ej. 3B-2026"></label>
@@ -74,12 +78,17 @@ function inicio() {
     <div class="fila"><button id="fuentes">📚 Datos NASA usados</button></div>
     <p class="chico suave pie">Stellar Experience · Moquegua, Perú · NASA Space Apps Challenge 2026</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
-    G.mision = G.misiones[+b.dataset.mision];
-    G.config = S.configInicial(G.mision);
-    G.rebobinados = 0;
-    arriba();
-    construir();
+    const empezar = () => {
+      G.mision = G.misiones[+b.dataset.mision];
+      G.config = S.configInicial(G.mision);
+      G.rebobinados = 0;
+      arriba();
+      construir();
+    };
+    // Antes de la primera misión, la prueba inicial (se puede posponer)
+    if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
   }));
+  $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje })[b.dataset.eval]()));
   for (const id of ['nombre', 'aula']) {
     document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
   }
@@ -356,8 +365,10 @@ function final() {
       ${nebula(esc(m.nebula.exito), 'feliz')}
       <div class="fila">
         ${siguiente ? `<button class="primario" id="sig">Siguiente: ${esc(siguiente.titulo)}</button>` : ''}
+        ${!siguiente && !G.eval.caso ? '<button class="primario" id="evalfinal">📝 Prueba final y caso Artemis-7</button>' : ''}
         <button id="inicio" class="secundario">Volver a misiones</button>
       </div>`;
+    document.getElementById('evalfinal')?.addEventListener('click', G.eval.final ? casoArtemis : pruebaFinal);
     if (siguiente) document.getElementById('sig').addEventListener('click', () => { G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; arriba(); construir(); });
     document.getElementById('inicio').addEventListener('click', inicio);
     return;
@@ -379,6 +390,77 @@ function final() {
     </div>`;
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
   document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; arriba(); construir(); });
+}
+
+// ───────────────────────── Evaluación del aprendizaje ─────────────────────────
+const ultimaMision = () => G.misiones[G.misiones.length - 1];
+const finalDesbloqueada = () => Boolean(G.progreso[ultimaMision().id]);
+
+function guardarEval(tipo, r) {
+  G.eval[tipo] = { puntaje: r.puntaje, maximo: r.maximo, respuestas: r.respuestas, nivel: r.nivel?.codigo, fecha: new Date().toISOString() };
+  guardar('horizonte.evaluacion', G.eval);
+  api.enviarEvaluacion({ tipo, puntaje: r.puntaje, maximo: r.maximo, nivel: r.nivel?.codigo || null, respuestas: r.respuestas, nombre: G.jugador.nombre, aula: G.jugador.aula });
+}
+
+function tarjetaAprendizaje() {
+  const ev = G.eval;
+  const fila = (icono, nombre, hecho, texto, boton, bloqueado) => `
+    <div class="fila-eval ${hecho ? 'hecho' : ''}"><span class="ico">${icono}</span>
+      <span class="info"><b>${nombre}</b><small class="suave">${texto}</small></span>
+      ${boton && !bloqueado ? `<button class="${hecho ? 'fantasma' : 'secundario'}" data-eval="${boton}">${hecho ? 'Repetir' : 'Hacer'}</button>` : `<span class="pastilla">${bloqueado ? '🔒' : '✓'}</span>`}</div>`;
+  const bloqueadaFinal = !finalDesbloqueada();
+  return `<section class="tarjeta aprendizaje">
+    <div class="entre"><h3>📈 Tu aprendizaje</h3>${ev.inicial && ev.final && ev.caso ? '<button class="fantasma" data-eval="resumen">Ver resumen →</button>' : ''}</div>
+    ${fila('📝', 'Prueba inicial', ev.inicial, ev.inicial ? `${ev.inicial.puntaje}/${ev.inicial.maximo}` : 'Antes de jugar · 2 min', ev.inicial ? null : 'inicial')}
+    ${fila('🎯', 'Prueba final', ev.final, ev.final ? `${ev.final.puntaje}/${ev.final.maximo}` : bloqueadaFinal ? `Completa “${esc(ultimaMision().titulo.replace(/^Misión \d · /, ''))}”` : 'Lista para hacer', 'final', bloqueadaFinal)}
+    ${fila('🧑‍🚀', 'Caso Artemis-7', ev.caso, ev.caso ? `${ev.caso.puntaje}/8 · ${ev.caso.nivel}` : 'Rúbrica 0–8 · después de la prueba final', 'caso', !ev.final)}
+  </section>`;
+}
+
+function pruebaInicial(despues) {
+  E.mostrarPrueba($app, G.evaluacion.inicial, {
+    conRespuestas: false,
+    alTerminar: (r) => { guardarEval('inicial', r); despues(); },
+    alSaltar: () => { G.eval.saltoInicial = true; guardar('horizonte.evaluacion', G.eval); despues(); },
+  });
+}
+
+function pruebaFinal() {
+  E.mostrarPrueba($app, G.evaluacion.final, {
+    conRespuestas: true, nasa: G.nasa,
+    alTerminar: (r) => { guardarEval('final', r); casoArtemis(); },
+  });
+}
+
+function casoArtemis() {
+  E.mostrarCaso($app, G.evaluacion.caso, {
+    niveles: G.evaluacion.niveles,
+    alTerminar: (r) => { guardarEval('caso', r); resumenAprendizaje(); },
+  });
+}
+
+function resumenAprendizaje() {
+  arriba();
+  const { inicial, final, caso } = G.eval;
+  const g = E.ganancia(inicial?.puntaje, final?.puntaje, 5);
+  const barra = (v, max) => `<div class="barra"><span style="width:${max ? (v / max) * 100 : 0}%"></span></div>`;
+  $app.innerHTML = `
+    <section class="tarjeta">
+      <p class="lema">Tu aprendizaje</p>
+      <h2>${esc(G.jugador.nombre || 'Comandante')}</h2>
+      <div class="comparacion">
+        <div><small class="suave">Prueba inicial</small><b>${inicial ? `${inicial.puntaje}/5` : '—'}</b>${barra(inicial?.puntaje || 0, 5)}</div>
+        <div class="flecha">→</div>
+        <div><small class="suave">Prueba final</small><b>${final ? `${final.puntaje}/5` : '—'}</b>${barra(final?.puntaje || 0, 5)}</div>
+      </div>
+      ${g != null ? `<p class="centrado">Ganancia de aprendizaje: <b>${Math.round(g * 100)} %</b> <span class="chico suave">de lo que te faltaba aprender</span></p>` : '<p class="chico suave centrado">Haz la prueba inicial y la final para ver tu ganancia.</p>'}
+    </section>
+    ${caso ? `<section class="tarjeta centrado"><p class="lema">Rúbrica · Caso Artemis-7</p>
+      <div class="nivel-res nivel-${caso.nivel}"><b>${caso.puntaje}</b><span>/ 8</span></div>
+      <p><span class="pastilla">${caso.nivel} · ${esc(G.evaluacion.niveles.find((n) => n.codigo === caso.nivel)?.nombre || '')}</span></p></section>` : ''}
+    ${nebula(g != null && g > 0 ? '¡Aprendiste cómo se conectan los sistemas de una base! Eso es exactamente lo que hacen los ingenieros de la NASA.' : 'Cada falla que entiendes te acerca a ser comandante. ¡Vuelve a jugar las misiones!', 'feliz')}
+    <div class="fila"><button class="primario" id="volver">Volver a misiones</button></div>`;
+  document.getElementById('volver').addEventListener('click', inicio);
 }
 
 // ───────────────────────── Fuentes ─────────────────────────

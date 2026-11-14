@@ -31,10 +31,21 @@ db.exec(`
     rebobinados INTEGER, estrellas INTEGER, config TEXT
   );
   CREATE INDEX IF NOT EXISTS partidas_aula ON partidas(aula);
+  CREATE TABLE IF NOT EXISTS evaluaciones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recibido TEXT NOT NULL DEFAULT (datetime('now')),
+    fecha TEXT, aula TEXT, nombre TEXT,
+    tipo TEXT NOT NULL CHECK (tipo IN ('inicial', 'final', 'caso')),
+    puntaje INTEGER NOT NULL, maximo INTEGER NOT NULL, nivel TEXT, respuestas TEXT
+  );
+  CREATE INDEX IF NOT EXISTS evaluaciones_aula ON evaluaciones(aula);
   CREATE TABLE IF NOT EXISTS cache_nasa (clave TEXT PRIMARY KEY, guardado INTEGER NOT NULL, cuerpo TEXT NOT NULL);
 `);
 const insertar = db.prepare(`INSERT INTO partidas (fecha, aula, nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, config)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+const insertarEval = db.prepare(`INSERT INTO evaluaciones (fecha, aula, nombre, tipo, puntaje, maximo, nivel, respuestas)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
 // ── Utilidades ──
 const TIPOS = {
@@ -94,6 +105,21 @@ async function api(req, res, url) {
     return json(res, 201, { ok: true });
   }
 
+  if (url.pathname === '/api/evaluaciones' && req.method === 'POST') {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+    if (!permitido(ip)) return json(res, 429, { error: 'demasiadas solicitudes' });
+    let e;
+    try { e = JSON.parse(await leerCuerpo(req)); } catch { return json(res, 400, { error: 'JSON inválido' }); }
+    const tipo = ['inicial', 'final', 'caso'].includes(e.tipo) ? e.tipo : null;
+    const maximo = entero(e.maximo, 1, 20);
+    const puntaje = maximo != null ? entero(e.puntaje, 0, maximo) : null;
+    if (!tipo || puntaje == null) return json(res, 400, { error: 'faltan datos' });
+    const respuestas = Array.isArray(e.respuestas) ? e.respuestas.slice(0, 20).map((x) => entero(x, 0, 9)) : null;
+    insertarEval.run(texto(e.fecha, 30), texto(e.aula, 20)?.toUpperCase() || null, texto(e.nombre, 40), tipo, puntaje, maximo,
+      ['AD', 'A', 'B', 'C'].includes(e.nivel) ? e.nivel : null, JSON.stringify(respuestas));
+    return json(res, 201, { ok: true });
+  }
+
   if (url.pathname === '/api/resultados' && req.method === 'GET') {
     if (!DOCENTE_TOKEN || req.headers.authorization !== `Bearer ${DOCENTE_TOKEN}`) return json(res, 401, { error: 'no autorizado' });
     const aula = texto(url.searchParams.get('aula'), 20)?.toUpperCase();
@@ -104,7 +130,24 @@ async function api(req, res, url) {
       FROM partidas WHERE aula = ? GROUP BY mision`).all(aula);
     const fallas = db.prepare(`SELECT mision, motivo, COUNT(*) veces FROM partidas WHERE aula = ? AND exito = 0
       GROUP BY mision, motivo ORDER BY veces DESC`).all(aula);
-    return json(res, 200, { aula, resumen, fallas, partidas: filas });
+    // Aprendizaje: último resultado de cada estudiante en cada tipo de evaluación
+    const ultimas = db.prepare(`SELECT e.nombre, e.tipo, e.puntaje, e.maximo, e.nivel FROM evaluaciones e
+      JOIN (SELECT COALESCE(nombre, '') n, tipo, MAX(id) id FROM evaluaciones WHERE aula = ? GROUP BY COALESCE(nombre, ''), tipo) u ON u.id = e.id`).all(aula);
+    const porEstudiante = {};
+    for (const u of ultimas) (porEstudiante[u.nombre || '(sin nombre)'] ||= { nombre: u.nombre || '(sin nombre)' })[u.tipo] = { puntaje: u.puntaje, maximo: u.maximo, nivel: u.nivel };
+    const estudiantes = Object.values(porEstudiante);
+    const prom = (tipo) => {
+      const v = estudiantes.filter((x) => x[tipo]).map((x) => x[tipo].puntaje);
+      return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null;
+    };
+    const ambos = estudiantes.filter((x) => x.inicial && x.final && x.inicial.puntaje < x.inicial.maximo);
+    const ganancia = ambos.length
+      ? Math.round((ambos.reduce((a, x) => a + (x.final.puntaje - x.inicial.puntaje) / (x.inicial.maximo - x.inicial.puntaje), 0) / ambos.length) * 100) / 100
+      : null;
+    const niveles = { AD: 0, A: 0, B: 0, C: 0 };
+    for (const x of estudiantes) if (x.caso?.nivel) niveles[x.caso.nivel] += 1;
+    const aprendizaje = { inicial: prom('inicial'), final: prom('final'), caso: prom('caso'), ganancia, niveles, estudiantes };
+    return json(res, 200, { aula, resumen, fallas, partidas: filas, aprendizaje });
   }
 
   if (url.pathname === '/api/donki' && req.method === 'GET') {

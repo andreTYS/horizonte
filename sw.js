@@ -1,8 +1,8 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v2';
+const CACHE = 'horizonte-v3';
 const ARCHIVOS = [
-  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js',
-  'data/nasa.json', 'data/juego.json', 'data/misiones.json',
+  './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js',
+  'data/nasa.json', 'data/juego.json', 'data/misiones.json', 'data/evaluacion.json',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', (e) => {

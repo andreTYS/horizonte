@@ -54,6 +54,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
 | `js/escena.js` | Escena isométrica SVG: módulos, día/noche, tormenta, refugio, alarmas |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
+| `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
 | `js/api.js` | Envía resultados al servidor si existe (en GitHub Pages el juego funciona sin él) |
 | `server/server.mjs` | Servidor del VPS: estáticos, partidas (SQLite), panel docente, proxy NASA DONKI |
 | `docente.html` | Panel docente: resultados por aula |
@@ -67,7 +68,6 @@ npm test       # pruebas del motor y del servidor (node --test)
 
 ## Próximos pasos
 
-- Prueba inicial / final y rúbrica 0–8 para medir aprendizaje.
 - Misión en Marte (MOXIE, RAD de Curiosity).
 - Arte original de Nebula y de la base.
 

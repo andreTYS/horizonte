@@ -1,0 +1,148 @@
+{
+  "_nota": "Prueba inicial y final: mismos 5 conceptos con preguntas distintas (pruebas paralelas). Caso Artemis-7: escenario nuevo calificado con rúbrica 0–8 (4 criterios × 0–2).",
+  "inicial": {
+    "titulo": "Prueba inicial",
+    "intro": "Antes de despegar, queremos saber qué sabes. Son 5 preguntas y no cuentan para tu nota: responde lo que creas.",
+    "preguntas": [
+      {
+        "concepto": "energia_o2",
+        "texto": "En una base lunar el oxígeno se fabrica partiendo agua con electricidad. Si se acaba la electricidad, ¿qué pasa primero?",
+        "opciones": ["Se congela la comida", "Se deja de fabricar oxígeno", "Aumenta la radiación", "Nada: el oxígeno se fabrica solo"],
+        "correcta": 1
+      },
+      {
+        "concepto": "agua_o2",
+        "texto": "Para fabricar oxígeno en la base, ¿qué se gasta además de energía?",
+        "opciones": ["Comida", "Regolito (suelo lunar)", "Agua", "Nada más"],
+        "correcta": 2
+      },
+      {
+        "concepto": "reciclaje",
+        "texto": "La Estación Espacial recicla casi toda el agua que usa. Sin un reciclador, una misión larga necesitaría…",
+        "opciones": ["Mucha más agua de reserva", "La misma cantidad de agua", "Menos agua", "Agua solo para beber"],
+        "correcta": 0
+      },
+      {
+        "concepto": "noche_lunar",
+        "texto": "¿Cuánto dura aproximadamente la noche en la Luna (lejos de los polos)?",
+        "opciones": ["12 horas", "3 días", "No hay noche en la Luna", "Unos 15 días terrestres"],
+        "correcta": 3
+      },
+      {
+        "concepto": "radiacion",
+        "texto": "Los satélites avisan que mañana llega una tormenta solar a la Luna. ¿Qué es lo más seguro para la tripulación?",
+        "opciones": ["Salir a explorar hoy antes de que llegue", "Apagar los paneles solares", "Ir al refugio protegido", "Nada: la Luna tiene atmósfera que protege"],
+        "correcta": 2
+      }
+    ]
+  },
+  "final": {
+    "titulo": "Prueba final",
+    "intro": "¡Completaste las misiones! Responde estas 5 preguntas para ver cuánto aprendiste. Al final verás las respuestas con su dato NASA.",
+    "preguntas": [
+      {
+        "concepto": "energia_o2",
+        "texto": "El electrolizador de una base se queda sin energía durante 3 días. ¿Qué recurso empieza a bajar sin reponerse?",
+        "opciones": ["Oxígeno", "Comida", "Radiación", "Ciencia"],
+        "correcta": 0,
+        "explicacion": "El electrolizador fabrica el oxígeno que respira la tripulación. Sin energía no lo fabrica, y cada astronauta sigue respirando 0,82 kg al día.",
+        "dato": "o2_persona_dia"
+      },
+      {
+        "concepto": "agua_o2",
+        "texto": "Un equipo necesita fabricar 10 kg de oxígeno con electrólisis. ¿Cuánta agua gastará más o menos?",
+        "opciones": ["Nada de agua", "Unos 11 kg de agua", "1 kg de agua", "100 kg de agua"],
+        "correcta": 1,
+        "explicacion": "Para fabricar 1 kg de oxígeno se parten 1,125 kg de agua (2H₂O → 2H₂ + O₂). Entonces 10 kg de O₂ cuestan unos 11 kg de agua.",
+        "dato": "agua_por_kg_o2"
+      },
+      {
+        "concepto": "reciclaje",
+        "texto": "El reciclador de agua se avería durante 3 días. ¿Qué pasa con el agua esos días?",
+        "opciones": ["Nada cambia", "El agua aumenta", "Se pierde toda el agua que se usa", "El agua se convierte en oxígeno"],
+        "correcta": 2,
+        "explicacion": "Con el reciclador se recupera el 98 % del agua usada; sin él se pierde el 100 %. Por eso conviene llevar una reserva para averías.",
+        "dato": "recuperacion_agua"
+      },
+      {
+        "concepto": "noche_lunar",
+        "texto": "Una base en el Mar de la Tranquilidad tiene solo paneles solares y pocas baterías. ¿Cuándo corre más peligro?",
+        "opciones": ["Al mediodía lunar", "Cuando la Tierra se ve llena", "Nunca: los paneles bastan", "Durante la noche lunar, de unos 15 días"],
+        "correcta": 3,
+        "explicacion": "De noche los paneles no producen nada y la noche lunar dura casi 15 días terrestres. Hace falta guardar mucha energía o un reactor que funcione día y noche.",
+        "dato": "ciclo_lunar_dias"
+      },
+      {
+        "concepto": "radiacion",
+        "texto": "El blindaje de regolito protege todos los días, pero pesa mucho. El refugio protege más durante una tormenta solar, pero…",
+        "opciones": ["Ese día la tripulación no hace ciencia", "Gasta el doble de oxígeno", "Rompe los paneles solares", "Consume toda el agua"],
+        "correcta": 0,
+        "explicacion": "Cada decisión tiene un costo: dentro del refugio la tripulación está protegida, pero no sale a explorar. Por eso se usa solo cuando llega la tormenta.",
+        "dato": "tormenta_mayo_2024"
+      }
+    ]
+  },
+  "caso": {
+    "titulo": "Caso Artemis-7",
+    "intro": "Esta base no la diseñaste tú. Lee su bitácora y responde como comandante. Cada respuesta se califica de 0 a 2 puntos.",
+    "descripcion": "Base en el ecuador de la Luna con 4 astronautas. Llevaban 8 paneles solares, 1 batería, reciclador de agua y 100 kg de agua. No llevaban reactor.",
+    "bitacora": [
+      "Días 1–5: todo normal, el Sol brilla y sobra energía.",
+      "Día 6: se pone el Sol.",
+      "Día 7: la batería se vacía. Se apaga el electrolizador.",
+      "Día 10: se acaba el oxígeno de reserva. La misión falla."
+    ],
+    "criterios": [
+      {
+        "id": "causa",
+        "nombre": "Identifica la causa",
+        "texto": "¿Cuál fue la causa principal de la falla?",
+        "opciones": [
+          { "texto": "Se acabó el oxígeno de reserva", "puntos": 1, "porque": "Es lo que pasó al final (el efecto), pero no explica por qué." },
+          { "texto": "No tenían energía para la larga noche lunar", "puntos": 2, "porque": "Exacto: sin energía de noche el electrolizador se apagó y ya no hubo oxígeno nuevo." },
+          { "texto": "Les faltó comida", "puntos": 0, "porque": "La comida no aparece en la bitácora." },
+          { "texto": "La radiación", "puntos": 0, "porque": "No hubo tormenta solar en esta misión." }
+        ]
+      },
+      {
+        "id": "correccion",
+        "nombre": "Propone una corrección",
+        "texto": "¿Qué cambio arregla mejor el problema?",
+        "opciones": [
+          { "texto": "Agregar más paneles solares", "puntos": 0, "porque": "De noche los paneles no producen nada, tengas los que tengas." },
+          { "texto": "Llevar más oxígeno de reserva", "puntos": 1, "porque": "Ayuda unos días, pero es un parche: la base sigue sin energía de noche." },
+          { "texto": "Agregar un reactor o baterías para unos 15 días de noche", "puntos": 2, "porque": "Ataca la causa: la base tiene energía durante toda la noche lunar." },
+          { "texto": "Quitar el reciclador de agua", "puntos": 0, "porque": "Ahorra energía, pero perderías casi toda el agua." }
+        ]
+      },
+      {
+        "id": "dato",
+        "nombre": "Justifica con un dato",
+        "texto": "¿Qué dato de la NASA respalda mejor tu cambio?",
+        "opciones": [
+          { "texto": "La gravedad de la Luna es un sexto de la terrestre", "puntos": 0, "porque": "Es un dato real, pero no tiene que ver con esta falla." },
+          { "texto": "La ISS recicla el 98 % de su agua", "puntos": 0, "porque": "Es cierto, pero el problema no fue el agua." },
+          { "texto": "Un astronauta respira 0,82 kg de oxígeno al día", "puntos": 1, "porque": "Explica cuánto oxígeno falta, pero no por qué conviene el reactor o las baterías." },
+          { "texto": "La noche lunar dura ~15 días y el reactor de la NASA da 40 kW de día y de noche", "puntos": 2, "porque": "Justifica directamente el cambio: hay que cubrir 15 días sin Sol." }
+        ]
+      },
+      {
+        "id": "efecto",
+        "nombre": "Anticipa efectos secundarios",
+        "texto": "Si agregas el reactor (6 toneladas), ¿qué más tendrás que tener en cuenta?",
+        "opciones": [
+          { "texto": "Nada: el reactor solo tiene ventajas", "puntos": 0, "porque": "Todo tiene un costo en una base espacial." },
+          { "texto": "La masa: quizás tenga que quitar otra cosa para no pasar el límite del cohete", "puntos": 2, "porque": "Exacto: todo está conectado. Ganas energía, pero pierdes espacio para otras cosas." },
+          { "texto": "Que el reactor necesita luz solar", "puntos": 0, "porque": "Al contrario: funciona de día y de noche." },
+          { "texto": "Que habrá que vigilar su temperatura y mantenimiento", "puntos": 1, "porque": "Es razonable, pero el efecto principal en tu diseño es la masa." }
+        ]
+      }
+    ]
+  },
+  "niveles": [
+    { "min": 7, "codigo": "AD", "nombre": "Logro destacado" },
+    { "min": 5, "codigo": "A", "nombre": "Logro esperado" },
+    { "min": 3, "codigo": "B", "nombre": "En proceso" },
+    { "min": 0, "codigo": "C", "nombre": "En inicio" }
+  ]
+}
