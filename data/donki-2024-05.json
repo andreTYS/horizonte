@@ -1,0 +1,95 @@
+{
+  "fuente": "NASA DONKI – Space Weather Database Of Notifications, Knowledge, Information",
+  "url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/",
+  "periodo": {
+    "inicio": "2024-05-01",
+    "fin": "2024-05-31"
+  },
+  "descargado": "2026-11-14",
+  "eventosParticulas": [
+    {
+      "hora": "2024-05-09T13:59Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30609/-1"
+    },
+    {
+      "hora": "2024-05-09T14:25Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30610/-1"
+    },
+    {
+      "hora": "2024-05-10T12:59Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30675/-1"
+    },
+    {
+      "hora": "2024-05-10T13:02Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30676/-1"
+    },
+    {
+      "hora": "2024-05-10T13:35Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30677/-1"
+    },
+    {
+      "hora": "2024-05-10T14:50Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30684/-1"
+    },
+    {
+      "hora": "2024-05-11T02:10Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30714/-1"
+    },
+    {
+      "hora": "2024-05-11T04:07Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30717/-1"
+    },
+    {
+      "hora": "2024-05-13T12:44Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30811/-1"
+    },
+    {
+      "hora": "2024-05-13T13:10Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30807/-1"
+    },
+    {
+      "hora": "2024-05-13T14:00Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30817/-1"
+    },
+    {
+      "hora": "2024-05-13T16:19Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30820/-1"
+    },
+    {
+      "hora": "2024-05-13T18:07Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30824/-1"
+    },
+    {
+      "hora": "2024-05-13T18:07Z",
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30825/-1"
+    }
+  ],
+  "tormentasGeomagneticas": [
+    {
+      "inicio": "2024-05-02T15:00Z",
+      "kpMax": 6.67,
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30399/-1"
+    },
+    {
+      "inicio": "2024-05-10T15:00Z",
+      "kpMax": 9,
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30693/-1"
+    },
+    {
+      "inicio": "2024-05-12T21:00Z",
+      "kpMax": 6.33,
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30798/-1"
+    },
+    {
+      "inicio": "2024-05-16T06:00Z",
+      "kpMax": 6,
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30929/-1"
+    },
+    {
+      "inicio": "2024-05-17T18:00Z",
+      "kpMax": 6,
+      "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30993/-1"
+    }
+  ],
+  "llamaradas": []
+}

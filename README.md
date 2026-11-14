@@ -36,7 +36,7 @@ Cifras marcadas `"verificado": false` deben confirmarse en la fuente antes de la
 Para traer eventos solares reales de DONKI (requiere internet):
 
 ```bash
-node tools/actualizar-donki.mjs 2024-05-01 2024-05-31
+NASA_API_KEY=tu_clave node tools/actualizar-donki.mjs 2024-05-01 2024-05-31
 ```
 
 ## Desarrollo
@@ -57,6 +57,7 @@ npm test       # pruebas del motor de simulación (node --test)
 
 ## Próximos pasos
 
+- Ver el documento de diseño completo: [`docs/DISENO.md`](docs/DISENO.md).
 - Prueba inicial / final y rúbrica 0–8 para medir aprendizaje.
 - Misión en Marte (MOXIE, RAD de Curiosity).
 - Arte original de Nebula y de la base.

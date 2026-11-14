@@ -86,20 +86,33 @@
       {
         "dia": 6,
         "tipo": "alerta_solar",
-        "texto": "Alerta: llamarada clase X detectada. Las partículas llegarán mañana."
+        "fecha_real": "2024-05-09",
+        "texto": "Alerta DONKI: partículas solares detectadas cerca de la Tierra (9 may 2024). Llegarán con fuerza mañana.",
+        "url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/"
       },
       {
         "dia": 7,
         "tipo": "tormenta_solar",
-        "texto": "¡Llegan las partículas solares!",
+        "fecha_real": "2024-05-10",
+        "texto": "¡Llegan las partículas solares! (10 may 2024, tormenta Kp 9: la más fuerte en 20 años)",
         "dosis_msv": 45,
-        "dato": "tormenta_mayo_2024"
+        "dato": "tormenta_mayo_2024",
+        "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/30693/-1"
       },
       {
         "dia": 8,
         "tipo": "tormenta_solar",
-        "texto": "La tormenta continúa.",
+        "fecha_real": "2024-05-11",
+        "texto": "La tormenta continúa (11 may 2024).",
         "dosis_msv": 20,
+        "dato": "tormenta_mayo_2024"
+      },
+      {
+        "dia": 10,
+        "tipo": "tormenta_solar",
+        "fecha_real": "2024-05-13",
+        "texto": "Nueva ráfaga de partículas: DONKI registra 6 eventos este día (13 may 2024).",
+        "dosis_msv": 15,
         "dato": "tormenta_mayo_2024"
       }
     ],
@@ -119,6 +132,8 @@
       "construir": "El blindaje protege todos los días, pero pesa. El refugio protege mucho, pero mientras estén dentro no se hace ciencia.",
       "exito": "¡Bien hecho! Así se protegerán los astronautas de Artemis en la Luna."
     },
-    "luz_permanente": true
+    "luz_permanente": true,
+    "fecha_inicio_real": "2024-05-03",
+    "fuente_eventos": "data/donki-2024-05.json"
   }
 ]
