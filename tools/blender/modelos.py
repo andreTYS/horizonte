@@ -15,7 +15,7 @@ def arg(nombre, defecto=None):
     return args[args.index(nombre) + 1] if nombre in args else defecto
 SALIDA_GLB = arg('--glb', 'assets/modelos')
 SALIDA_PREVIAS = arg('--previas')
-SOLO = arg('--solo', 'habitat,reactor,panel').split(',')
+SOLO = arg('--solo', 'habitat,reactor,panel,bateria,reciclador,invernadero,lander,astronauta').split(',')
 
 # ───────────────────────── utilidades ─────────────────────────
 def limpiar():
@@ -276,6 +276,160 @@ def panel(M):
         poner(caja((0.05, 0.05, 0.62), (dx, 0.12, 1.27), (0.55, 0, 0)), M['metal'], None, C, suave=False)
     return C
 
+def cortar_abajo(obj, z):
+    """Borra los vértices por debajo de z (en coordenadas del mundo)."""
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for v in obj.data.vertices:
+        v.select = (obj.matrix_world @ v.co).z < z - 1e-4
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.delete(type='VERT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    return obj
+
+# ───────────────────────── BATERÍA ─────────────────────────
+def bateria(M):
+    C = nueva_coleccion('bateria')
+    for dx in (-0.45, 0.45):
+        for dy in (-0.45, 0.45):
+            poner(caja((0.16, 0.16, 0.12), (dx, dy, 0.06)), M['oscuro'], None, C, suave=False)
+    poner(caja((1.2, 1.2, 1.45), (0, 0, 0.84)), M['blanco'], 'gabinete', C, bisel=0.04)
+    poner(caja((1.24, 1.24, 0.08), (0, 0, 1.6)), M['gris'], 'tapa', C, bisel=0.02)
+    for k in range(9):  # disipadores de calor
+        poner(caja((1.05, 0.04, 0.16), (0, -0.48 + k * 0.12, 1.72)), M['metal'], None, C, suave=False)
+    poner(caja((0.02, 0.9, 0.9), (-0.61, 0, 0.9)), M['oscuro'], 'frente', C, suave=False)
+    poner(caja((0.03, 0.5, 0.18), (-0.62, 0, 1.15)), mat('pantalla_bat', (0.05, 0.2, 0.3), emis=(0.2, 0.8, 1.0), fuerza=2), 'pantalla', C, suave=False)
+    for k, z in enumerate((0.55, 0.7, 0.85)):
+        poner(cil(0.04, 0.03, (-0.62, -0.3 + k * 0.3, 0.6), 12, rot=(0, math.pi / 2, 0)), M['amarillo' if k == 1 else 'gris'], None, C)
+    # Barra de carga: el juego la escala en altura (origen abajo)
+    barra = caja((0.08, 0.32, 1.2), (0, 0, 0))
+    for v in barra.data.vertices:
+        v.co.z += 0.6
+    barra.location = (0.62, 0, 0.25)
+    poner(barra, mat('carga', (0.29, 0.87, 0.5), emis=(0.29, 0.87, 0.5), fuerza=2.5), 'carga', C, suave=False)
+    poner(caja((0.04, 0.4, 1.3), (0.6, 0, 0.85)), M['oscuro'], 'marco_carga', C, suave=False)
+    # Rayo de advertencia
+    bpy.ops.mesh.primitive_cone_add(vertices=3, radius1=0.12, depth=0.02, location=(-0.62, 0.3, 1.38), rotation=(0, math.pi / 2, 0))
+    poner(bpy.context.active_object, M['amarillo'], 'aviso', C, suave=False)
+    return C
+
+# ───────────────────────── RECICLADOR DE AGUA ─────────────────────────
+def reciclador(M):
+    C = nueva_coleccion('reciclador')
+    agua = mat('agua', (0.15, 0.55, 0.95), rough=0.08, alpha=0.7)
+    poner(caja((2.1, 1.4, 0.15), (0.2, 0, 0.075)), M['gris'], 'patin', C, bisel=0.02)
+    poner(caja((1.5, 1.3, 1.25), (0.45, 0, 0.78)), M['blanco'], 'unidad', C, bisel=0.05)
+    for k in range(6):  # rejilla de ventilación
+        poner(caja((0.9, 0.02, 0.05), (0.45, -0.66, 0.5 + k * 0.1)), M['oscuro'], None, C, suave=False)
+    poner(caja((0.5, 0.02, 0.3), (0.65, -0.66, 1.15)), mat('pantalla_rec', (0.05, 0.2, 0.3), emis=(0.37, 0.84, 1.0), fuerza=3), 'estado', C, suave=False)
+    # Tanque de agua transparente con anillos
+    poner(cil(0.5, 1.4, (-0.85, 0, 0.85), 40), agua, 'tanque', C)
+    for z in (0.25, 0.85, 1.45):
+        poner(toro(0.52, 0.04, (-0.85, 0, z), mayor=40, menor=6), M['metal'], None, C)
+    poner(cil(0.52, 0.08, (-0.85, 0, 1.58), 40), M['gris'], None, C)
+    # Tuberías y bomba
+    poner(cil(0.05, 0.7, (-0.45, 0, 1.45), 12, rot=(0, math.pi / 2, 0)), M['metal'], None, C)
+    poner(cil(0.05, 0.6, (-0.45, 0.35, 0.35), 12, rot=(0, math.pi / 2, 0)), M['metal'], None, C)
+    poner(cil(0.18, 0.3, (-0.2, 0.45, 0.35), 20, rot=(0, math.pi / 2, 0)), M['naranja'], 'bomba', C, bisel=0.01)
+    poner(toro(0.25, 0.05, (-0.2, 0, 1.45), (math.pi / 2, 0, 0), 24, 6), M['metal'], None, C)
+    poner(caja((0.3, 0.3, 0.25), (1.05, 0.4, 1.53)), M['gris'], 'filtro', C, bisel=0.02)
+    return C
+
+# ───────────────────────── INVERNADERO (como Veggie) ─────────────────────────
+def invernadero(M):
+    C = nueva_coleccion('invernadero')
+    vidrio = mat('vidrio_inv', (0.7, 0.92, 1.0), rough=0.05, alpha=0.22)
+    planta = mat('planta', (0.13, 0.62, 0.25), rough=0.8)
+    planta2 = mat('planta2', (0.35, 0.82, 0.38), rough=0.8)
+    lechuga = mat('lechuga', (0.55, 0.85, 0.3), rough=0.8)
+    poner(caja((5.3, 2.9, 0.3), (0, 0, 0.15)), M['gris'], 'plataforma', C, bisel=0.03)
+    # Cubierta de vidrio (medio cilindro a lo largo de X)
+    cubierta = cil(1.4, 5.0, (0, 0, 0.3), 48, rot=(0, math.pi / 2, 0))
+    cortar_abajo(cubierta, 0.3)
+    poner(cubierta, vidrio, 'cubierta', C)
+    for x in (-2.5, -1.5, -0.5, 0.5, 1.5, 2.5):  # arcos de estructura
+        arco = toro(1.42, 0.04, (x, 0, 0.3), (0, math.pi / 2, 0), 48, 6)
+        cortar_abajo(arco, 0.3)
+        poner(arco, M['blanco'], None, C)
+    for y in (-0.7, 0.7):
+        poner(caja((5.0, 0.04, 0.04), (0, y, 0.3 + math.sqrt(1.42 ** 2 - y ** 2))), M['blanco'], None, C, suave=False)
+    # Bandejas hidropónicas con plantas
+    for fila, y in enumerate((-0.6, 0.0, 0.6)):
+        poner(caja((4.4, 0.42, 0.18), (0, y, 0.45)), M['blanco'], None, C, bisel=0.01)
+        for k in range(10):
+            x = -2.0 + k * 0.44
+            tam = 0.13 + ((k * 7 + fila * 3) % 5) * 0.025
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=tam, location=(x, y, 0.6 + tam * 0.6))
+            o = bpy.context.active_object
+            o.scale.z = 0.75
+            poner(o, (planta, planta2, lechuga)[(k + fila) % 3], None, C)
+    # Luces de cultivo (rosadas, como Veggie): el juego las apaga si el invernadero se apaga
+    poner(caja((4.6, 0.25, 0.05), (0, 0, 1.45)), mat('luz_cultivo', (1, 0.37, 0.82), emis=(1, 0.3, 0.8), fuerza=6), 'luz', C, suave=False)
+    # Puertas en los extremos
+    for x in (-2.55, 2.55):
+        poner(caja((0.08, 0.8, 1.2), (x, 0, 0.9)), M['gris'], None, C, bisel=0.01)
+    poner(cil(0.22, 0.3, (2.75, 0.9, 0.45), 20, rot=(0, math.pi / 2, 0)), M['oscuro'], 'ventilador', C)
+    return C
+
+# ───────────────────────── MÓDULO DE ATERRIZAJE ─────────────────────────
+def lander(M):
+    C = nueva_coleccion('lander')
+    poner(cil(1.7, 1.3, (0, 0, 1.75), 8), M['oro'], 'etapa_descenso', C, bisel=0.03)
+    poner(cil(1.75, 0.08, (0, 0, 2.42), 8), M['gris'], None, C)
+    poner(cil(1.2, 1.5, (0, 0, 3.2), 8, r2=0.95), M['blanco'], 'cabina', C, bisel=0.03)
+    for i in range(3):
+        a = i / 3 * math.tau + 0.4
+        poner(cil(0.18, 0.06, (math.cos(a) * 1.0, math.sin(a) * 1.0, 3.45), 20, rot=(math.pi / 2, 0, a + math.pi / 2)), M['vidrio'], f'ventana_lander_{i}', C)
+    poner(cil(0.95, 0.15, (0, 0, 4.0), 8), M['gris'], None, C)
+    poner(cil(0.04, 1.0, (0.4, 0.3, 4.55), 8), M['metal'], 'antena_lander', C)
+    poner(cil(0.45, 0.8, (0, 0, 0.75), 24, r2=0.25), M['oscuro'], 'tobera', C)
+    for i in range(4):  # propulsores de control
+        a = i / 4 * math.tau + math.pi / 4
+        poner(caja((0.25, 0.25, 0.25), (math.cos(a) * 1.15, math.sin(a) * 1.15, 3.6)), M['gris'], None, C, bisel=0.02)
+    for i in range(4):  # patas
+        a = i / 4 * math.tau
+        base = Vector((math.cos(a) * 2.6, math.sin(a) * 2.6, 0.08))
+        tope = Vector((math.cos(a) * 1.5, math.sin(a) * 1.5, 2.0))
+        medio = (base + tope) / 2
+        largo = (tope - base).length
+        pata = cil(0.07, largo, medio, 12)
+        pata.rotation_euler = (tope - base).to_track_quat('Z', 'Y').to_euler()
+        poner(pata, M['metal'], None, C)
+        poner(cil(0.38, 0.1, (base.x, base.y, 0.05), 24), M['metal'], None, C, bisel=0.01)
+    for k in range(5):  # escalera en una pata
+        poner(caja((0.5, 0.05, 0.04), (2.3 - k * 0.2, 0, 0.35 + k * 0.33)), M['metal'], None, C, suave=False)
+    return C
+
+# ───────────────────────── ASTRONAUTA ─────────────────────────
+def astronauta(M):
+    C = nueva_coleccion('astronauta')
+    traje = mat('traje', (0.93, 0.93, 0.9), rough=0.7)
+    for x in (-0.12, 0.12):  # piernas y botas
+        poner(cil(0.1, 0.72, (x, 0, 0.5), 16), traje, None, C)
+        poner(caja((0.18, 0.3, 0.14), (x, -0.04, 0.08)), M['gris'], None, C, bisel=0.03)
+    poner(cil(0.27, 0.55, (0, 0, 1.12), 20), traje, 'torso', C, bisel=0.02)
+    poner(esfera(0.27, (0, 0, 1.38), 20, 10), traje, None, C)
+    for x in (-0.33, 0.33):  # brazos
+        # brazos colgando, un poco abiertos hacia afuera, con la mano (guante) al final
+        poner(cil(0.08, 0.6, (x, 0, 1.12), 12, rot=(0, -math.copysign(0.18, x), 0)), traje, None, C)
+        poner(esfera(0.085, (x + math.copysign(0.06, x), 0, 0.8), 12, 6), M['gris'], None, C)
+    poner(caja((0.42, 0.22, 0.6), (0, 0.28, 1.2)), M['blanco'], 'mochila', C, bisel=0.03)
+    poner(caja((0.24, 0.04, 0.16), (0, -0.27, 1.15)), M['gris'], 'panel_pecho', C, bisel=0.01)
+    poner(caja((0.08, 0.02, 0.05), (0.15, -0.27, 1.32)), M['naranja'], None, C, suave=False)
+    poner(esfera(0.22, (0, 0, 1.62), 24, 12), M['blanco'], 'casco', C)
+    # Visor dorado mirando hacia -Y (el frente para el juego)
+    visor = esfera(0.205, (0, -0.03, 1.62), 24, 12)
+    for v in visor.data.vertices:
+        if v.co.y > -0.02:
+            v.co.y = -0.02
+    poner(visor, M['oro'], 'visor', C)
+    return C
+
 # ───────────────────────── exportar y renderizar ─────────────────────────
 def exportar(C, nombre):
     os.makedirs(SALIDA_GLB, exist_ok=True)
@@ -332,6 +486,11 @@ FABRICAS = {
     'habitat': (habitat, (13, 7.5, 2.4)),
     'reactor': (reactor, (11, 6.5, 3.6)),
     'panel': (panel, (4.2, 2.8, 1.1, 1)),
+    'bateria': (bateria, (3.2, 2.2, 0.8)),
+    'reciclador': (reciclador, (4.2, 2.8, 0.8)),
+    'invernadero': (invernadero, (6.5, 4.5, 0.6)),
+    'lander': (lander, (9, 5.5, 2.2)),
+    'astronauta': (astronauta, (2.6, 1.7, 1.0)),
 }
 creadas = {n: FABRICAS[n][0](M) for n in SOLO if n in FABRICAS}
 for nombre, C in creadas.items():

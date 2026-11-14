@@ -1,6 +1,6 @@
 # Modelos de Blender para HORIZONTE
 
-**Activos ahora** (hechos en Blender con `tools/blender/modelos.py`): `habitat.glb`, `reactor.glb`, `panel.glb`.
+**Activos ahora** (los 8, hechos en Blender con `tools/blender/modelos.py`): `habitat`, `reactor`, `panel`, `bateria`, `reciclador`, `invernadero`, `lander`, `astronauta` (`.glb`).
 Para regenerarlos o cambiarlos desde el código (también funciona dentro del contenedor de Blender del VPS):
 
 ```bash

@@ -1,5 +1,10 @@
 {
   "habitat": "habitat.glb",
   "reactor": "reactor.glb",
-  "panel": "panel.glb"
+  "panel": "panel.glb",
+  "bateria": "bateria.glb",
+  "reciclador": "reciclador.glb",
+  "invernadero": "invernadero.glb",
+  "lander": "lander.glb",
+  "astronauta": "astronauta.glb"
 }
