@@ -184,7 +184,7 @@ export function crearPlataforma() {
 }
 
 /** Rocas sobre el terreno (una sola malla instanciada: liviana). */
-export function crearRocas(altura, cantidad = 320) {
+export function crearRocas(altura, cantidad = 320, radio = 100) {
   const geo = new THREE.DodecahedronGeometry(1, 0);
   const mat = new THREE.MeshStandardMaterial({ color: 0x8b8e99, roughness: 0.95, flatShading: true });
   const rocas = new THREE.InstancedMesh(geo, mat, cantidad);
@@ -194,7 +194,7 @@ export function crearRocas(altura, cantidad = 320) {
   let i = 0, intento = 0;
   while (i < cantidad && intento < cantidad * 10) {
     intento++;
-    const a = Math.random() * Math.PI * 2, d = 27 + Math.pow(Math.random(), 0.7) * 100;
+    const a = Math.random() * Math.PI * 2, d = 27 + Math.pow(Math.random(), 1.3) * radio;
     const x = Math.cos(a) * d, z = Math.sin(a) * d;
     const tam = Math.random() < 0.08 ? 1.2 + Math.random() * 1.6 : 0.15 + Math.random() * 0.7;
     s.set(tam * (0.8 + Math.random() * 0.5), tam * (0.45 + Math.random() * 0.35), tam * (0.8 + Math.random() * 0.5));

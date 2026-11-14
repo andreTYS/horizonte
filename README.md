@@ -55,7 +55,8 @@ npm test       # pruebas del motor y del servidor (node --test)
 | Archivo | Qué hace |
 |---|---|
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
-| `js/mundo3d.js` | Mapa 3D: terreno lunar, cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas |
+| `js/mundo3d.js` | Mapa 3D: cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas, cámara para explorar |
+| `js/terreno3d.js` | Terreno de 920 × 920 m: relieve, cordillera, cráteres, texturas generadas, huellas de rover y puntos de interés |
 | `js/modelos3d.js` | Modelos 3D de cada módulo (exportables a `.glb` para Blender) |
 | `js/escena.js` | Escena isométrica SVG de respaldo (equipos sin WebGL) |
 | `tools/blender/modelos.py` | Script de Blender: modela hábitat, reactor y panel, exporta `.glb` y renderiza previas |

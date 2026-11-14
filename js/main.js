@@ -94,6 +94,16 @@ async function cargarIdioma() {
     habitat: t('Hábitat'), panel: t('Paneles'), bateria: t('Baterías'), reactor: t('Reactor'), reciclador: t('Reciclador'),
     invernadero: t('Invernadero'), extractor: t('Extractor de hielo'), moxie: 'MOXIE',
   });
+  G.mundo?.puntos?.({
+    hielo: { nombre: t("Cráter en sombra"), texto: t("En el fondo de los cráteres polares que nunca reciben sol hay hielo de agua: lo confirmó la misión LCROSS en 2009."), textoMarte: t("En Marte también hay hielo de agua bajo el suelo: algunos cráteres recientes lo dejaron a la vista.") },
+    rover: { nombre: t("Rover"), texto: t("Los rovers exploran lejos de la base y traen muestras sin que los astronautas se expongan."), textoMarte: t("Los rovers Curiosity y Perseverance llevan años explorando Marte.") },
+    antena: { nombre: t("Antena"), texto: t("Una señal de radio tarda cerca de 1,3 segundos en ir de la Luna a la Tierra."), textoMarte: t("Desde Marte, una señal tarda entre 3 y 22 minutos en llegar a la Tierra: no se puede pedir ayuda al instante.") },
+    cima: { nombre: t("Cima iluminada"), texto: t("Algunas cimas cerca del polo sur de la Luna reciben luz del Sol la mayor parte del año: buen lugar para paneles."), textoMarte: t("El cielo de Marte de día es color caramelo por el polvo fino que flota en el aire.") },
+  }, {
+    volver: t("Volver a la base"),
+    raton: t("Explora: clic derecho y arrastra (o flechas) para moverte · doble clic para ir · toca un marcador"),
+    tactil: t("Explora: arrastra con dos dedos para moverte · toca dos veces para ir · toca un marcador"),
+  });
 }
 
 const botonSonido = () => `<button class="boton-icono" id="sonido" aria-label="${t('Sonido')}" aria-pressed="${sonidoActivo()}">${I(sonidoActivo() ? 'sonido' : 'mudo')}</button>`;

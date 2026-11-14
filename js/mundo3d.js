@@ -9,6 +9,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
+import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR } from './terreno3d.js';
 
 export function soportaWebGL() {
   try {
@@ -34,58 +35,9 @@ const MAX_PANELES = 20;
 const MAX_BATERIAS = 12;
 const NOMBRES = { habitat: 'Hábitat', panel: 'Paneles', bateria: 'Baterías', reactor: 'Reactor', reciclador: 'Reciclador', invernadero: 'Invernadero', extractor: 'Extractor de hielo', moxie: 'MOXIE' };
 
-// ── Ruido para el terreno ──
 function hash(x, y) {
   const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
   return s - Math.floor(s);
-}
-function ruido(x, y) {
-  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-const fbm = (x, y) => ruido(x, y) * 0.5 + ruido(x * 2.1, y * 2.1) * 0.25 + ruido(x * 4.3, y * 4.3) * 0.125;
-const CRATERES = Array.from({ length: 26 }, (_, i) => {
-  const a = hash(i, 1) * Math.PI * 2, d = 30 + hash(i, 2) * 80;
-  return { x: Math.cos(a) * d, z: Math.sin(a) * d, r: 3 + hash(i, 3) * 9, p: 0.6 + hash(i, 4) * 1.6 };
-}).concat([{ x: 26, z: -22, r: 7, p: 1.8 }, { x: -30, z: -6, r: 5, p: 1.2 }]);
-
-function altura(x, z) {
-  const dist = Math.hypot(x, z);
-  const plano = THREE.MathUtils.smoothstep(dist, 22, 34); // la base está en terreno nivelado
-  let h = (fbm(x * 0.035, z * 0.035) - 0.45) * 7 * plano + (fbm(x * 0.2, z * 0.2) - 0.45) * 0.5 * plano;
-  for (const c of CRATERES) {
-    const d = Math.hypot(x - c.x, z - c.z) / c.r;
-    if (d < 1) h -= c.p * (1 - d * d) * 1.6;
-    else if (d < 1.4) h += c.p * 0.5 * (1 - (d - 1) / 0.4);
-  }
-  return h;
-}
-
-function texturaRegolito() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 512;
-  const g = c.getContext('2d');
-  const img = g.createImageData(512, 512);
-  for (let i = 0; i < 512 * 512; i++) {
-    const x = i % 512, y = Math.floor(i / 512);
-    const n = fbm(x * 0.05, y * 0.05) * 0.6 + Math.random() * 0.4;
-    const v = 120 + n * 90;
-    img.data[i * 4] = v; img.data[i * 4 + 1] = v; img.data[i * 4 + 2] = v * 1.04; img.data[i * 4 + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  for (let i = 0; i < 140; i++) { // cráteres pequeños: centro oscuro y borde claro
-    const x = Math.random() * 512, y = Math.random() * 512, r = 2 + Math.pow(Math.random(), 3) * 18;
-    g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = Math.max(1, r * 0.25); g.beginPath(); g.arc(x - r * 0.15, y - r * 0.15, r, 0, Math.PI * 2); g.stroke();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = 4;
-  t.repeat.set(28, 28);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
 }
 
 function texturaTierra() {
@@ -142,9 +94,13 @@ export class Mundo {
     this.controles = new OrbitControls(this.camara, canvas);
     this.controles.target.set(0, 1, 0);
     this.controles.enableDamping = true;
-    this.controles.enablePan = false;
-    this.controles.minDistance = 18;
-    this.controles.maxDistance = 90;
+    this.controles.enablePan = true;           // clic derecho / dos dedos: moverse por el mapa
+    this.controles.screenSpacePanning = false; // se desliza sobre el suelo
+    this.controles.panSpeed = 1.4;
+    this.controles.minDistance = 10;
+    this.controles.maxDistance = 190;
+    this.controles.keyPanSpeed = 22;
+    this.controles.listenToKeyEvents(window);  // flechas para moverse
     this.controles.maxPolarAngle = 1.32;
     this.controles.minPolarAngle = 0.35;
     this.controles.autoRotateSpeed = 0.35;
@@ -229,6 +185,8 @@ export class Mundo {
     };
     this.estrellas = [estrellas(2500, 1.2, 0.7), estrellas(400, 2.2, 0.95)];
     this.escena.add(...this.estrellas);
+    this.viaLactea = crearViaLactea();
+    this.escena.add(this.viaLactea);
 
     const tierra = new THREE.Mesh(new THREE.SphereGeometry(22, 48, 32), new THREE.MeshStandardMaterial({ map: texturaTierra(), roughness: 0.8, emissive: 0x0a1a40, emissiveIntensity: 0.4 }));
     tierra.position.set(-300, 75, -380);
@@ -248,22 +206,14 @@ export class Mundo {
   }
 
   #terreno() {
-    const tam = 260, seg = this.calidad === 'baja' ? 120 : 200;
-    const geo = new THREE.PlaneGeometry(tam, tam, seg, seg);
-    geo.rotateX(-Math.PI / 2);
-    const p = geo.attributes.position;
-    for (let i = 0; i < p.count; i++) p.setY(i, altura(p.getX(i), p.getZ(i)));
-    geo.computeVertexNormals();
-    const tex = texturaRegolito();
-    const mat = new THREE.MeshStandardMaterial({ color: 0xb4b7c2, map: tex, bumpMap: tex, bumpScale: 2.5, roughness: 0.97, metalness: 0 });
-    const suelo = new THREE.Mesh(geo, mat);
-    suelo.receiveShadow = true;
-    this.suelo = suelo;
-    this.escena.add(suelo);
+    this.suelo = crearTerreno(this.calidad);
+    this.escena.add(this.suelo);
+    this.exploracion = crearExploracion(this.calidad);
+    this.escena.add(this.exploracion.grupo);
     // Plataforma de la base (losas, caminos, pista y luces) y rocas alrededor
     this.plataforma = crearPlataforma();
     this.escena.add(this.plataforma.grupo);
-    this.rocas = crearRocas(altura, this.calidad === 'baja' ? 160 : 340);
+    this.rocas = crearRocas(altura, this.calidad === 'baja' ? 380 : 1100, 330);
     this.escena.add(this.rocas);
   }
 
@@ -282,6 +232,7 @@ export class Mundo {
     this.luzHabitat = new THREE.PointLight(0xffb36b, 0, 40, 1.6);
     this.luzHabitat.position.set(0, 4, 0);
     this.luzTormenta = new THREE.AmbientLight(0xff5a2a, 0);
+    this.escena.add(this.sol.target);
     this.escena.add(this.sol, this.hemi, this.luzTierra, this.luzHabitat, this.luzTormenta);
   }
 
@@ -464,7 +415,9 @@ export class Mundo {
   #cambiarPlaneta(planeta) {
     this.planeta = planeta;
     const marte = planeta === 'marte';
-    this.suelo.material.color.setHex(marte ? 0xd98b5f : 0xb4b7c2);
+    this.suelo.material.color.setHex(marte ? 0xe39468 : 0xc4c7d0);
+    this.viaLactea.visible = !marte;
+    this.#pintarPuntos();
     this.rocas.material.color.setHex(marte ? 0x8f4f33 : 0x8b8e99);
     this.hemi.color.setHex(marte ? 0xffc79a : 0x9aa8d8);
     this.sol.color.setHex(marte ? 0xffe2c4 : 0xfff1dc);
@@ -494,8 +447,11 @@ export class Mundo {
     this.modo = modo;
     this.controles.autoRotate = modo === 'portada';
     const destino = { portada: [44, 26, 44], diseno: [30, 40, 34], mision: [32, 24, 30], resultado: [26, 18, 28] }[modo] || [40, 30, 40];
-    this.transicion = { desde: this.camara.position.clone(), hasta: new THREE.Vector3(...destino), t: 0 };
+    this.#volar(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...destino));
     if (this.capaEtiquetas) this.capaEtiquetas.hidden = modo !== 'diseno';
+    this.#cerrarFicha();
+    if (this.capaPuntos) this.capaPuntos.hidden = !(modo === 'mision' || modo === 'diseno');
+    if (modo === 'mision') this.#mostrarAyuda();
   }
 
   redimensionar() {
@@ -579,11 +535,19 @@ export class Mundo {
 
     // Transición de cámara
     if (this.transicion) {
-      this.transicion.t = Math.min(1, this.transicion.t + dt * 0.8);
-      const s = this.transicion.t * this.transicion.t * (3 - 2 * this.transicion.t);
-      this.camara.position.lerpVectors(this.transicion.desde, this.transicion.hasta, s);
-      if (this.transicion.t >= 1) this.transicion = null;
+      const tr = this.transicion;
+      tr.t = Math.min(1, (this.reloj.elapsedTime - tr.inicio) * tr.vel); // tiempo real: llega igual aunque el equipo sea lento
+      const s = tr.t * tr.t * (3 - 2 * tr.t);
+      this.camara.position.lerpVectors(tr.desde, tr.hasta, s);
+      this.controles.target.lerpVectors(tr.objDesde, tr.objHasta, s);
+      if (tr.t >= 1) this.transicion = null;
     }
+    this.#limitarExploracion();
+    for (const b of this.exploracion.balizas) b.material.emissiveIntensity = (t * 0.9 + b.position.y) % 1 < 0.15 ? 4 : 0.4;
+    this.exploracion.hielo.material.opacity = 0.55 + Math.sin(t * 3) * 0.35;
+    // La sombra sigue a lo que mira la cámara
+    this.sol.target.position.copy(this.controles.target);
+    this.sol.position.copy(this.controles.target).addScaledVector(this.dirSol, 80);
     this.tierra.rotation.y += dt * 0.02;
     this.controles.update(dt);
 
@@ -597,6 +561,119 @@ export class Mundo {
       }
     }
 
+    if (this.capaPuntos && !this.capaPuntos.hidden) {
+      const w = window.innerWidth, h = window.innerHeight, v = new THREE.Vector3();
+      const vertical = h > w; // margen: no tapar el HUD de arriba, los botones del costado ni la barra de abajo
+      const MX = vertical ? 0.5 : 0.86, MY = vertical ? 0.42 : 0.62;
+      for (const pin of this.pines) {
+        v.copy(pin.pos).project(this.camara);
+        const detras = v.z > 1;
+        let x = v.x, y = v.y;
+        if (detras) { x = -x; y = -y; }
+        const dentro = !detras && Math.abs(x) < MX && Math.abs(y) < MY;
+        if (!dentro) { // marcador en el borde, apuntando hacia el lugar
+          const k = Math.min(MX / Math.max(Math.abs(x), 1e-3), MY / Math.max(Math.abs(y), 1e-3));
+          x *= k; y *= k;
+          pin.flecha.style.transform = `rotate(${Math.atan2(-y, x)}rad)`;
+          pin.dist.textContent = `${Math.round(Math.hypot(pin.pos.x - this.controles.target.x, pin.pos.z - this.controles.target.z))} m`;
+        }
+        pin.el.classList.toggle('borde', !dentro);
+        pin.el.style.transform = `translate(-50%, ${dentro ? '-100%' : '-50%'}) translate(${((x + 1) / 2) * w}px, ${((1 - y) / 2) * h}px)`;
+      }
+    }
+
     if (this.composer) this.composer.render(); else this.renderer.render(this.escena, this.camara);
+  }
+
+  // ── Exploración ──
+  #volar(objetivo, posicion, vel = 0.8) {
+    this.transicion = { desde: this.camara.position.clone(), hasta: posicion, objDesde: this.controles.target.clone(), objHasta: objetivo, t: 0, vel, inicio: this.reloj.elapsedTime };
+  }
+
+  /** La cámara no sale del mapa ni se mete bajo el suelo. */
+  #limitarExploracion() {
+    const o = this.controles.target;
+    const d = Math.hypot(o.x, o.z);
+    if (d > RADIO_EXPLORAR) {
+      const k = RADIO_EXPLORAR / d, dx = o.x * (k - 1), dz = o.z * (k - 1);
+      o.x += dx; o.z += dz; this.camara.position.x += dx; this.camara.position.z += dz;
+    }
+    if (!this.transicion) {
+      const suelo = Math.max(altura(o.x, o.z), 0) + 1;
+      this.camara.position.y += (suelo - o.y) * 0.1;
+      o.y += (suelo - o.y) * 0.1;
+    }
+    const minCam = altura(this.camara.position.x, this.camara.position.z) + 2.5;
+    if (this.camara.position.y < minCam) this.camara.position.y = minCam;
+  }
+
+  /** Textos de los puntos de interés (traducidos): { id: { nombre, texto, textoMarte } } y textos de ayuda. */
+  puntos(info, ayuda) {
+    this.infoPuntos = info;
+    this.textoAyuda = ayuda;
+    this.#pintarPuntos();
+  }
+
+  #pintarPuntos() {
+    if (!this.infoPuntos) return;
+    if (!this.capaPuntos) {
+      this.capaPuntos = document.createElement('div');
+      this.capaPuntos.id = 'puntos';
+      this.capaPuntos.hidden = true;
+      this.canvas.after(this.capaPuntos);
+      this.renderer.domElement.addEventListener('dblclick', (ev) => this.#irAlSuelo(ev));
+    }
+    this.capaPuntos.querySelectorAll('.pin').forEach((x) => x.remove());
+    this.pines = Object.entries(this.infoPuntos).map(([id, info]) => {
+      const el = document.createElement('button');
+      el.className = 'pin';
+      el.dataset.punto = id;
+      el.innerHTML = `<span class="pin-icono" aria-hidden="true"><svg class="i"><use href="icons/sprite.svg#i-${id}"></use></svg></span><span class="pin-nombre">${info.nombre} <small class="pin-dist"></small></span><span class="pin-flecha" aria-hidden="true"></span>`;
+      el.setAttribute('aria-label', info.nombre);
+      el.addEventListener('click', () => this.irA(id));
+      this.capaPuntos.appendChild(el);
+      return { el, flecha: el.querySelector('.pin-flecha'), dist: el.querySelector('.pin-dist'), pos: new THREE.Vector3(PUNTOS[id].x, alturaPunto(id), PUNTOS[id].z) };
+    });
+  }
+
+  /** Vuela la cámara hasta un punto de interés y muestra su ficha. */
+  irA(id) {
+    const { x, z } = PUNTOS[id];
+    const y = altura(x, z);
+    const desde = new THREE.Vector3(x, y + 1, z).sub(this.camara.position).setY(0).normalize();
+    const lejos = (id === 'hielo' ? 70 : 26) * (window.innerHeight > window.innerWidth ? 1.6 : 1);
+    this.#volar(new THREE.Vector3(x, y + 1, z), new THREE.Vector3(x - desde.x * lejos, y + lejos * 0.6, z - desde.z * lejos), 0.55);
+    this.controles.autoRotate = false;
+    const info = this.infoPuntos[id];
+    this.#cerrarFicha();
+    const f = document.createElement('div');
+    f.className = 'ficha-punto';
+    f.innerHTML = `<b>${info.nombre}</b><p>${this.planeta === 'marte' && info.textoMarte ? info.textoMarte : info.texto}</p><button class="fantasma chico"><svg class="i" aria-hidden="true"><use href="icons/sprite.svg#i-base"></use></svg> ${this.textoAyuda?.volver || 'Volver a la base'}</button>`;
+    f.querySelector('button').addEventListener('click', () => this.vista(this.modo));
+    this.capaPuntos.appendChild(f);
+    this.ficha = f;
+  }
+
+  #cerrarFicha() { this.ficha?.remove(); this.ficha = null; }
+
+  #irAlSuelo(ev) {
+    const r = this.renderer.domElement.getBoundingClientRect();
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), this.camara);
+    const [hit] = ray.intersectObject(this.suelo);
+    if (!hit) return;
+    const delta = hit.point.clone().sub(this.controles.target);
+    this.#volar(hit.point.clone().setY(hit.point.y + 1), this.camara.position.clone().add(delta), 0.9);
+  }
+
+  #mostrarAyuda() {
+    if (!this.textoAyuda || this.ayudaMostrada || !this.capaPuntos) return;
+    this.ayudaMostrada = true;
+    const a = document.createElement('div');
+    a.className = 'ayuda-explorar';
+    a.textContent = matchMedia('(pointer: coarse)').matches ? this.textoAyuda.tactil : this.textoAyuda.raton;
+    this.capaPuntos.appendChild(a);
+    setTimeout(() => a.classList.add('fuera'), 7000);
+    setTimeout(() => a.remove(), 8000);
   }
 }

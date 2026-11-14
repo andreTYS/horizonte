@@ -495,3 +495,34 @@ button .i { width: 1.2em; height: 1.2em; }
 @keyframes nebula-habla { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(140, 160, 255, .55); } 50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(140, 160, 255, 0); } }
 body.nebula-habla .nebula .cara { animation: nebula-habla .6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { body.nebula-habla .nebula .cara { animation: none; outline: 2px solid #8ca0ff; } }
+
+/* ── Exploración del mapa: marcadores, ficha y ayuda ── */
+#puntos { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+#puntos .pin { position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0; min-height: 0; background: none; border: 0; color: var(--texto, #fff); cursor: pointer; font: 600 11px/1.2 'Exo 2', system-ui, sans-serif; letter-spacing: .04em; text-shadow: 0 1px 3px #000; }
+#puntos .pin-icono { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: rgba(10, 16, 40, .78); border: 1.5px solid #ffb547; box-shadow: 0 0 12px rgba(255, 181, 71, .45); transition: transform .2s, background .2s; }
+#puntos .pin-icono .i { width: 16px; height: 16px; transform: rotate(45deg); color: #ffd27a; }
+#puntos .pin:hover .pin-icono, #puntos .pin:focus-visible .pin-icono { transform: rotate(-45deg) scale(1.15); background: rgba(255, 181, 71, .3); }
+#puntos .pin-nombre { padding: 2px 7px; border-radius: 8px; background: rgba(5, 8, 26, .65); white-space: nowrap; }
+.ficha-punto { position: absolute; left: 50%; top: calc(max(10px, env(safe-area-inset-top)) + 66px); transform: translateX(-50%); width: min(380px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 16px; background: var(--vidrio-fuerte, rgba(10, 16, 40, .9)); border: 1px solid #ffb547; backdrop-filter: blur(12px); pointer-events: auto; animation: ficha-entra .35s ease-out; }
+.ficha-punto b { font-family: Orbitron, sans-serif; color: #ffd27a; letter-spacing: .05em; }
+.ficha-punto p { margin: 6px 0 10px; font-size: 14px; line-height: 1.45; }
+.ficha-punto button { display: inline-flex; align-items: center; gap: 6px; }
+.ficha-punto button .i { width: 16px; height: 16px; }
+@keyframes ficha-entra { from { opacity: 0; transform: translate(-50%, -12px); } }
+.ayuda-explorar { position: absolute; left: 50%; top: calc(max(10px, env(safe-area-inset-top)) + 70px); transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 8px 14px; border-radius: 999px; background: rgba(5, 8, 26, .78); border: 1px solid rgba(255, 255, 255, .15); font-size: 13px; text-align: center; transition: opacity .8s; }
+.ayuda-explorar.fuera { opacity: 0; }
+#puntos .pin-dist { display: none; opacity: .8; font-weight: 500; }
+#puntos .pin-flecha { display: none; position: absolute; left: 50%; top: 15px; width: 0; height: 0; }
+#puntos .pin.borde { flex-direction: row; gap: 6px; opacity: .85; }
+#puntos .pin.borde:hover { opacity: 1; }
+#puntos .pin.borde .pin-icono { transform: none; border-radius: 50%; width: 28px; height: 28px; }
+#puntos .pin.borde .pin-icono .i { transform: none; }
+#puntos .pin.borde .pin-dist { display: inline; }
+#puntos .pin.borde .pin-flecha { display: block; left: 14px; top: 50%; }
+#puntos .pin.borde .pin-flecha::after { content: ''; position: absolute; left: 16px; top: -5px; border: 5px solid transparent; border-left: 8px solid #ffb547; }
+@media (max-width: 640px) { #puntos .pin.borde .pin-nombre { display: none; } }
+@media (max-width: 640px) {
+  .ficha-punto { top: calc(max(10px, env(safe-area-inset-top)) + 158px); padding: 12px 14px; }
+  .ficha-punto p { font-size: 13px; }
+  .ayuda-explorar { top: calc(max(10px, env(safe-area-inset-top)) + 158px); font-size: 12px; border-radius: 14px; }
+}
