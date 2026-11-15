@@ -379,9 +379,12 @@ function personajes() {
 // ───────────────────────── Recompensas, tripulación y objetos ─────────────────────────
 function guardarRec() { guardar('horizonte.recompensas', G.rec); }
 
-function coloresTripulacion() {
+function coloresDe(a) {
   const color = (id) => R.CATALOGO.find((x) => x.id === id)?.color;
-  return G.tripulacion.map((a) => ({ traje: color(a.traje), acento: color(a.acento), visor: color(a.visor) }));
+  return { traje: color(a.traje), acento: color(a.acento), visor: color(a.visor), parche: a.parche || 'parche-peru', accesorio: a.accesorio || 'acc-ninguno' };
+}
+function coloresTripulacion() {
+  return tripulacionActiva().map(coloresDe);
 }
 
 function aplicarPersonalizacion() {
@@ -439,58 +442,210 @@ function bloquePremio(p) {
 const chipCreditos = () => `<button class="chip-creditos" id="chipCreditos" aria-label="${t('Créditos estelares: {n}. Abrir tripulación', { n: G.rec.creditos })}">${I('estrella')} ${G.rec.creditos}</button>`;
 
 /** Pantalla de la tripulación: personalizar astronautas, comprar y colocar objetos, ver insignias. */
-function pantallaTripulacion(aviso = '') {
-  document.body.dataset.pantalla = 'modal';
-  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 4, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
-  const tiene = (id) => G.rec.comprados.includes(id);
-  const muestra = (it, actual) => `<button class="muestra ${tiene(it.id) ? '' : 'bloqueada'} ${actual === it.id ? 'elegida' : ''}" data-item="${it.id}" style="--c:#${it.color.toString(16).padStart(6, '0')}"
-    aria-label="${t(it.nombre)}${tiene(it.id) ? '' : ` · ${it.precio} ${t('créditos')}`}" aria-pressed="${actual === it.id}" title="${t(it.nombre)}${tiene(it.id) ? '' : ` · ${it.precio}`}">${tiene(it.id) ? '' : I('candado')}</button>`;
-  const fila = (tipo, etiqueta, a, i) => `<div class="fila-muestras"><small>${etiqueta}</small><div data-astro="${i}" data-tipo="${tipo}">${R.CATALOGO.filter((x) => x.tipo === tipo).map((it) => muestra(it, a[tipo])).join('')}</div></div>`;
-  const tarjetas = G.tripulacion.map((a, i) => `<div class="astro-carta" style="--traje:#${R.CATALOGO.find((x) => x.id === a.traje).color.toString(16).padStart(6, '0')};--acento:#${R.CATALOGO.find((x) => x.id === a.acento).color.toString(16).padStart(6, '0')};--visor:#${R.CATALOGO.find((x) => x.id === a.visor).color.toString(16).padStart(6, '0')}">
-      <div class="astro-figura" aria-hidden="true"><i class="casco"><i class="visor"></i></i><i class="cuerpo"><i class="cinto"></i></i></div>
-      <label class="astro-nombre">${t('Nombre')} <input data-nombre="${i}" maxlength="16" value="${esc(a.nombre)}"></label>
-      ${fila('traje', t('Traje'), a, i)}${fila('acento', t('Franjas'), a, i)}${fila('visor', t('Visor'), a, i)}
-    </div>`).join('');
+function abrirMision(m) {
+  const empezar = () => { G.mision = m; G.config = S.configInicial(m); G.rebobinados = 0; G.tutorialFallo = false; G.coachVisto = {}; G.coachSalteado = false; construir(); };
+  if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
+}
+
+// ───────────────────────── Globo de la Luna y de Marte ─────────────────────────
+// Coordenadas reales (grados) de los lugares de cada misión.
+const COORDENADAS = {
+  noche: [0.67, 23.47], // Mar de la Tranquilidad (Apolo 11)
+  amanecer: [-88.5, -20], // región del polo sur (Artemis)
+  tormenta: [-89.67, 129.78], // cráter Shackleton
+  hielo: [-84.9, -35.5], // cráter Cabeus (LCROSS)
+  cadena: [32.8, -15.6], // Mar de las Lluvias (Imbrium)
+  marte: [18.38, 77.58], // cráter Jezero (Perseverance)
+  tormenta_marte: [-5.4, 137.8], // cráter Gale (Curiosity)
+};
+let globo3d = null;
+
+function globo(planeta = 'luna', elegida = null) {
+  document.body.dataset.pantalla = 'globo';
+  const lista = G.misiones.filter((m) => COORDENADAS[m.id] && (m.planeta || 'luna') === planeta);
+  const sel = lista.find((m) => m.id === elegida) || lista[0];
+  const ficha = (m) => {
+    const est = G.progreso[m.id] || 0;
+    return `<p class="lema">${I('lugar')} ${esc(m.lugar)} · ${COORDENADAS[m.id].map((v, i) => `${Math.abs(v).toFixed(1)}° ${i ? (v >= 0 ? 'E' : 'O') : v >= 0 ? 'N' : 'S'}`).join(' ')}</p>
+      <h3>${esc(m.titulo)}</h3><p class="suave">${esc(m.resumen || '')}</p>
+      <div class="entre"><span class="estrellas-res chico">${'★'.repeat(est)}<span>${'★'.repeat(3 - est)}</span></span>
+      <button class="primario" id="globoJugar">${I('cohete')} ${t('Jugar esta misión')}</button></div>`;
+  };
+  globo3d?.destruir(); globo3d = null;
+  $app.innerHTML = `
+    <section class="globo-pantalla" aria-label="${t('La Luna y Marte en globo')}">
+      <header class="vestidor-cabecera">
+        <button class="boton-icono" id="globoVolver" aria-label="${t('Volver')}">${I('volver')}</button>
+        <div><p class="lema">${t('Explora')}</p><h2>${planeta === 'marte' ? t('Marte') : t('La Luna')}</h2></div>
+        <div class="vestidor-cats" role="tablist" style="margin-left:auto">
+          <button role="tab" aria-selected="${planeta === 'luna'}" data-planeta="luna">${t('La Luna')}</button>
+          <button role="tab" aria-selected="${planeta === 'marte'}" data-planeta="marte">${t('Marte')}</button></div>
+      </header>
+      <div class="globo-cuerpo">
+        <div class="globo-escena" id="globoEscena">${G.mundo ? '' : `<ul class="globo-lista">${lista.map((m) => `<li><button data-lugar="${m.id}">${esc(m.lugar)}</button></li>`).join('')}</ul>`}<div class="globo-etiquetas" id="globoEtiquetas"></div>
+          ${G.mundo ? `<small class="pista-girar">${I('mano')} ${t('Arrastra para girar · toca un lugar')}</small>` : ''}</div>
+        <aside class="globo-ficha" id="globoFicha" aria-live="polite">${sel ? ficha(sel) : ''}</aside>
+      </div>
+      <p class="suave chico">${t('Mapa simplificado: los mares, cráteres y volcanes principales están en su lugar real; los colores no son una foto.')}</p>
+    </section>`;
+  const elegir = (id) => {
+    const m = lista.find((x) => x.id === id);
+    if (!m) return;
+    $app.querySelector('#globoFicha').innerHTML = ficha(m);
+    $app.querySelector('#globoJugar').addEventListener('click', () => { globo3d?.destruir(); globo3d = null; G.mundo?.reanudar?.(); abrirMision(m); });
+    sfx.abrir?.();
+  };
+  if (sel) elegir(sel.id);
+  $app.querySelector('#globoVolver').addEventListener('click', () => { globo3d?.destruir(); globo3d = null; G.mundo?.reanudar?.(); inicio(); });
+  $app.querySelectorAll('[data-planeta]').forEach((b) => b.addEventListener('click', () => globo(b.dataset.planeta)));
+  $app.querySelectorAll('[data-lugar]').forEach((b) => b.addEventListener('click', () => elegir(b.dataset.lugar)));
+  if (G.mundo) {
+    G.mundo.pausar?.();
+    import('./globo3d.js').then(({ crearGlobo }) => {
+      if (document.body.dataset.pantalla !== 'globo') return;
+      globo3d = crearGlobo($app.querySelector('#globoEscena'), $app.querySelector('#globoEtiquetas'), { alElegir: elegir });
+      globo3d.mostrar(planeta, lista.map((m) => ({ id: m.id, lat: COORDENADAS[m.id][0], lon: COORDENADAS[m.id][1], titulo: esc(sinNumero(m.titulo)), lugar: esc(m.lugar), estrellas: G.progreso[m.id] || 0 })));
+      if (sel) globo3d.enfocar(sel.id, false);
+    }).catch((err) => console.warn('Globo 3D:', err));
+  }
+}
+
+// ───────────────────────── Vestidor de la tripulación ─────────────────────────
+// Pantalla grande: el astronauta en 3D sobre un pedestal y, al lado, trajes, franjas, visores, parches y accesorios.
+// Lo bloqueado muestra su precio en créditos. En el Episodio 0 todo se puede probar gratis (probador).
+const CATEGORIAS = [['traje', 'Traje'], ['acento', 'Franjas'], ['visor', 'Visor'], ['parche', 'Parche'], ['accesorio', 'Accesorio']];
+const ICONO_ACC = { 'acc-ninguno': 'cerrar', 'acc-bufanda': 'tripulacion', 'acc-luces': 'sol', 'acc-antena': 'antena', 'acc-orejas': 'nebula', 'acc-capitan': 'estrella', 'acc-jetpack': 'cohete' };
+const POR_DEFECTO = { parche: 'parche-peru', accesorio: 'acc-ninguno' };
+const hex = (n) => `#${(n ?? 0).toString(16).padStart(6, '0')}`;
+let vestidor3d = null, miniaturasParche = null;
+
+function tripulacionActiva() { return G.tripulacionPrueba || G.tripulacion; }
+
+function pantallaTripulacion(aviso = '', opciones = {}) {
+  const probador = Boolean(opciones.probador ?? G.vestidor?.probador);
+  G.vestidor = { astro: G.vestidor?.astro ?? 0, cat: G.vestidor?.cat ?? 'traje', seccion: G.vestidor?.seccion ?? 'astros', probador, volver: opciones.volver ?? G.vestidor?.volver ?? inicio };
+  if (probador && !G.tripulacionPrueba) G.tripulacionPrueba = structuredClone(G.tripulacion);
+  const V = G.vestidor, crew = tripulacionActiva();
+  document.body.dataset.pantalla = 'vestidor';
+  const tiene = (id) => probador || G.rec.comprados.includes(id) || R.CATALOGO.find((x) => x.id === id)?.precio === 0;
+  const a = crew[V.astro];
+  const valor = (cat) => a[cat] || POR_DEFECTO[cat];
+  const items = R.CATALOGO.filter((x) => x.tipo === V.cat);
+  const vista = (it) => {
+    if (V.cat === 'parche') return miniaturasParche?.[it.id] ? `<img src="${miniaturasParche[it.id]}" alt="" width="64" height="64">` : `<span class="parche-plano">${esc(t(it.nombre)).slice(0, 2)}</span>`;
+    if (V.cat === 'accesorio') return `<span class="acc-ico">${I(ICONO_ACC[it.id] || 'estrella')}</span>`;
+    return `<span class="color" style="--c:${hex(it.color)}"></span>`;
+  };
+  const tarjeta = (it) => {
+    const mio = tiene(it.id), puesto = valor(V.cat) === it.id;
+    return `<button class="pieza ${mio ? '' : 'bloqueada'} ${puesto ? 'puesta' : ''}" data-pieza="${it.id}" aria-pressed="${puesto}"
+      aria-label="${t(it.nombre)}${mio ? '' : ` · ${t('{n} créditos', { n: it.precio })}`}">
+      ${vista(it)}<b>${t(it.nombre)}</b>
+      <small>${puesto ? `${I('check')} ${t('Puesto')}` : mio ? t('Ponérselo') : `${I('candado')} ${it.precio}`}</small></button>`;
+  };
   const objetos = R.CATALOGO.filter((x) => x.tipo === 'objeto').map((it) => {
-    const mio = tiene(it.id), puesto = G.rec.objetos.includes(it.id);
+    const mio = G.rec.comprados.includes(it.id) || it.precio === 0, puesto = G.rec.objetos.includes(it.id);
     return `<div class="objeto-tienda ${mio ? '' : 'bloqueado'}"><b>${t(it.nombre)}</b>
       ${mio ? `<label class="casilla"><input type="checkbox" data-objeto="${it.id}" ${puesto ? 'checked' : ''}> ${t('En la base')}</label>` : `<button class="secundario chico" data-comprar="${it.id}">${I('estrella')} ${it.precio}</button>`}</div>`;
   }).join('');
   const insignias = R.INSIGNIAS.map((b) => { const ok = G.rec.insignias.includes(b.id); return `<div class="insignia ${ok ? 'ganada' : ''}" title="${t(b.desc)}"><span class="medalla">${I(ok ? b.icono : 'candado')}</span><b>${t(b.nombre)}</b><small>${t(b.desc)}</small></div>`; }).join('');
-  const c = modal({ ancho: true, cerrable: true });
-  c.innerHTML = `
-    <div class="entre"><div><p class="lema">${t('Tu expedición')}</p><h2>${I('tripulacion')} ${t('Tripulación y recompensas')}</h2></div>
-      <div class="creditos-grandes">${I('estrella')} <b>${G.rec.creditos}</b><small>${t('créditos estelares')}</small></div></div>
-    <p class="suave chico">${t('Ganas créditos al cumplir misiones, al acertar tus predicciones, al no rebobinar y al ganar insignias. Úsalos para personalizar a tu tripulación y tu base.')}</p>
+  const desbloqueadas = R.CATALOGO.filter((x) => x.tipo !== 'objeto' && G.rec.comprados.includes(x.id) && x.precio > 0).length;
+  const totalPagas = R.CATALOGO.filter((x) => x.tipo !== 'objeto' && x.precio > 0).length;
+
+  if (vestidor3d && !document.getElementById('vestidorEscena')) { vestidor3d.destruir(); vestidor3d = null; }
+  if (V.seccion !== 'astros' && vestidor3d) { vestidor3d.destruir(); vestidor3d = null; }
+  const reusar = vestidor3d && document.querySelector('.vestidor');
+  const html = `
+    <header class="vestidor-cabecera">
+      <button class="boton-icono" id="vestidorVolver" aria-label="${t('Volver')}">${I('volver')}</button>
+      <div><p class="lema">${probador ? t('Probador del Episodio 0') : t('Tu expedición')}</p><h2>${t('Vestidor de la tripulación')}</h2></div>
+      <div class="creditos-grandes">${I('estrella')} <b>${G.rec.creditos}</b><small>${t('créditos estelares')}</small></div>
+    </header>
+    ${probador ? `<div class="aviso-probador">${I('estrella')} ${t('En el Episodio 0 puedes probar todos los trajes, parches y accesorios gratis. Al terminar el entrenamiento, tu tripulación vuelve a lo que ya desbloqueaste.')}</div>` : ''}
     ${aviso ? `<div class="toast alerta" role="status">${aviso}</div>` : ''}
-    <h3>${t('Astronautas')}</h3><div class="tripulacion-grid">${tarjetas}</div>
-    <h3>${t('Objetos de la base')}</h3><div class="objetos-grid">${objetos}</div>
-    <h3>${t('Insignias')} <small class="suave">${G.rec.insignias.length}/${R.INSIGNIAS.length}</small></h3><div class="insignias-grid">${insignias}</div>`;
-  c.querySelectorAll('[data-nombre]').forEach((inp) => inp.addEventListener('change', () => { G.tripulacion[+inp.dataset.nombre].nombre = inp.value.trim() || R.TRIPULACION_INICIAL[+inp.dataset.nombre].nombre; guardar('horizonte.tripulacion', G.tripulacion); }));
-  c.querySelectorAll('[data-item]').forEach((b) => b.addEventListener('click', () => {
-    const cont = b.parentElement, i = +cont.dataset.astro, tipo = cont.dataset.tipo, id = b.dataset.item;
-    const it = R.CATALOGO.find((x) => x.id === id);
+    <nav class="vestidor-secciones" role="tablist">
+      ${[['astros', 'tripulacion', 'Astronautas'], ['base', 'base', 'Objetos de la base'], ['insignias', 'estrella', 'Insignias']].map(([k, ic, n]) => `<button role="tab" aria-selected="${V.seccion === k}" data-seccion="${k}">${I(ic)} ${t(n)}</button>`).join('')}
+    </nav>
+    ${V.seccion === 'astros' ? `
+    <div class="vestidor-cuerpo">
+      <div class="vestidor-escena" id="vestidorEscena">
+        ${G.mundo ? '' : `<div class="astro-figura grande" aria-hidden="true" style="--traje:${hex(R.CATALOGO.find((x) => x.id === a.traje)?.color)};--acento:${hex(R.CATALOGO.find((x) => x.id === a.acento)?.color)};--visor:${hex(R.CATALOGO.find((x) => x.id === a.visor)?.color)}"><i class="casco"><i class="visor"></i></i><i class="cuerpo"><i class="cinto"></i></i></div>`}
+        <div class="vestidor-astros">${crew.map((x, i) => `<button class="${i === V.astro ? 'activo' : ''}" data-astro="${i}">${esc(x.nombre)}</button>`).join('')}</div>
+        <label class="astro-nombre">${t('Nombre')} <input id="nombreAstro" maxlength="16" value="${esc(a.nombre)}"></label>
+        ${G.mundo ? `<small class="pista-girar">${I('mano')} ${t('Arrastra para girarlo')}</small>` : ''}
+      </div>
+      <div class="vestidor-panel">
+        <div class="vestidor-cats" role="tablist">${CATEGORIAS.map(([k, n]) => `<button role="tab" aria-selected="${V.cat === k}" data-cat="${k}">${t(n)}</button>`).join('')}</div>
+        <div class="piezas">${items.map(tarjeta).join('')}</div>
+        <p class="suave chico">${probador ? '' : t('Desbloqueaste {a} de {b} piezas. Ganas créditos al cumplir misiones, acertar predicciones, no rebobinar y aprender de un error.', { a: desbloqueadas, b: totalPagas })}</p>
+      </div>
+    </div>` : V.seccion === 'base' ? `<div class="objetos-grid">${objetos}</div>` : `<p class="suave">${G.rec.insignias.length}/${R.INSIGNIAS.length}</p><div class="insignias-grid">${insignias}</div>`}`;
+
+  if (reusar && V.seccion === 'astros') {
+    // Solo redibuja el panel y la cabecera, sin recrear la escena 3D (no parpadea)
+    const cont = document.querySelector('.vestidor');
+    cont.innerHTML = html;
+    vestidor3d.mover(document.getElementById('vestidorEscena'));
+  } else {
+    vestidor3d?.destruir(); vestidor3d = null;
+    $app.innerHTML = `<section class="vestidor" aria-label="${t('Vestidor de la tripulación')}">${html}</section>`;
+    if (V.seccion === 'astros' && G.mundo) {
+      G.mundo.pausar?.();
+      import('./vestidor3d.js').then(({ crearVestidor }) => {
+        const cont = document.getElementById('vestidorEscena');
+        if (!cont || vestidor3d) return;
+        vestidor3d = crearVestidor(cont);
+        vestidor3d.vestir(coloresDe(tripulacionActiva()[G.vestidor.astro]));
+      }).catch((err) => console.warn('Vestidor 3D:', err));
+      if (!miniaturasParche) import('./astronauta3d.js').then(({ texturaParche }) => {
+        miniaturasParche = Object.fromEntries(R.CATALOGO.filter((x) => x.tipo === 'parche').map((x) => [x.id, texturaParche(x.id).image.toDataURL()]));
+        if (G.vestidor?.cat === 'parche' && document.body.dataset.pantalla === 'vestidor') pantallaTripulacion();
+      }).catch(() => {});
+    }
+  }
+  vestidor3d?.vestir(coloresDe(a));
+  const raiz = document.querySelector('.vestidor');
+  raiz.querySelector('#vestidorVolver').addEventListener('click', cerrarVestidor);
+  raiz.querySelectorAll('[data-seccion]').forEach((b) => b.addEventListener('click', () => { G.vestidor.seccion = b.dataset.seccion; pantallaTripulacion(); }));
+  raiz.querySelectorAll('[data-astro]').forEach((b) => b.addEventListener('click', () => { G.vestidor.astro = +b.dataset.astro; vestidor3d?.mostrar(); pantallaTripulacion(); }));
+  raiz.querySelectorAll('[data-cat]').forEach((b) => b.addEventListener('click', () => { G.vestidor.cat = b.dataset.cat; pantallaTripulacion(); }));
+  raiz.querySelector('#nombreAstro')?.addEventListener('change', (ev) => {
+    G.tripulacion[V.astro].nombre = ev.target.value.trim() || R.TRIPULACION_INICIAL[V.astro].nombre;
+    if (G.tripulacionPrueba) G.tripulacionPrueba[V.astro].nombre = G.tripulacion[V.astro].nombre;
+    guardar('horizonte.tripulacion', G.tripulacion);
+  });
+  raiz.querySelectorAll('[data-pieza]').forEach((b) => b.addEventListener('click', () => {
+    const id = b.dataset.pieza, it = R.CATALOGO.find((x) => x.id === id);
     if (!tiene(id)) {
       const r = R.comprar(G.rec, id);
       if (!r.ok) return pantallaTripulacion(t('Te faltan {n} créditos para «{x}».', { n: it.precio - G.rec.creditos, x: t(it.nombre) }));
       guardarRec(); sfx.exito?.();
-    }
-    G.tripulacion[i][tipo] = id;
-    guardar('horizonte.tripulacion', G.tripulacion);
+    } else sfx.modulo();
+    tripulacionActiva()[V.astro][V.cat] = id;
+    if (!probador) guardar('horizonte.tripulacion', G.tripulacion);
+    vestidor3d?.mostrar();
     aplicarPersonalizacion();
     pantallaTripulacion();
   }));
-  c.querySelectorAll('[data-comprar]').forEach((b) => b.addEventListener('click', () => {
+  raiz.querySelectorAll('[data-comprar]').forEach((b) => b.addEventListener('click', () => {
     const it = R.CATALOGO.find((x) => x.id === b.dataset.comprar);
     const r = R.comprar(G.rec, it.id);
     if (!r.ok) return pantallaTripulacion(t('Te faltan {n} créditos para «{x}».', { n: it.precio - G.rec.creditos, x: t(it.nombre) }));
     guardarRec(); aplicarPersonalizacion(); sfx.modulo(); pantallaTripulacion();
   }));
-  c.querySelectorAll('[data-objeto]').forEach((cb) => cb.addEventListener('change', () => {
+  raiz.querySelectorAll('[data-objeto]').forEach((cb) => cb.addEventListener('change', () => {
     const id = cb.dataset.objeto;
     G.rec.objetos = cb.checked ? [...new Set([...G.rec.objetos, id])] : G.rec.objetos.filter((x) => x !== id);
     guardarRec(); aplicarPersonalizacion();
   }));
+}
+
+function cerrarVestidor() {
+  vestidor3d?.destruir(); vestidor3d = null;
+  G.mundo?.reanudar?.();
+  const volver = G.vestidor?.volver || inicio;
+  G.vestidor = null;
+  volver();
 }
 
 // ───────────────────────── Teclado ─────────────────────────
@@ -664,6 +819,7 @@ function modal({ ancho = false, cerrable = false } = {}) {
 // ───────────────────────── Portada ─────────────────────────
 function inicio() {
   document.getElementById('ficha-modulo')?.remove();
+  if (G.tripulacionPrueba) { G.tripulacionPrueba = null; aplicarPersonalizacion(); }
   document.body.dataset.pantalla = 'portada';
   ambienteEstado({});
   callar();
@@ -708,13 +864,12 @@ function inicio() {
         <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
         <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
       </details>
-      <div class="fila"><button id="guiaBtn" class="secundario">${I('info')} ${t('Guía del juego')}</button><button id="personajesBtn" class="secundario">${I('persona')} ${t('Personajes')}</button><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
+      <div class="fila"><button id="guiaBtn" class="secundario">${I('info')} ${t('Guía del juego')}</button><button id="personajesBtn" class="secundario">${I('persona')} ${t('Personajes')}</button><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="globoBtn" class="secundario">${I('orbita')} ${t('La Luna y Marte en globo')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
     </aside>
     <p class="pista-gesto">${I('mano')} ${t('Arrastra para girar la base · pellizca para acercar')}</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
-    const empezar = () => { G.mision = G.misiones[+b.dataset.mision]; G.config = S.configInicial(G.mision); G.rebobinados = 0; G.tutorialFallo = false; G.coachVisto = {}; G.coachSalteado = false; construir(); };
-    if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
+    abrirMision(G.misiones[+b.dataset.mision]);
   }));
   $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje, informe: informeComandante })[b.dataset.eval]()));
   for (const id of ['nombre', 'aula']) {
@@ -726,6 +881,7 @@ function inicio() {
   document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('aLanding').addEventListener('click', landing);
   document.getElementById('tripulacionBtn').addEventListener('click', () => pantallaTripulacion());
+  document.getElementById('globoBtn').addEventListener('click', () => globo());
   document.getElementById('guiaBtn').addEventListener('click', () => guia());
   document.getElementById('personajesBtn').addEventListener('click', () => personajes());
   document.getElementById('chipCreditos').addEventListener('click', () => pantallaTripulacion());
@@ -767,6 +923,7 @@ function estimaciones() {
 
 function construir() {
   document.body.dataset.pantalla = 'diseno';
+  if (!G.mision.tutorial && G.tripulacionPrueba) { G.tripulacionPrueba = null; aplicarPersonalizacion(); }
   const { mision: m, config: c, juego: j, nasa } = G;
   pintar({ config: c, luz: S.hayLuz(m, 0, nasa), tripulacion: m.tripulacion, carga: 1, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: m.planeta || 'luna' }, 'diseno');
   const masa = S.masa(c, j, nasa);
@@ -790,6 +947,7 @@ function construir() {
       <button id="volver" class="boton-icono" aria-label="${t('Volver a misiones')}">${I('volver')}</button>
       <div class="titulo-barra"><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small><b>${esc(m.titulo)}</b></div>
       <button class="boton-icono" id="deDonde" aria-label="${t('¿De dónde salen estos números?')}" title="${t('¿De dónde salen estos números?')}">${I('datos')}</button>
+      ${m.tutorial ? `<button class="secundario chico" id="probador">${I('tripulacion')} ${t('Vestir tripulación')}</button>` : ''}
       <div class="masa ${excedido ? 'peligro' : pct > 85 ? 'alerta' : ''}" title="${t('Masa que lleva el cohete')}">
         <div class="entre"><span>${I('cohete')} ${t('Masa')}</span><b>${fmt(masa, 2)} / ${m.presupuesto_t} t</b></div>
         <div class="barra"><span style="width:${pct}%"></span></div>
@@ -834,6 +992,7 @@ function construir() {
 
   document.getElementById('volver').addEventListener('click', () => { G.scrollDock = 0; inicio(); });
   document.getElementById('deDonde').addEventListener('click', () => { fuentes(); G.volverDeFuentes = construir; });
+  document.getElementById('probador')?.addEventListener('click', () => { G.vestidor = null; pantallaTripulacion('', { probador: true, volver: construir }); });
   document.getElementById('entendido')?.addEventListener('click', () => { G.briefingVisto[m.id] = true; construir(); });
   document.getElementById('ayuda').addEventListener('click', () => { G.briefingVisto[m.id] = false; construir(); });
   const tipoDe = (k) => (['o2', 'agua', 'comida'].includes(k) ? 'habitat' : k);

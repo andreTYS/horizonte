@@ -110,6 +110,8 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
 | `js/mundo3d.js` | Mapa 3D: cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas, cámara para explorar |
 | `js/viaje3d.js` | Viaje en 3D antes de cada misión: plataforma en la Tierra, despegue, ruta Tierra→Luna/Marte y aterrizaje en el puesto de avanzada |
+| `js/astronauta3d.js` · `js/vestidor3d.js` | Astronauta 3D detallado (traje, visor, parche, accesorios, camina) y probador grande para personalizarlo |
+| `js/globo3d.js` | Globo 3D de la Luna y de Marte con los lugares reales de cada misión |
 | `js/terreno3d.js` | Terreno de 920 × 920 m: relieve, cordillera, cráteres, texturas generadas, huellas de rover y puntos de interés |
 | `js/modelos3d.js` | Modelos 3D de cada módulo (exportables a `.glb` para Blender) |
 | `js/escena.js` | Escena isométrica SVG de respaldo (equipos sin WebGL) |

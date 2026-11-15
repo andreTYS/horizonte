@@ -956,6 +956,7 @@ body.destello-falla .modal { animation: temblor .45s ease-in-out; }
 .viaje-texto .lema { color: var(--acento); font: 800 .85rem var(--boton); letter-spacing: .08em; text-transform: uppercase; margin: 0; }
 .viaje-texto .suave { max-width: 640px; margin: 0 auto; }
 .viaje-texto .etq { display: inline-flex; gap: 4px; align-items: center; font-size: .78rem; padding: 2px 8px; border-radius: 99px; background: rgba(92, 200, 238, .15); color: var(--acento-2); }
+body[data-pantalla="vestidor"] #aviso-lento, body[data-pantalla="globo"] #aviso-lento { top: auto; bottom: 16px; }
 .viaje-saltar { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 2; }
 .cohete-svg { width: 100%; height: 100%; display: block; }
 .llama-motor { opacity: 0; transform-origin: 40px 162px; }
@@ -1036,3 +1037,72 @@ body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d 
 .viaje-escena { z-index: 1; }
 .viaje-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .viaje.con-3d .viaje-escena { background: none !important; animation: none !important; filter: none !important; }
+
+/* ───────── Vestidor de la tripulación (pantalla grande) ───────── */
+.vestidor { position: fixed; inset: 0; z-index: 25; overflow: auto; padding: calc(12px + env(safe-area-inset-top)) clamp(12px, 3vw, 32px) calc(20px + var(--seguro-abajo));
+  background: radial-gradient(circle at 30% 30%, #2d3870, var(--fondo) 70%); display: flex; flex-direction: column; gap: 12px; }
+.vestidor-cabecera { display: flex; align-items: center; gap: 12px; }
+.vestidor-cabecera h2 { margin: 0; font-family: var(--titulo); font-size: clamp(1.2rem, 3vw, 1.7rem); }
+.vestidor-cabecera .lema { margin: 0; color: var(--acento); font: 800 .8rem var(--boton); letter-spacing: .08em; text-transform: uppercase; }
+.vestidor-cabecera .creditos-grandes { margin-left: auto; }
+.aviso-probador { padding: 10px 14px; border-radius: 14px; background: rgba(255, 201, 74, .14); border: 1px solid var(--acento); font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.vestidor-secciones, .vestidor-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.vestidor-secciones button, .vestidor-cats button { border-radius: 99px; padding: 8px 14px; min-height: 40px; background: rgba(245, 246, 255, .07); border: 1px solid var(--borde); color: var(--texto); font: 700 .95rem var(--boton); display: inline-flex; gap: 6px; align-items: center; }
+.vestidor-secciones [aria-selected="true"], .vestidor-cats [aria-selected="true"] { background: var(--acento); color: #1c2446; border-color: var(--acento); }
+.vestidor-cuerpo { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.1fr); gap: 16px; flex: 1; min-height: 0; }
+.vestidor-escena { position: relative; min-height: min(62vh, 560px); border-radius: 24px; overflow: hidden;
+  background: radial-gradient(circle at 50% 75%, rgba(255, 201, 74, .18), transparent 55%), linear-gradient(#222b52, #18203f); border: 1px solid var(--borde); }
+.vestidor-3d { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.vestidor-astros { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 1; }
+.vestidor-astros button { border-radius: 99px; padding: 6px 12px; background: rgba(24, 32, 63, .75); border: 1px solid var(--borde); color: var(--texto); font: 800 .95rem var(--boton); }
+.vestidor-astros button.activo { background: var(--acento-2); color: #18203f; border-color: var(--acento-2); }
+.vestidor-escena .astro-nombre { position: absolute; left: 12px; bottom: 12px; z-index: 1; background: rgba(24, 32, 63, .75); padding: 6px 10px; border-radius: 12px; }
+.pista-girar { position: absolute; right: 12px; bottom: 16px; z-index: 1; color: var(--suave); display: inline-flex; gap: 4px; align-items: center; }
+.astro-figura.grande { transform: scale(3); transform-origin: 50% 100%; position: absolute; left: 50%; bottom: 30%; margin-left: -23px; }
+.vestidor-panel { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.piezas { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); align-content: start; }
+.pieza { display: grid; justify-items: center; gap: 4px; padding: 12px 8px; border-radius: 18px; background: rgba(245, 246, 255, .06); border: 2px solid var(--borde); color: var(--texto); text-align: center; min-height: 140px; }
+.pieza b { font: 800 .9rem var(--boton); line-height: 1.15; }
+.pieza small { color: var(--suave); display: inline-flex; gap: 4px; align-items: center; font-weight: 700; }
+.pieza .color { width: 58px; height: 58px; border-radius: 50%; background: var(--c); border: 3px solid rgba(245, 246, 255, .5); box-shadow: inset -6px -6px 0 rgba(0, 0, 0, .12); }
+.pieza img { width: 64px; height: 64px; border-radius: 50%; }
+.pieza .acc-ico { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; background: rgba(92, 200, 238, .15); color: var(--acento-2); }
+.pieza .acc-ico .i { width: 30px; height: 30px; }
+.pieza .parche-plano { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; background: var(--violeta); font-weight: 800; }
+.pieza.puesta { border-color: var(--acento); background: rgba(255, 201, 74, .12); }
+.pieza.puesta small { color: var(--acento); }
+.pieza.bloqueada > :first-child { filter: grayscale(.2) brightness(.9); opacity: .85; }
+.pieza.bloqueada small { color: var(--acento); }
+.pieza:hover { transform: translateY(-2px); }
+@media (max-width: 820px) {
+  .vestidor-cuerpo { grid-template-columns: 1fr; }
+  .vestidor-escena { min-height: 46vh; }
+}
+
+/* ───────── Globo de la Luna y Marte ───────── */
+.globo-pantalla { position: fixed; inset: 0; z-index: 25; overflow: auto; padding: calc(12px + env(safe-area-inset-top)) clamp(12px, 3vw, 32px) calc(16px + var(--seguro-abajo));
+  background: radial-gradient(circle at 40% 40%, #222b52, #141a33 70%); display: flex; flex-direction: column; gap: 12px; }
+.globo-cuerpo { flex: 1; display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 16px; min-height: 0; }
+.globo-escena { position: relative; min-height: min(68vh, 620px); border-radius: 24px; overflow: hidden; }
+.globo-3d { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.globo-etiquetas { position: absolute; inset: 0; pointer-events: none; }
+.marcador-globo { position: absolute; left: 0; top: 0; pointer-events: auto; display: grid; justify-items: center; gap: 0; padding: 4px 8px; border-radius: 12px;
+  background: rgba(24, 32, 63, .82); border: 1px solid var(--borde); color: var(--texto); transition: opacity .2s; min-height: 0; }
+.marcador-globo b { font: 800 .85rem var(--boton); white-space: nowrap; }
+.marcador-globo small { font-size: .72rem; color: var(--suave); white-space: nowrap; }
+.marcador-globo .pin { position: absolute; left: 50%; bottom: -10px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--acento); border: 2px solid #18203f; }
+.marcador-globo.hecha .pin { background: var(--ok); }
+.marcador-globo.activo { background: var(--acento); color: #18203f; border-color: var(--acento); }
+.marcador-globo.activo small { color: #29335e; }
+.marcador-globo.oculto { opacity: 0; pointer-events: none; }
+.globo-ficha { align-self: start; padding: 18px; border-radius: 20px; background: var(--tarjeta); border: 1px solid var(--borde); display: grid; gap: 8px; }
+.globo-ficha h3 { margin: 0; font-family: var(--titulo); }
+.globo-ficha .lema { margin: 0; color: var(--acento-2); font: 700 .8rem var(--boton); display: flex; gap: 4px; align-items: center; }
+.globo-lista { list-style: none; padding: 16px; display: grid; gap: 8px; }
+@media (max-width: 820px) { .globo-cuerpo { grid-template-columns: 1fr; } .globo-escena { min-height: 52vh; } }
+.globo-ficha #globoJugar { white-space: nowrap; }
+.globo-ficha .entre { flex-wrap: wrap; gap: 10px; }
+
+.ayuda-docente { grid-column: 1 / -1; font-size: .92rem; }
+.ayuda-docente summary { cursor: pointer; font-weight: 700; color: var(--acento-2); }
+.ayuda-docente ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }

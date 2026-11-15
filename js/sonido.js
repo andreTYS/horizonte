@@ -57,14 +57,23 @@ export function alternarSonido() {
 }
 
 // ── Música de fondo: generada en el navegador, suave y amigable para niños ──
-// Acordes tipo "pad" muy suaves, un bajo cálido y una melodía de caja musical en escala pentatónica (nunca suena "mal").
-// Cambia de ánimo: de día en mayor, de noche más lenta y grave, en tormenta en menor pero sin ruido.
+// Acordes suaves, bajo que camina, batería ligera (bombo, palmas y platillo) y melodías cortas de caja musical
+// hechas con las notas del acorde (nunca suenan "mal"). De día alegre, de noche tranquila, en tormenta en menor y más rápida.
 const NOTA = (n) => 440 * 2 ** ((n - 69) / 12); // número MIDI → Hz
 const ANIMOS = {
-  dia: { bpm: 76, acordes: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 67]], escala: [72, 74, 76, 79, 81, 84], prob: 0.55 },
-  noche: { bpm: 60, acordes: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 55, 60, 64], [55, 59, 62, 67]], escala: [69, 72, 74, 76, 79], prob: 0.35 },
-  tormenta: { bpm: 84, acordes: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], escala: [69, 71, 72, 76, 77], prob: 0.4 },
+  // ritmo: 16 pasos (corcheas en 2 compases). k = bombo, s = palmas suaves, h = platillo cerrado
+  dia: { bpm: 104, acordes: [[60, 64, 67, 72], [57, 60, 64, 69], [53, 57, 60, 65], [55, 59, 62, 67]], ritmo: 'k.h.s.h.k.hks.h.', bajo: [0, null, 12, null, 7, null, 12, 7, 0, null, 12, null, 7, 5, 4, 2] },
+  noche: { bpm: 84, acordes: [[57, 60, 64, 69], [53, 57, 60, 65], [48, 55, 60, 64], [55, 59, 62, 67]], ritmo: '..h...h...h...h.', bajo: [0, null, null, null, 7, null, null, null, 0, null, null, null, 12, null, 7, null] },
+  tormenta: { bpm: 112, acordes: [[57, 60, 64, 69], [53, 57, 60, 65], [50, 53, 57, 62], [52, 56, 59, 64]], ritmo: 'k.hhs.hhk.hks.hh', bajo: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 7, 7, 5, 5] },
 };
+// Melodías cortas y pegajosas: índices a las notas del acorde (0 = raíz, 1, 2, 3, 4 = raíz una octava arriba). Se alternan.
+const MOTIVOS = [
+  [0, null, 1, 2, null, 4, null, 2, 3, null, 2, 1, null, 0, null, null],
+  [2, null, 2, 3, 4, null, 3, 2, 1, null, 2, null, 0, null, null, null],
+  [4, 3, 2, null, 1, null, 2, null, 3, null, 4, 3, 2, null, null, null],
+  [0, 1, 2, 4, null, 2, null, 1, 2, null, null, 0, 1, null, null, null],
+];
+let ruidoBuf = null;
 
 function crearAmbiente() {
   const salida = ctx.createGain();
@@ -86,7 +95,7 @@ function crearAmbiente() {
   brillo.connect(eco);
   salida.connect(busAmbiente);
   salida.gain.setTargetAtTime(0.9, ctx.currentTime, 2);
-  ambiente = { salida, entrada: brillo, animo: 'dia', compas: 0, proximo: ctx.currentTime + 0.3, paso: 0 };
+  ambiente = { salida, entrada: brillo, seco: salida, animo: 'dia', compas: 0, proximo: ctx.currentTime + 0.3, paso: 0 };
   setInterval(programarMusica, 120);
 }
 
@@ -114,6 +123,26 @@ function voz(freq, inicio, dur, { tipo = 'sine', vol = 0.05, ataque = 0.02, armo
   }
 }
 
+function percusion(tipo, t) {
+  if (!ruidoBuf) {
+    ruidoBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+    const d = ruidoBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (tipo === 'k') { // bombo suave: seno que baja de tono
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+    g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    o.connect(g).connect(ambiente.seco); o.start(t); o.stop(t + 0.25);
+    return;
+  }
+  const src = ctx.createBufferSource(); src.buffer = ruidoBuf;
+  const f = ctx.createBiquadFilter(), g = ctx.createGain();
+  if (tipo === 'h') { f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(0.045, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); }
+  else { f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 0.8; g.gain.setValueAtTime(0.09, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14); }
+  src.connect(f).connect(g).connect(ambiente.seco); src.start(t); src.stop(t + 0.2);
+}
+
 /** Programa la música un poco por adelantado (así no se corta aunque la pestaña esté ocupada). */
 function programarMusica() {
   if (!ctx || !ambiente || ctx.state !== 'running') return;
@@ -122,18 +151,22 @@ function programarMusica() {
   while (ambiente.proximo < ctx.currentTime + 0.6) {
     const t = ambiente.proximo;
     const paso = ambiente.paso % 16; // 16 corcheas = 2 compases por acorde
-    const acorde = a.acordes[Math.floor(ambiente.paso / 16) % a.acordes.length];
-    if (paso === 0) {
-      const dur = pulso * 16 + 0.6;
-      acorde.forEach((n, i) => voz(NOTA(n), t + i * 0.04, dur, { tipo: 'triangle', vol: 0.022, ataque: 1.2 }));
-      voz(NOTA(acorde[0] - 12), t, pulso * 7, { vol: 0.06, ataque: 0.08 });
-    }
-    if (paso === 8) voz(NOTA(acorde[0] - 12), t, pulso * 7, { vol: 0.045, ataque: 0.08 });
-    // Melodía de caja musical: notas del acorde o de la escala, no en todos los pulsos
-    if (paso % 2 === 0 && Math.random() < a.prob) {
-      const opciones = Math.random() < 0.6 ? acorde.map((n) => n + 12) : a.escala;
-      const n = opciones[Math.floor(Math.random() * opciones.length)];
-      voz(NOTA(n), t, pulso * 5, { vol: 0.035, ataque: 0.006, armonico: 0.35 });
+    const vuelta = Math.floor(ambiente.paso / 16);
+    const acorde = a.acordes[vuelta % a.acordes.length];
+    if (paso === 0) acorde.slice(0, 3).forEach((n, i) => voz(NOTA(n), t + i * 0.03, pulso * 16 + 0.4, { tipo: 'triangle', vol: 0.016, ataque: 0.6 }));
+    // Bajo que camina
+    const b = a.bajo[paso];
+    if (b != null) voz(NOTA(acorde[0] - 24 + b), t, pulso * 1.6, { tipo: 'triangle', vol: 0.07, ataque: 0.01 });
+    // Ritmo (la intro de 1 vuelta va sin batería)
+    const golpe = a.ritmo[paso];
+    if (golpe !== '.' && vuelta > 0) percusion(golpe, t);
+    // Melodía: un motivo por acorde; cada 4 acordes se descansa una vuelta para que no canse
+    const frase = Math.floor(vuelta / 4) % 3;
+    const motivo = MOTIVOS[(vuelta + frase) % MOTIVOS.length];
+    const i = motivo[paso];
+    if (i != null && frase !== 2) {
+      const notas = [acorde[0], acorde[1], acorde[2], acorde[3] ?? acorde[0] + 12, acorde[0] + 12].map((n) => n + 12);
+      voz(NOTA(notas[i]), t, pulso * 2.2, { vol: ambiente.animo === 'noche' ? 0.03 : 0.042, ataque: 0.006, armonico: 0.4 });
     }
     ambiente.paso += 1;
     ambiente.proximo += pulso;

@@ -2,7 +2,7 @@
 // Los créditos estelares premian lo que queremos que el estudiante aprenda: predecir bien, entender sin rebobinar,
 // atreverse sin pistas y volver a intentar después de un error. Con ellos se personaliza la tripulación y la base.
 
-/** Tienda: colores del traje, franjas, visor y objetos para la base. precio 0 = viene de inicio. */
+/** Tienda: colores del traje, franjas, visor, parches, accesorios y objetos para la base. precio 0 = viene de inicio. */
 export const CATALOGO = [
   { id: 'traje-blanco', tipo: 'traje', nombre: 'Blanco NASA', color: 0xeef0f6, precio: 0 },
   { id: 'traje-celeste', tipo: 'traje', nombre: 'Celeste', color: 0x9fd8ff, precio: 30 },
@@ -19,6 +19,19 @@ export const CATALOGO = [
   { id: 'visor-plata', tipo: 'visor', nombre: 'Plata', color: 0xdfe6f0, precio: 25 },
   { id: 'visor-cian', tipo: 'visor', nombre: 'Aurora', color: 0x7fd8f2, precio: 35 },
   { id: 'visor-rosa', tipo: 'visor', nombre: 'Atardecer', color: 0xff7a7a, precio: 35 },
+  { id: 'parche-peru', tipo: 'parche', nombre: 'Bandera del Perú', precio: 0 },
+  { id: 'parche-moquegua', tipo: 'parche', nombre: 'Moquegua', precio: 20 },
+  { id: 'parche-stellar', tipo: 'parche', nombre: 'Estrella STELLAR', precio: 30 },
+  { id: 'parche-inti', tipo: 'parche', nombre: 'Inti, el Sol', precio: 35 },
+  { id: 'parche-condor', tipo: 'parche', nombre: 'Cóndor andino', precio: 45 },
+  { id: 'parche-llama', tipo: 'parche', nombre: 'Llama astronauta', precio: 45 },
+  { id: 'acc-ninguno', tipo: 'accesorio', nombre: 'Sin accesorio', precio: 0 },
+  { id: 'acc-bufanda', tipo: 'accesorio', nombre: 'Bufanda andina', precio: 40 },
+  { id: 'acc-luces', tipo: 'accesorio', nombre: 'Luces del casco', precio: 40 },
+  { id: 'acc-antena', tipo: 'accesorio', nombre: 'Antena de radio', precio: 50 },
+  { id: 'acc-orejas', tipo: 'accesorio', nombre: 'Orejas de llama', precio: 60 },
+  { id: 'acc-capitan', tipo: 'accesorio', nombre: 'Gorra de capitán', precio: 70 },
+  { id: 'acc-jetpack', tipo: 'accesorio', nombre: 'Mochila cohete', precio: 100 },
   { id: 'obj-bandera', tipo: 'objeto', nombre: 'Bandera del Perú', precio: 0 },
   { id: 'obj-contenedores', tipo: 'objeto', nombre: 'Contenedores de carga', precio: 0 },
   { id: 'obj-torre', tipo: 'objeto', nombre: 'Torre meteorológica', precio: 0 },
@@ -33,10 +46,10 @@ export const INICIALES = CATALOGO.filter((x) => x.precio === 0).map((x) => x.id)
 
 /** Tripulación de inicio: nombres en quechua (Luna, Sol, Viento, Suerte). */
 export const TRIPULACION_INICIAL = [
-  { nombre: 'Killa', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro' },
-  { nombre: 'Inti', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro' },
-  { nombre: 'Wayra', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro' },
-  { nombre: 'Sami', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro' },
+  { nombre: 'Killa', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro', parche: 'parche-peru', accesorio: 'acc-ninguno' },
+  { nombre: 'Inti', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro', parche: 'parche-peru', accesorio: 'acc-ninguno' },
+  { nombre: 'Wayra', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro', parche: 'parche-peru', accesorio: 'acc-ninguno' },
+  { nombre: 'Sami', traje: 'traje-blanco', acento: 'acento-naranja', visor: 'visor-oro', parche: 'parche-peru', accesorio: 'acc-ninguno' },
 ];
 
 export function estadoInicial() {

@@ -11,6 +11,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
+import { crearAstronauta, vestirAstronauta, caminar } from './astronauta3d.js';
 import { FABRICAS_OBJETOS, POS_OBJETOS, ESCALA_OBJETOS, animarObjeto } from './objetos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
 import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
@@ -252,6 +253,7 @@ export class Mundo {
   }
 
   #fabricar(tipo) {
+    if (tipo === 'astronauta') { const a = crearAstronauta(); a.scale.setScalar(1.25); return a; }
     return this.plantillas[tipo] ? this.plantillas[tipo].clone(true) : FABRICAS[tipo]();
   }
 
@@ -552,15 +554,7 @@ export class Mundo {
   }
 
   #pintarAstronauta(a, c) {
-    if (!c) return;
-    a.traverse((m) => {
-      if (!m.isMesh || !m.material) return;
-      if (!m.userData.matPropio) { m.material = m.material.clone(); m.userData.matPropio = true; m.userData.matNombre = m.material.name; }
-      const n = m.userData.matNombre;
-      if (n === 'traje' || n === 'blanco') m.material.color.setHex(n === 'traje' ? c.traje : new THREE.Color(c.traje).lerp(new THREE.Color(0xffffff), 0.45).getHex());
-      if (n === 'naranja') m.material.color.setHex(c.acento);
-      if (n === 'oro') { m.material.color.setHex(c.visor); if (m.material.emissive) { m.material.emissive.setHex(c.visor); m.material.emissiveIntensity = 0.15; } }
-    });
+    if (c) vestirAstronauta(a, c);
   }
 
   /** El astronauta más cercano camina hasta el módulo, se queda un rato y vuelve a su ronda. */
@@ -872,9 +866,10 @@ export class Mundo {
         if (dist > 0.15) {
           d.normalize().multiplyScalar(Math.min(dist, dt * 3.2));
           as.position.x += d.x; as.position.z += d.z;
-          as.position.y = SUELO_Y + Math.abs(Math.sin(t * 9)) * 0.14;
+          as.position.y = SUELO_Y + Math.abs(Math.sin(t * 9)) * 0.08;
           as.rotation.y = Math.atan2(d.x, d.z);
-        } else if ((u.espera += dt) > 6) { // vuelve a su ronda desde donde está
+          caminar(as, t * 9, 0.6);
+        } else if (caminar(as, 0, 0), (u.espera += dt) > 6) { // vuelve a su ronda desde donde está
           u.r = Math.max(4, Math.hypot(as.position.x, as.position.z));
           u.f = Math.atan2(as.position.z, as.position.x) - t * u.v * u.dir;
           u.destino = null;
@@ -882,7 +877,8 @@ export class Mundo {
         continue;
       }
       const ang = u.f + t * u.v * u.dir;
-      as.position.set(Math.cos(ang) * u.r, SUELO_Y + Math.abs(Math.sin(t * 4 + u.f)) * 0.12, Math.sin(ang) * u.r);
+      as.position.set(Math.cos(ang) * u.r, SUELO_Y + Math.abs(Math.sin(t * 4 + u.f)) * 0.06, Math.sin(ang) * u.r);
+      caminar(as, t * 4 + u.f, 0.45);
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);
     }
 
