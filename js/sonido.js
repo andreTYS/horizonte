@@ -73,6 +73,28 @@ const MOTIVOS = [
   [4, 3, 2, null, 1, null, 2, null, 3, null, 4, 3, 2, null, null, null],
   [0, 1, 2, 4, null, 2, null, 1, 2, null, null, 0, 1, null, null, null],
 ];
+// Varios temas: el menú, la Luna, Marte y el viaje (épico). Cada tema tiene su variante de noche y de tormenta.
+const TEMAS = {
+  menu: { bpm: 96, acordes: [[60, 64, 67, 72], [55, 59, 62, 67], [57, 60, 64, 69], [53, 57, 60, 65]], ritmo: 'k.h.s.h.k.h.s.hh', bajo: [0, null, 7, null, 12, null, 7, null, 0, null, 7, null, 12, 10, 7, 5], timbre: 'campana' },
+  luna: { ...ANIMOS.dia, timbre: 'campana' },
+  marte: { bpm: 100, acordes: [[62, 65, 69, 72], [60, 64, 67, 72], [58, 62, 65, 70], [60, 64, 67, 70]], ritmo: 'k..hs.h.k.hhs.h.', bajo: [0, null, 0, 12, null, 7, null, 5, 0, null, 0, 12, null, 10, 7, null], timbre: 'flauta' },
+  viaje: { bpm: 120, acordes: [[57, 60, 64, 69], [53, 57, 60, 65], [48, 52, 55, 60], [55, 59, 62, 67]], ritmo: 'k.hhs.hhk.hks.hh', bajo: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 7, 7, 5, 5], timbre: 'chip' },
+};
+function configMusica() {
+  const tema = TEMAS[ambiente.tema] || TEMAS.luna;
+  if (ambiente.animo === 'tormenta') return { ...ANIMOS.tormenta, timbre: tema.timbre };
+  if (ambiente.animo === 'noche') return { ...tema, bpm: Math.round(tema.bpm * 0.8), ritmo: ANIMOS.noche.ritmo, bajo: ANIMOS.noche.bajo, suave: true };
+  return tema;
+}
+/** Cambia la canción (menu, luna, marte, viaje). Entra al empezar el siguiente acorde. */
+let temaPendiente = null;
+export function musicaTema(nombre) {
+  temaPendiente = nombre;
+  if (!ambiente || ambiente.tema === nombre) return;
+  ambiente.tema = nombre;
+  ambiente.animo = 'dia';
+  ambiente.paso = Math.ceil(ambiente.paso / 16) * 16;
+}
 let ruidoBuf = null;
 
 function crearAmbiente() {
@@ -95,7 +117,7 @@ function crearAmbiente() {
   brillo.connect(eco);
   salida.connect(busAmbiente);
   salida.gain.setTargetAtTime(0.9, ctx.currentTime, 2);
-  ambiente = { salida, entrada: brillo, seco: salida, animo: 'dia', compas: 0, proximo: ctx.currentTime + 0.3, paso: 0 };
+  ambiente = { salida, entrada: brillo, seco: salida, animo: 'dia', tema: temaPendiente || 'menu', compas: 0, proximo: ctx.currentTime + 0.3, paso: 0 };
   setInterval(programarMusica, 120);
 }
 
@@ -146,7 +168,7 @@ function percusion(tipo, t) {
 /** Programa la música un poco por adelantado (así no se corta aunque la pestaña esté ocupada). */
 function programarMusica() {
   if (!ctx || !ambiente || ctx.state !== 'running') return;
-  const a = ANIMOS[ambiente.animo];
+  const a = configMusica();
   const pulso = 60 / a.bpm / 2; // corcheas
   while (ambiente.proximo < ctx.currentTime + 0.6) {
     const t = ambiente.proximo;
@@ -166,7 +188,10 @@ function programarMusica() {
     const i = motivo[paso];
     if (i != null && frase !== 2) {
       const notas = [acorde[0], acorde[1], acorde[2], acorde[3] ?? acorde[0] + 12, acorde[0] + 12].map((n) => n + 12);
-      voz(NOTA(notas[i]), t, pulso * 2.2, { vol: ambiente.animo === 'noche' ? 0.03 : 0.042, ataque: 0.006, armonico: 0.4 });
+      const nota = NOTA(notas[i]), vol = a.suave ? 0.03 : 0.042;
+      if (a.timbre === 'flauta') voz(nota, t, pulso * 2.4, { tipo: 'triangle', vol: vol * 1.1, ataque: 0.04 });
+      else if (a.timbre === 'chip') voz(nota, t, pulso * 1.6, { tipo: 'square', vol: vol * 0.45, ataque: 0.005 });
+      else voz(nota, t, pulso * 2.2, { vol, ataque: 0.006, armonico: 0.4 });
     }
     ambiente.paso += 1;
     ambiente.proximo += pulso;

@@ -29,7 +29,63 @@ $('form').addEventListener('submit', (ev) => {
   cargar();
 });
 
+// ── Aula de demostración: datos de ejemplo (inventados) para conocer el panel sin clave ──
+function datosDemo() {
+  let semilla = 7;
+  const azar = () => { semilla = (semilla * 9301 + 49297) % 233280; return semilla / 233280; };
+  const nombres = ['Luz', 'Mateo', 'Ximena', 'Thiago', 'Valeria', 'Joaquín', 'Camila', 'Renzo'];
+  const camp = ['cero', 'noche', 'amanecer', 'marte', 'tormenta_marte'];
+  const causa = { cero: 'energia', noche: 'energia', amanecer: 'o2', marte: 'energia', tormenta_marte: 'radiacion' };
+  const frases = {
+    noche: ['Puse el reactor porque la noche dura 14 días.', 'Agregué baterías, pero no alcanzaban: cambié al reactor.'],
+    amanecer: ['Llevé más agua porque el oxígeno se hace con agua.', 'El reciclador ahorra agua pero gasta energía.'],
+    marte: ['En la tormenta de polvo apagué el invernadero.', 'El reactor sigue funcionando aunque no haya sol.'],
+    tormenta_marte: ['Cuando llegó la alerta metí a todos al refugio.', 'El blindaje alto bajó la radiación.'],
+    cero: ['Sin baterías la base se apaga en la noche.'],
+  };
+  const ahora = Date.now(), partidas = [], notas = [], logros = [], estudiantes = [];
+  nombres.forEach((nombre, n) => {
+    let misiones = 0, creditos = 0;
+    const llega = 2 + Math.floor(azar() * 4);
+    camp.slice(0, llega).forEach((m, k) => {
+      const intentos = 1 + Math.floor(azar() * 3);
+      for (let i = 0; i < intentos; i++) {
+        const exito = i === intentos - 1 && azar() > 0.15;
+        const pred = azar() < 0.6 ? (exito ? 'exito' : causa[m]) : ['agua', 'comida', 'o2'][Math.floor(azar() * 3)];
+        partidas.push({ nombre, mision: m, exito, motivo: exito ? null : causa[m], prediccion: pred, estrellas: exito ? 3 - Math.min(2, i) : 0, rebobinados: Math.floor(azar() * 3), dias: 10 + Math.floor(azar() * 20), ciencia: Math.floor(azar() * 30), fecha: new Date(ahora - (n * 9 + k * 3 + i) * 3600e3).toISOString() });
+        if (exito) { misiones += 1; creditos += 60 + Math.floor(azar() * 50); }
+      }
+      if (azar() < 0.7) notas.push({ nombre, mision: m, nota: frases[m][Math.floor(azar() * frases[m].length)], fecha: new Date(ahora - (n * 9 + k * 3) * 3600e3).toISOString() });
+    });
+    logros.push({ nombre, misiones, insignias: ['primera', 'profeta', 'leccion', 'noche', 'limpio'].slice(0, 1 + Math.floor(azar() * 5)), creditos, actualizado: ahora - n * 1800e3 });
+    const ini = 1 + Math.floor(azar() * 3), fin = Math.min(5, ini + 1 + Math.floor(azar() * 3)), caso = 3 + Math.floor(azar() * 6);
+    estudiantes.push({ nombre, inicial: { puntaje: ini, maximo: 5 }, final: llega >= 5 ? { puntaje: fin, maximo: 5 } : null, caso: llega >= 5 ? { puntaje: caso, maximo: 8, nivel: caso >= 7 ? 'AD' : caso >= 5 ? 'A' : caso >= 3 ? 'B' : 'C' } : null });
+  });
+  const prom = (xs) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null);
+  const conFinal = estudiantes.filter((e) => e.final);
+  const pi = prom(conFinal.map((e) => e.inicial.puntaje)), pf = prom(conFinal.map((e) => e.final.puntaje));
+  const niveles = { AD: 0, A: 0, B: 0, C: 0 };
+  estudiantes.forEach((e) => { if (e.caso) niveles[e.caso.nivel] += 1; });
+  const porMision = (fn) => camp.map((m) => fn(m, partidas.filter((p) => p.mision === m))).filter(Boolean);
+  return {
+    aula: 'DEMO-3B', demo: true, pausa: false, mensaje: '',
+    aprendizaje: { estudiantes, inicial: prom(estudiantes.map((e) => e.inicial.puntaje)), final: pf, ganancia: pi != null && pf != null ? (pf - pi) / (5 - pi) : null, caso: prom(estudiantes.filter((e) => e.caso).map((e) => e.caso.puntaje)), niveles },
+    predicciones: porMision((m, ps) => ps.length && { mision: m, total: ps.length, aciertos: ps.filter((p) => p.prediccion === (p.exito ? 'exito' : p.motivo)).length }),
+    resumen: porMision((m, ps) => ps.length && { mision: m, intentos: ps.length, exitos: ps.filter((p) => p.exito).length, rebobinados_prom: prom(ps.map((p) => p.rebobinados)) }),
+    fallas: porMision((m, ps) => { const f = ps.filter((p) => !p.exito); return f.length && { mision: m, motivo: causa[m], veces: f.length }; }),
+    partidas: partidas.sort((a, b) => b.fecha.localeCompare(a.fecha)), notas, logros,
+  };
+}
+
+$('demoBtn')?.addEventListener('click', () => {
+  sesion = { aula: 'DEMO-3B', token: null, demo: true };
+  datos = datosDemo();
+  pintar();
+  $('salida').scrollIntoView({ behavior: 'smooth' });
+});
+
 async function cargar() {
+  if (sesion?.demo) { datos = datosDemo(); pintar(); return; }
   $('salida').innerHTML = '<p class="suave">Cargando…</p>';
   try {
     const r = await fetch(`api/resultados?aula=${encodeURIComponent(sesion.aula)}`, { headers: { Authorization: `Bearer ${sesion.token}` } });
@@ -42,7 +98,7 @@ async function cargar() {
   }
 }
 
-const tabla = (filas, cols) => `<div class="tabla-scroll"><table class="tabla-fuentes"><thead><tr>${cols.map(([, t]) => `<th>${t}</th>`).join('')}</tr></thead><tbody>${
+const tabla = (filas, cols) => `<div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla"><table class="tabla-fuentes"><thead><tr>${cols.map(([, t]) => `<th>${t}</th>`).join('')}</tr></thead><tbody>${
   filas.map((f) => `<tr>${cols.map(([k, , fmt]) => `<td>${fmt ? fmt(f[k], f) : esc(f[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 
 /** Enlace para estudiantes: abre el juego con el código de aula y el modo aula activo. */
@@ -61,7 +117,7 @@ function tarjetaAula() {
       <div>
         <p class="suave chico">Comparte este enlace o el código QR. El juego se abre con el código de aula, <b>sin sonido ni voz al inicio</b> (cada estudiante puede activarlos) y con la pausa de aula activa.</p>
         <label class="casilla"><input type="checkbox" id="tranquilo"> Ritmo tranquilo: sin el botón ×5 (avanzan de un día en un día)</label>
-        <div class="enlace-aula"><input id="enlace" readonly><button class="secundario" id="copiar">${I('copiar')} Copiar</button></div>
+        <div class="enlace-aula"><input id="enlace" readonly aria-label="Enlace para tus estudiantes"><button class="secundario" id="copiar">${I('copiar')} Copiar</button></div>
         <div class="pausa-panel ${datos.pausa ? 'activa' : ''}">
           <p><b>${datos.pausa ? `${I('pausa')} El aula está en pausa` : `${I('play')} El aula está jugando`}</b></p>
           <label>Mensaje en la pantalla de pausa (opcional) <input id="mensaje" maxlength="120" value="${esc(datos.mensaje || '')}" placeholder="Miren la pizarra"></label>
@@ -104,7 +160,7 @@ function pintar() {
     <p class="chico suave">Créditos estelares e insignias ganadas en el juego (se guardan cuando el estudiante escribe su nombre y el código de aula).</p>
     ${d.logros?.length ? tabla(d.logros, [['nombre', 'Estudiante'], ['misiones', 'Misiones cumplidas'], ['insignias', 'Insignias', (x) => String(x.length)], ['creditos', 'Créditos'], ['actualizado', 'Última vez', (x) => new Date(x).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })]]) : '<p class="suave">Aún no hay progreso guardado.</p>'}
   </section>`;
-  $('salida').innerHTML = `${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
+  $('salida').innerHTML = `${d.demo ? '<div class="aviso-demo" role="status"><b>Aula de demostración.</b> Los estudiantes y resultados son <b>inventados</b> para que veas cómo funciona el panel. Nada se guarda. Para tu aula real, escribe tu código y la clave docente.</div>' : ''}${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
     <section class="tarjeta"><h3>Resumen por misión</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión', nombreMision], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
     <section class="tarjeta"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión', nombreMision], ['motivo', 'Causa', (m) => MOTIVOS[m] || esc(m)], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
     <section class="tarjeta"><div class="entre"><h3>Partidas</h3><div class="fila-botones"><button class="secundario" id="csvPartidas">${I('descargar')} Partidas (CSV)</button><button class="secundario" id="csvNotas">${I('descargar')} Bitácoras (CSV)</button></div></div>
@@ -127,6 +183,7 @@ function pintar() {
   });
   $('actualizar').addEventListener('click', cargar);
   $('pausar').addEventListener('click', async () => {
+    if (d.demo) { datos.pausa = !datos.pausa; datos.mensaje = $('mensaje').value.trim(); pintar(); return; } // en la demo la pausa es solo de muestra
     const r = await fetch('api/aula', {
       method: 'POST', headers: { Authorization: `Bearer ${sesion.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aula: sesion.aula, pausa: !datos.pausa, mensaje: $('mensaje').value.trim() }),

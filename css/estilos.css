@@ -970,9 +970,10 @@ body[data-pantalla="vestidor"] #aviso-lento, body[data-pantalla="globo"] #aviso-
   background: rgba(245, 246, 255, .92); color: #29335e; border-radius: 18px; box-shadow: 0 10px 30px rgba(24, 32, 63, .25); font: 700 .95rem var(--boton); max-height: 80%; overflow: auto; }
 .manifiesto li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 10px; background: #e6e9fb; animation: sube-carga .4s both; animation-delay: calc(var(--i) * .26s); }
 .manifiesto .ico { color: #5b54c4; display: inline-flex; }
-.manifiesto .ok { margin-left: auto; color: #3e9e6a; display: inline-flex; animation: aparece .3s both; animation-delay: calc(var(--i) * .26s + .25s); }
+.manifiesto .ok { margin-left: auto; color: #3e9e6a; display: inline-flex; animation: aparece-check .3s both; animation-delay: calc(var(--i) * .26s + .25s); }
 @keyframes sube-carga { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-@keyframes aparece { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@keyframes aparece-check { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@keyframes sube-hud { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* 2. Despegue */
 .fase-despegue { animation: cielo-oscurece 3.4s ease-in 1s forwards; }
@@ -1106,3 +1107,41 @@ body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d 
 .ayuda-docente { grid-column: 1 / -1; font-size: .92rem; }
 .ayuda-docente summary { cursor: pointer; font-weight: 700; color: var(--acento-2); }
 .ayuda-docente ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* Fin de misión: botones en una barra fija (HUD) y ficha de resultado ordenada */
+.hud-acciones { position: fixed; left: 50%; bottom: calc(14px + var(--seguro-abajo)); transform: translateX(-50%); z-index: 22; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  width: min(760px, calc(100vw - 20px)); padding: 10px; border-radius: 20px; background: var(--vidrio-fuerte); border: 1px solid var(--borde-fuerte); box-shadow: var(--sombra); animation: sube-hud .35s both .3s; }
+.hud-acciones button { flex: 1 1 200px; min-height: 52px; font-size: 1.02rem; }
+.modal.resultado { max-height: calc(100dvh - 120px - var(--seguro-abajo)); top: calc(50% - 40px); }
+.modal.resultado .contenido { padding-bottom: 22px; display: grid; gap: 12px; }
+.modal.resultado .contenido > * { margin-top: 0; margin-bottom: 0; }
+@media (min-width: 980px) {
+  .modal.resultado { width: min(900px, calc(100vw - 40px)); }
+  .modal.resultado .contenido { grid-template-columns: 1fr 1fr; align-items: start; column-gap: 18px; }
+  .modal.resultado .contenido > .celebracion, .modal.resultado .contenido > h2, .modal.resultado .contenido > .sello, .modal.resultado .contenido > .prediccion { grid-column: 1 / -1; }
+}
+
+/* Nebula flotante: se puede arrastrar y parpadea para llamar la atención */
+#nebula-flotante { position: fixed; z-index: 26; width: 64px; height: 64px; min-height: 64px; padding: 0; border-radius: 50%; overflow: visible; touch-action: none; cursor: grab;
+  background: radial-gradient(circle at 30% 30%, #5b54c4, #29335e); border: 3px solid var(--acento); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); animation: nebula-llama 2.4s ease-in-out infinite; }
+#nebula-flotante img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; animation: nebula-parpadeo 4s infinite; }
+#nebula-flotante .punto-aviso { position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: var(--peligro); border: 2px solid #18203f; }
+#nebula-flotante.vista .punto-aviso { display: none; }
+#nebula-flotante.arrastrando { cursor: grabbing; animation: none; transform: scale(1.1); }
+#nebula-flotante[hidden] { display: none; }
+@keyframes nebula-llama { 0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, .35), 0 0 0 0 rgba(255, 201, 74, .6); } 50% { box-shadow: 0 6px 18px rgba(0, 0, 0, .35), 0 0 0 12px rgba(255, 201, 74, 0); } }
+@keyframes nebula-parpadeo { 0%, 92%, 100% { filter: none; } 95% { filter: brightness(.6); } }
+#nebula-globo { position: fixed; z-index: 27; width: min(320px, calc(100vw - 100px)); padding: 12px 36px 12px 14px; border-radius: 16px; background: #f5f6ff; color: #18203f; box-shadow: var(--sombra); animation: aparece-check .25s both; }
+#nebula-globo b { font: 800 .85rem var(--boton); color: #5b54c4; }
+#nebula-globo p { margin: 4px 0 0; font-size: .95rem; }
+#nebula-globo button { position: absolute; top: 6px; right: 6px; min-height: 28px; width: 28px; padding: 0; color: #18203f; }
+.menos-movimiento #nebula-flotante, .menos-movimiento #nebula-flotante img { animation: none; }
+
+.aviso-demo { margin: 12px 0; padding: 12px 14px; border-radius: 14px; background: rgba(92, 200, 238, .14); border: 1px solid var(--acento-2); }
+
+@media (max-width: 640px) {
+  #aviso-lento { top: auto; bottom: calc(10px + var(--seguro-abajo)); font-size: .8rem; padding: 8px 10px; gap: 6px; }
+  #aviso-lento span { display: none; }
+  #aviso-lento b { flex: 1 1 auto; }
+  #aviso-lento button { min-height: 34px; padding: 4px 10px; font-size: .8rem; }
+}

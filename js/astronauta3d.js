@@ -50,6 +50,20 @@ function estrella(x, cx, cy, r1, r2, c) {
   for (let i = 0; i < 10; i++) { const r = i % 2 ? r2 : r1, a = -Math.PI / 2 + (i * Math.PI) / 5; x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
   x.fill();
 }
+// Relieve de tela acolchada para el traje (costuras horizontales y algo de ruido)
+let relieveTela = null;
+function texturaTela() {
+  if (relieveTela) return relieveTela;
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = '#808080'; x.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 900; i++) { const v = 110 + Math.random() * 40; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(Math.random() * 128, Math.random() * 128, 2, 2); }
+  for (let y = 0; y < 128; y += 16) { x.fillStyle = '#3a3a3a'; x.fillRect(0, y, 128, 2); x.fillStyle = '#b0b0b0'; x.fillRect(0, y + 2, 128, 2); }
+  relieveTela = new THREE.CanvasTexture(c);
+  relieveTela.wrapS = relieveTela.wrapT = THREE.RepeatWrapping;
+  relieveTela.repeat.set(2, 3);
+  return relieveTela;
+}
 const cacheParches = new Map();
 export function texturaParche(id) {
   if (cacheParches.has(id)) return cacheParches.get(id);
@@ -110,10 +124,12 @@ function accesorios(acento) {
 export function crearAstronauta() {
   const g = new THREE.Group();
   g.name = 'astronauta';
-  const traje = nombrado(std(0xeef0f6, { roughness: 0.7 }), 'traje');
-  const claro = nombrado(std(0xf8f9fc, { roughness: 0.6 }), 'blanco');
+  const tela = texturaTela();
+  const traje = nombrado(new THREE.MeshPhysicalMaterial({ color: 0xeef0f6, roughness: 0.85, sheen: 0.6, sheenRoughness: 0.8, sheenColor: 0xffffff, bumpMap: tela, bumpScale: 1.2 }), 'traje');
+  const claro = nombrado(new THREE.MeshPhysicalMaterial({ color: 0xf8f9fc, roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.3 }), 'blanco');
   const acento = nombrado(std(0xff9a52, { roughness: 0.5 }), 'naranja');
-  const visorMat = nombrado(new THREE.MeshPhysicalMaterial({ color: 0xd9a540, metalness: 0.25, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, emissive: 0xd9a540, emissiveIntensity: 0.35 }), 'oro');
+  const visorMat = nombrado(new THREE.MeshPhysicalMaterial({ color: 0xd9a540, metalness: 0.9, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.02, emissive: 0xd9a540, emissiveIntensity: 0.08, envMapIntensity: 1.6 }), 'oro');
+  const vidrio = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.18, clearcoat: 1, envMapIntensity: 2, depthWrite: false });
   const oscuro = std(0x3a3f52, { roughness: 0.8 });
   const metal = std(0xc9ced8, { metalness: 0.75, roughness: 0.3 });
 
@@ -135,7 +151,15 @@ export function crearAstronauta() {
   const visor = malla(new THREE.SphereGeometry(0.24, 28, 16, Math.PI * 0.08, Math.PI * 0.84, 0.62, 1.15), visorMat, 0, 1.62, 0.05);
   const marco = malla(new THREE.TorusGeometry(0.19, 0.018, 8, 28), acento, 0, 1.6, 0.19);
   const reflejo = malla(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 }), -0.08, 1.7, 0.25); reflejo.scale.set(1, 0.55, 0.3); reflejo.castShadow = false;
-  g.add(torso, cadera, cinto, panel, ...botones, mochila, tapa, tubo, cuello, casco, visor, reflejo);
+  const burbuja = malla(new THREE.SphereGeometry(0.29, 32, 24, Math.PI * 0.05, Math.PI * 0.9, 0.35, 1.5), vidrio, 0, 1.62, 0.015); burbuja.castShadow = false;
+  // Mangueras de la mochila al panel del pecho, placa con nombre y rejillas de la mochila
+  for (const sx of [-1, 1]) {
+    const curva = new THREE.CatmullRomCurve3([new THREE.Vector3(sx * 0.2, 1.25, -0.2), new THREE.Vector3(sx * 0.3, 1.12, 0.05), new THREE.Vector3(sx * 0.13, 1.02, 0.24)]);
+    g.add(malla(new THREE.TubeGeometry(curva, 16, 0.018, 8), new THREE.MeshStandardMaterial({ color: sx < 0 ? 0x5cc8ee : 0xff7a7a, roughness: 0.5 })));
+  }
+  const placa = malla(new THREE.BoxGeometry(0.12, 0.035, 0.01), std(0x29335e), 0.12, 1.22, 0.215); placa.rotation.y = 0.1;
+  for (let i = 0; i < 4; i++) g.add(malla(new THREE.BoxGeometry(0.3, 0.015, 0.02), oscuro, 0, 0.92 + i * 0.05, -0.385));
+  g.add(torso, cadera, cinto, panel, ...botones, mochila, tapa, tubo, cuello, casco, visor, burbuja, reflejo, placa);
 
   // Brazos (hombro → codo → guante), articulados para caminar
   for (const s of [-1, 1]) {
@@ -146,7 +170,9 @@ export function crearAstronauta() {
     const anillo = malla(new THREE.TorusGeometry(0.08, 0.018, 6, 16), acento, 0, -0.3, 0); anillo.rotation.x = Math.PI / 2;
     const inf = malla(new THREE.CapsuleGeometry(0.07, 0.18, 4, 10), traje, 0, -0.43, 0);
     const guante = malla(new THREE.SphereGeometry(0.075, 12, 10), oscuro, 0, -0.6, 0.01); guante.scale.set(1, 1.15, 0.9);
-    hombro.add(sup, anillo, inf, guante);
+    const puno = malla(new THREE.CylinderGeometry(0.075, 0.08, 0.06, 16), metal, 0, -0.53, 0);
+    hombro.add(sup, anillo, inf, guante, puno);
+    if (s > 0) hombro.add(malla(new THREE.BoxGeometry(0.07, 0.04, 0.05), std(0x29335e), 0, -0.47, 0.07)); // pantalla de muñeca
     hombro.rotation.z = s * 0.12;
     g.add(hombro);
   }
@@ -165,6 +191,8 @@ export function crearAstronauta() {
     const bota = malla(new THREE.BoxGeometry(0.17, 0.12, 0.27), oscuro, 0, -0.62, 0.04);
     const suela = malla(new THREE.BoxGeometry(0.18, 0.03, 0.28), acento, 0, -0.69, 0.04);
     pierna.add(muslo, rodilla, canilla, bota, suela);
+    for (let k = 0; k < 4; k++) pierna.add(malla(new THREE.BoxGeometry(0.17, 0.02, 0.025), oscuro, 0, -0.665, -0.07 + k * 0.075)); // relieve de la suela
+    pierna.add(malla(new THREE.TorusGeometry(0.09, 0.012, 6, 16), metal, 0, -0.55, 0).rotateX(Math.PI / 2)); // anillo de la bota
     g.add(pierna);
   }
   g.add(accesorios(acento));

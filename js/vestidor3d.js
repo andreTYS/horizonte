@@ -1,5 +1,6 @@
 // Probador 3D: el astronauta en grande, sobre un pedestal, girando despacio (se puede girar con el dedo).
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { crearAstronauta, vestirAstronauta, caminar } from './astronauta3d.js';
 
 export function crearVestidor(contenedorInicial) {
@@ -12,7 +13,13 @@ export function crearVestidor(contenedorInicial) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   const escena = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  escena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  escena.environmentIntensity = 0.7;
   const camara = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
   camara.position.set(0, 1.25, 4.2);
   camara.lookAt(0, 1.0, 0);
@@ -75,6 +82,7 @@ export function crearVestidor(contenedorInicial) {
       obs.disconnect();
       renderer.setAnimationLoop(null);
       escena.traverse((o) => { o.geometry?.dispose(); if (o.material && !o.material.map) o.material.dispose(); });
+      escena.environment?.dispose(); pmrem.dispose();
       renderer.dispose();
       renderer.forceContextLoss?.();
       canvas.remove();

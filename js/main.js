@@ -5,7 +5,7 @@ import { escena as escenaSVG } from './escena.js';
 import * as api from './api.js';
 import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
-import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido } from './sonido.js';
+import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido, musicaTema } from './sonido.js';
 import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz } from './voz.js';
 import { mostrarLanding } from './landing.js';
 import * as A from './accesibilidad.js';
@@ -143,8 +143,9 @@ function avisoModo2D() {
 }
 // Si el 3D va muy lento aun con la calidad al mínimo, se ofrece (una vez) la vista 2D ligera.
 window.addEventListener('mundo-calidad', (ev) => {
-  if (G.demo || ev.detail.escalon < 3 || ev.detail.fps >= 12 || G.ofrecio2D || document.getElementById('aviso-lento')) return;
+  if (G.demo || ev.detail.escalon < 3 || ev.detail.fps >= 12 || G.ofrecio2D || leer('horizonte.avisoLento', false) || document.getElementById('aviso-lento')) return;
   G.ofrecio2D = true;
+  guardar('horizonte.avisoLento', true); // una sola vez por equipo
   const a = document.createElement('div');
   a.id = 'aviso-lento';
   a.setAttribute('role', 'status');
@@ -153,6 +154,7 @@ window.addEventListener('mundo-calidad', (ev) => {
   document.body.appendChild(a);
   a.querySelector('#usar2d').addEventListener('click', () => { guardar('horizonte.vista', '2d'); location.reload(); });
   a.querySelector('#seguir3d').addEventListener('click', () => a.remove());
+  setTimeout(() => a.remove(), 12000);
 });
 window.addEventListener('mundo-perdido', () => {
   G.motivo2D = t('la tarjeta gráfica se reinició');
@@ -741,6 +743,10 @@ async function cargarIdioma() {
     hielo: { nombre: t("Cráter en sombra"), texto: t("En el fondo de los cráteres polares que nunca reciben sol hay hielo de agua: lo confirmó la misión LCROSS en 2009."), textoMarte: t("En Marte también hay hielo de agua bajo el suelo: algunos cráteres recientes lo dejaron a la vista.") },
     rover: { nombre: t("Rover"), texto: t("Los rovers exploran lejos de la base y traen muestras sin que los astronautas se expongan."), textoMarte: t("Los rovers Curiosity y Perseverance llevan años explorando Marte.") },
     antena: { nombre: t("Antena"), texto: t("Una señal de radio tarda cerca de 1,3 segundos en ir de la Luna a la Tierra."), textoMarte: t("Desde Marte, una señal tarda entre unos 4 y 24 minutos en llegar a la Tierra: no se puede pedir ayuda al instante.") },
+    tubo: { icono: 'refugio', nombre: t("Pozo de tubo de lava"), texto: t("La sonda LRO de la NASA fotografió más de 200 pozos en la Luna. Algunos podrían ser la entrada a tubos de lava: refugios naturales contra la radiación."), textoMarte: t("La cámara HiRISE de la NASA también ha fotografiado pozos en Marte que podrían llevar a cuevas.") },
+    impacto: { icono: 'meteorito', nombre: t("Cráter fresco"), texto: t("La LRO de la NASA ha visto aparecer cráteres nuevos en la Luna: sin atmósfera, los meteoritos llegan hasta el suelo."), textoMarte: t("Los orbitadores de la NASA ven cráteres nuevos en Marte; algunos dejaron hielo a la vista.") },
+    roca: { icono: 'capas', nombre: t("Roca rodante"), texto: t("Cuando una roca rueda cuesta abajo deja un surco largo que se ve desde la órbita."), textoMarte: t("Perseverance perfora rocas y guarda muestras en tubos para traerlas algún día a la Tierra.") },
+    huellas: { icono: 'persona', nombre: t("Huellas"), texto: t("En la Luna no hay viento ni lluvia: las huellas de los astronautas del Apolo pueden durar muchísimo tiempo."), textoMarte: t("En Marte el viento sí mueve el polvo: los remolinos y las tormentas borran las huellas.") },
     cima: { nombre: t("Cima iluminada"), texto: t("Algunas cimas cerca del polo sur de la Luna reciben luz del Sol la mayor parte del año: buen lugar para paneles."), textoMarte: t("El cielo de Marte de día es color caramelo por el polvo fino que flota en el aire.") },
   }, {
     volver: t("Volver a la base"),
@@ -821,6 +827,7 @@ function inicio() {
   document.getElementById('ficha-modulo')?.remove();
   if (G.tripulacionPrueba) { G.tripulacionPrueba = null; aplicarPersonalizacion(); }
   document.body.dataset.pantalla = 'portada';
+  musicaTema('menu');
   ambienteEstado({});
   callar();
   olvidarUltimo();
@@ -923,6 +930,7 @@ function estimaciones() {
 
 function construir() {
   document.body.dataset.pantalla = 'diseno';
+  musicaTema(G.mision.planeta === 'marte' ? 'marte' : 'luna');
   if (!G.mision.tutorial && G.tripulacionPrueba) { G.tripulacionPrueba = null; aplicarPersonalizacion(); }
   const { mision: m, config: c, juego: j, nasa } = G;
   pintar({ config: c, luz: S.hayLuz(m, 0, nasa), tripulacion: m.tripulacion, carga: 1, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: m.planeta || 'luna' }, 'diseno');
@@ -954,7 +962,7 @@ function construir() {
       </div>
     </header>
 
-    <aside class="widgets-diseno">
+    <aside class="widgets-diseno" tabindex="0" aria-label="${t('Cómo va tu diseño')}">
       <div class="widget ${estado(e.dia >= e.demanda)}"><span>${I('energia')}</span><div><b>+${fmt(e.dia)} / −${fmt(e.demanda)}</b><small>${t('kWh/día con luz')}</small></div></div>
       ${m.luz_permanente ? '' : `<div class="widget ${estado(e.nochesAguanta >= 15)}"><span>${I('noche')}</span><div><b>${dias(e.nochesAguanta)} ${t('días')}</b><small>${t('aguantas de noche (~15)')}</small></div></div>`}
       <div class="widget ${estado(e.diasAgua >= m.dias)}"><span>${I('agua')}</span><div><b>${dias(e.diasAgua)} ${t('días')}</b><small>${t('de agua')}</small></div></div>
@@ -963,7 +971,6 @@ function construir() {
       ${G.reservas[m.id] ? `<div class="widget reserva"><span>${I('caja')}</span><div><b>+${fmt(G.reservas[m.id].o2, 1)} O₂ · +${fmt(G.reservas[m.id].agua)} ${t('agua')} · +${fmt(G.reservas[m.id].comida)} ${t('comida')}</b><small>${t('kg de reserva de la misión anterior (no pesan)')}</small></div></div>` : ''}
     </aside>
 
-    <button class="nebula-mini" id="ayuda" aria-label="${t('Ver la pista de Nebula')}">${CARA_NEBULA}</button>
     ${G.briefingVisto[m.id] ? '' : `<div class="briefing">${nebula(esc(m.nebula.briefing) + '<br><br>' + esc(m.nebula.construir), 'pensando')}<button class="primario" id="entendido">${t('¡Entendido!')}</button></div>`}
     ${excedido ? `<div class="toasts"><div class="toast peligro">${t('El cohete no puede despegar: quita masa.')}</div></div>` : `<p class="pista-tocar">${I('mano')} ${t('Toca un módulo en el mapa para ver qué hace')}</p>`}
 
@@ -994,7 +1001,6 @@ function construir() {
   document.getElementById('deDonde').addEventListener('click', () => { fuentes(); G.volverDeFuentes = construir; });
   document.getElementById('probador')?.addEventListener('click', () => { G.vestidor = null; pantallaTripulacion('', { probador: true, volver: construir }); });
   document.getElementById('entendido')?.addEventListener('click', () => { G.briefingVisto[m.id] = true; construir(); });
-  document.getElementById('ayuda').addEventListener('click', () => { G.briefingVisto[m.id] = false; construir(); });
   const tipoDe = (k) => (['o2', 'agua', 'comida'].includes(k) ? 'habitat' : k);
   const lim = (k, val) => Math.max(0, Math.min(j.modulos[k]?.max ?? 9999, val));
   $app.querySelectorAll('[data-mas]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.mas; c[k] = lim(k, c[k] + +b.dataset.paso); construir(); resaltar(tipoDe(k)); sfx.modulo(); }));
@@ -1053,6 +1059,7 @@ function viaje(despues) {
   const corto = Boolean(G.viajesVistos[m.id]); // la segunda vez solo despegue y aterrizaje
   G.viajesVistos[m.id] = true;
   document.body.dataset.pantalla = 'viaje';
+  musicaTema('viaje');
   callar();
   const masa = S.masa(c, G.juego, G.nasa);
   const nivel = ['', t('medio'), t('alto')][c.blindaje] || '';
@@ -1092,7 +1099,7 @@ function viaje(despues) {
     $e.innerHTML = escena;
     A.anunciar(titulo);
   };
-  const terminar = () => { if (terminado) return; terminado = true; document.removeEventListener('keydown', tecla); v3d?.destruir(); G.mundo?.reanudar?.(); despues(); };
+  const terminar = () => { if (terminado) return; terminado = true; musicaTema(marte ? 'marte' : 'luna'); document.removeEventListener('keydown', tecla); v3d?.destruir(); G.mundo?.reanudar?.(); despues(); };
   const tecla = (ev) => { if (ev.key === 'Escape') saltar = true; };
   document.addEventListener('keydown', tecla);
   $app.querySelector('#viajeSaltar').addEventListener('click', () => { saltar = true; });
@@ -1166,6 +1173,79 @@ function estadoEnPalabras() {
     r: fmt(e.dosis, 1), l: m.limite_dosis_msv, s: fmt(e.salud), k: e.ciencia, kt: m.objetivo_ciencia,
   });
 }
+
+// ───────────────────────── Nebula flotante ─────────────────────────
+// La gata piloto está siempre a mano: un botón flotante que parpadea, se puede arrastrar a cualquier lugar
+// (recuerda dónde lo dejaste) y al tocarlo da la pista de la pantalla en la que estás.
+function nebulaFlotante() {
+  let b = document.getElementById('nebula-flotante');
+  const visible = ['diseno', 'mision', 'resultado'].includes(document.body.dataset.pantalla) && !G.demo;
+  if (!visible) { b?.setAttribute('hidden', ''); document.getElementById('nebula-globo')?.remove(); return; }
+  if (!b) {
+    b = document.createElement('button');
+    b.id = 'nebula-flotante';
+    b.innerHTML = `${CARA_NEBULA}<span class="punto-aviso" aria-hidden="true"></span>`;
+    document.body.appendChild(b);
+    const pos = leer('horizonte.nebulaPos', null);
+    const colocar = (x, y) => {
+      const w = window.innerWidth, h = window.innerHeight;
+      b.style.left = `${Math.min(w - 70, Math.max(6, x * w))}px`;
+      b.style.top = `${Math.min(h - 70, Math.max(6, y * h))}px`;
+    };
+    colocar(pos?.x ?? 0.02, pos?.y ?? 0.3);
+    window.addEventListener('resize', () => { const p = leer('horizonte.nebulaPos', { x: 0.02, y: 0.3 }); colocar(p.x, p.y); });
+    let arrastre = null;
+    b.addEventListener('pointerdown', (e) => { arrastre = { x: e.clientX, y: e.clientY, l: b.offsetLeft, t: b.offsetTop, movio: false }; b.setPointerCapture(e.pointerId); });
+    b.addEventListener('pointermove', (e) => {
+      if (!arrastre) return;
+      const dx = e.clientX - arrastre.x, dy = e.clientY - arrastre.y;
+      if (!arrastre.movio && Math.hypot(dx, dy) < 6) return;
+      arrastre.movio = true;
+      b.classList.add('arrastrando');
+      colocar((arrastre.l + dx) / window.innerWidth, (arrastre.t + dy) / window.innerHeight);
+    });
+    b.addEventListener('pointerup', () => {
+      if (!arrastre) return;
+      const movio = arrastre.movio;
+      arrastre = null;
+      b.classList.remove('arrastrando');
+      if (movio) { guardar('horizonte.nebulaPos', { x: b.offsetLeft / window.innerWidth, y: b.offsetTop / window.innerHeight }); return; }
+      pistaFlotante();
+    });
+    b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pistaFlotante(); } });
+  }
+  b.removeAttribute('hidden');
+  b.setAttribute('aria-label', t('Nebula: pedir una pista (puedes arrastrarla)'));
+}
+
+function pistaFlotante() {
+  const m = G.mision, pant = document.body.dataset.pantalla;
+  if (pant === 'diseno') { G.briefingVisto[m.id] = false; construir(); return; }
+  const viejo = document.getElementById('nebula-globo');
+  if (viejo) { viejo.remove(); return; }
+  let texto = m?.nebula?.construir || '';
+  if (pant === 'mision') {
+    const e = actual(), ultimo = G.registros[G.registros.length - 1];
+    const pista = pistaNebula(e, ultimo);
+    texto = pista ? pista.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : t('Mira las barras de arriba: si alguna baja rápido, usa el refugio, la ración o apaga el invernadero. En el Cronoscopio puedes volver a un día pasado.');
+  }
+  if (pant === 'resultado') texto = t('Lee la cadena de causas: ahí está la pista de qué cambiar. Puedes rebobinar a un día pasado o rediseñar la base.');
+  const b = document.getElementById('nebula-flotante');
+  const g = document.createElement('div');
+  g.id = 'nebula-globo';
+  g.setAttribute('role', 'status');
+  g.innerHTML = `<b>Nebula</b><p>${esc(texto)}</p><button class="fantasma chico" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
+  document.body.appendChild(g);
+  const r = b.getBoundingClientRect();
+  const derecha = r.left < window.innerWidth / 2;
+  g.style.top = `${Math.min(window.innerHeight - 160, Math.max(10, r.top))}px`;
+  g.style[derecha ? 'left' : 'right'] = `${derecha ? r.right + 10 : window.innerWidth - r.left + 10}px`;
+  g.querySelector('button').addEventListener('click', () => g.remove());
+  leerEnVoz(texto);
+  b.classList.add('vista');
+}
+
+new MutationObserver(() => nebulaFlotante()).observe(document.body, { attributes: true, attributeFilter: ['data-pantalla'] });
 
 function escucharEstado() {
   if (document.body.dataset.pantalla !== 'mision') return;
@@ -1458,11 +1538,12 @@ function final() {
       ${nebula(esc(m.nebula.exito), 'feliz')}
       <label class="cuentalo">${I('lapiz')} ${t('Tu bitácora: ¿qué cambiaste o qué protegiste para lograrlo?')}
         <textarea id="nota" maxlength="200" rows="2" placeholder="${t('Una frase basta')}">${esc(G.notas[m.id] || '')}</textarea></label>
-      <div class="fila">
+      <div class="fila" id="accionesFinal">
         ${siguiente ? `<button class="primario" id="sig">${t('Siguiente: {x}', { x: esc(sinNumero(siguiente.titulo)) })} ▶</button>` : ''}
         ${m.evaluacion && !G.eval.caso ? `<button class="primario" id="evalfinal">${I('prueba')} ${t('Prueba final y caso Artemis-7')}</button>` : ''}
         <button class="secundario" id="inicio">${t('Menú')}</button>
       </div>`;
+    accionesAlHud();
     document.getElementById('evalfinal')?.addEventListener('click', G.eval.final ? casoArtemis : pruebaFinal);
     const guardarNota = () => {
       const nota = document.getElementById('nota')?.value.trim();
@@ -1491,16 +1572,30 @@ function final() {
     <ol class="cadena">${a.cadena.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
     ${a.datos.map(cifraNasa).join('')}
     ${nebula(esc(a.consejo), 'pensando')}
-    <div class="fila">
+    <div class="fila" id="accionesFinal">
       <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('cronoscopio')} ${t('Rebobinar al día {n}', { n: diaRebobinar + 1 })}</button>
       <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} ${t('Rediseñar la base')}</button>
     </div>`;
+  accionesAlHud();
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
   document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; olvidarUltimo(); construir(); });
   document.getElementById('irTripulacion')?.addEventListener('click', () => pantallaTripulacion());
   setTimeout(decirNebula, 1400);
   G.tutorialFallo = G.tutorialFallo || G.mision.id === 'cero';
   coach();
+}
+
+/** Los botones del final de la misión van en una barra fija en pantalla (HUD), siempre a la vista. */
+function accionesAlHud() {
+  const fila = document.getElementById('accionesFinal');
+  if (!fila) return;
+  const barra = document.createElement('nav');
+  barra.className = 'hud-acciones';
+  barra.setAttribute('aria-label', t('Qué hacer ahora'));
+  barra.append(...fila.children);
+  fila.remove();
+  $app.appendChild(barra);
+  document.querySelector('.modal')?.classList.add('resultado');
 }
 
 // ───────────────────────── Evaluación del aprendizaje ─────────────────────────

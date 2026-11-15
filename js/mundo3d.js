@@ -14,7 +14,7 @@ import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
 import { crearAstronauta, vestirAstronauta, caminar } from './astronauta3d.js';
 import { FABRICAS_OBJETOS, POS_OBJETOS, ESCALA_OBJETOS, animarObjeto } from './objetos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
-import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
+import { altura, alturaMalla, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
 
 /** ¿Hay WebGL? Si no, deja en `soportaWebGL.motivo` lo que dijo el navegador (p. ej. que bloqueó el 3D en este sitio). */
 export function soportaWebGL() {
@@ -557,6 +557,31 @@ export class Mundo {
     if (c) vestirAstronauta(a, c);
   }
 
+  /** Módulos y objetos de la base como círculos en el suelo (x, z, radio), para que nadie los atraviese. */
+  #obstaculos() {
+    const lista = [];
+    const sumar = (o) => {
+      if (!o?.visible) return;
+      if (o.userData.radioSuelo == null) {
+        const caja = new THREE.Box3().setFromObject(o), tam = caja.getSize(new THREE.Vector3());
+        o.userData.radioSuelo = Math.max(0.6, Math.hypot(tam.x, tam.z) / 2 * 0.85);
+        o.userData.centroSuelo = caja.getCenter(new THREE.Vector3());
+      }
+      lista.push([o.userData.centroSuelo.x, o.userData.centroSuelo.z, o.userData.radioSuelo + 0.45]);
+    };
+    for (const m of this.modulos || []) if (!(m.userData.entra < 1)) sumar(m);
+    for (const o of this.grupoObjetos?.children || []) if (o.userData.id !== 'obj-dron') sumar(o);
+    return lista;
+  }
+
+  /** Si un astronauta quedó dentro de un módulo u objeto, lo empuja hacia afuera (rodea en vez de atravesar). */
+  #esquivar(as, obstaculos) {
+    for (const [ox, oz, r] of obstaculos) {
+      const dx = as.position.x - ox, dz = as.position.z - oz, d = Math.hypot(dx, dz);
+      if (d < r && d > 1e-3) { as.position.x = ox + (dx / d) * r; as.position.z = oz + (dz / d) * r; }
+    }
+  }
+
   /** El astronauta más cercano camina hasta el módulo, se queda un rato y vuelve a su ronda. */
   #caminarHacia(pos) {
     const visibles = this.astronautas.filter((a) => a.visible);
@@ -687,9 +712,20 @@ export class Mundo {
   #animarPatrulla(t, dt) {
     const r = 40, w = 0.045, ang = t * w;
     const x = Math.cos(ang) * r, z = Math.sin(ang) * r * 0.85;
-    const y = Math.max(altura(x, z), 0.12);
+    // Apoyado en el suelo de verdad: altura de la malla bajo las ruedas (no la fórmula, que puede quedar por encima)
+    const suelo = (px, pz) => Math.max(alturaMalla(px, pz, this.calidad), 0.05);
+    const rumbo = -ang - Math.PI / 2;
+    const fx = Math.cos(rumbo), fz = -Math.sin(rumbo); // hacia adelante
+    const lx = -fz, lz = fx;                            // hacia el costado
+    const hD = suelo(x + fx * 1.3, z + fz * 1.3), hA = suelo(x - fx * 1.3, z - fz * 1.3);
+    const hI = suelo(x + lx * 1, z + lz * 1), hR = suelo(x - lx * 1, z - lz * 1);
+    const y = Math.min(hD, hA, hI, hR) * 0.4 + ((hD + hA + hI + hR) / 4) * 0.6;
     this.patrulla.position.set(x, y, z);
-    this.patrulla.rotation.y = -ang - Math.PI / 2 + (Math.sin(t * 0.7) * 0.05);
+    this.patrulla.rotation.set(0, 0, 0);
+    this.patrulla.rotation.y = rumbo;
+    this.patrulla.rotateZ(Math.atan2(hD - hA, 2.6)); // cabecea con la pendiente
+    this.patrulla.rotateX(Math.atan2(hR - hI, 2) * -1); // y se inclina de lado
+    this.patrulla.children.forEach((c) => { if (c.geometry?.type === 'CylinderGeometry' && c.position.y === 0.5) c.rotation.z -= dt * 1.6; });
     // Polvo detrás de las ruedas
     const p = this.polvoRover.geometry.attributes.position, v = this.polvoRover.userData.vida;
     const u = this.polvoRover.userData;
@@ -857,6 +893,7 @@ export class Mundo {
     if (this.escudo.visible) this.escudo.material.uniforms.t.value = t;
 
     // Astronautas caminando alrededor de la base
+    const obstaculos = this.#obstaculos();
     for (const as of this.astronautas) {
       if (!as.visible) continue;
       const u = as.userData;
@@ -881,6 +918,8 @@ export class Mundo {
       caminar(as, t * 4 + u.f, 0.45);
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);
     }
+
+    for (const as of this.astronautas) if (as.visible) this.#esquivar(as, obstaculos); // rodean módulos y objetos
 
     if (this.grupoObjetos) for (const o of this.grupoObjetos.children) animarObjeto(o, t);
 
@@ -1000,7 +1039,7 @@ export class Mundo {
       const el = document.createElement('button');
       el.className = 'pin';
       el.dataset.punto = id;
-      el.innerHTML = `<span class="pin-icono" aria-hidden="true"><svg class="i"><use href="icons/sprite.svg#i-${id}"></use></svg></span><span class="pin-nombre">${info.nombre} <small class="pin-dist"></small></span><span class="pin-flecha" aria-hidden="true"></span>`;
+      el.innerHTML = `<span class="pin-icono" aria-hidden="true"><svg class="i"><use href="icons/sprite.svg#i-${info.icono || id}"></use></svg></span><span class="pin-nombre">${info.nombre} <small class="pin-dist"></small></span><span class="pin-flecha" aria-hidden="true"></span>`;
       el.setAttribute('aria-label', info.nombre);
       el.addEventListener('click', () => this.irA(id));
       this.capaPuntos.appendChild(el);

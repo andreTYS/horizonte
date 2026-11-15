@@ -87,7 +87,7 @@ export const INSIGNIAS = [
   { id: 'cosecha', icono: 'invernadero', nombre: 'Primera cosecha', desc: 'Cumple la misión de la cosecha en Marte.', cond: (e) => Boolean(e.progreso.marte) },
   { id: 'escudo', icono: 'refugio', nombre: 'Escudo de la tripulación', desc: 'Protege a tu tripulación de la tormenta solar en Marte.', cond: (e) => Boolean(e.progreso.tormenta_marte) },
   { id: 'comandante', icono: 'final', nombre: 'Comandante', desc: 'Completa las 4 misiones de la expedición.', cond: (e) => ['noche', 'amanecer', 'marte', 'tormenta_marte'].every((id) => e.progreso[id]) },
-  { id: 'explorador', icono: 'lugar', nombre: 'Explorador', desc: 'Visita los 4 lugares del mapa.', cond: (e) => e.visitados.length >= 4 },
+  { id: 'explorador', icono: 'lugar', nombre: 'Explorador', desc: 'Visita 6 lugares del mapa.', cond: (e) => e.visitados.length >= 6 },
   { id: 'cientifico', icono: 'datos', nombre: 'Científico curioso', desc: 'Abre 6 fichas de módulos u objetos.', cond: (e) => e.fichas.length >= 6 },
   { id: 'cronista', icono: 'lapiz', nombre: 'Cronista', desc: 'Escribe 3 frases en tu bitácora.', cond: (e) => Object.keys(e.notas).length >= 3 },
 ];

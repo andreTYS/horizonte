@@ -25,6 +25,10 @@ export const PUNTOS = {
   rover: { x: -95, z: 70 },
   antena: { x: 62, z: 92 },
   cima: { x: -175, z: -150 },
+  tubo: { x: 128, z: 38 },
+  impacto: { x: -62, z: -95 },
+  roca: { x: -140, z: 12 },
+  huellas: { x: 34, z: -62 },
 };
 
 // Cráteres: chicos cerca de la base, grandes lejos, y el gran cráter en sombra con hielo.
@@ -38,6 +42,8 @@ const CRATERES = [
     return { x: Math.cos(a) * d, z: Math.sin(a) * d, r: 8 + hash(i, 13) * 26, p: 1 + hash(i, 14) * 2.4 };
   }),
   { x: 26, z: -22, r: 7, p: 1.8 }, { x: -30, z: -6, r: 5, p: 1.2 },
+  { x: -62, z: -95, r: 9, p: 2.6, grande: true }, // cráter fresco (punto «impacto»)
+  { x: 128, z: 38, r: 6, p: 4.5, grande: true },  // pozo de un tubo de lava (punto «tubo»)
   { x: PUNTOS.hielo.x, z: PUNTOS.hielo.z, r: 42, p: 5.5, grande: true },
 ].filter((c) => c.grande || Math.hypot(c.x - PUNTOS.hielo.x, c.z - PUNTOS.hielo.z) > 70);
 
@@ -348,6 +354,23 @@ export function crearExploracion(calidad) {
   poner(bandera(), { x: PUNTOS.cima.x + 3, z: PUNTOS.cima.z + 2 });
   const hielo = hieloEnSombra();
   grupo.add(hielo);
+  // Roca gigante que rodó cuesta abajo (y su surco)
+  const roca = new THREE.Mesh(new THREE.DodecahedronGeometry(3.4, 1), mat(0x8e8f98, { roughness: 1, flatShading: true }));
+  roca.scale.set(1.3, 0.9, 1.1);
+  poner(roca, PUNTOS.roca, 0.6, 2.2);
+  grupo.add(huella([[PUNTOS.roca.x - 40, PUNTOS.roca.z - 18], [PUNTOS.roca.x - 20, PUNTOS.roca.z - 8], [PUNTOS.roca.x - 4, PUNTOS.roca.z - 1]], calidad, 2.4));
+  // Material claro expulsado alrededor del cráter fresco
+  const eyecta = new THREE.Mesh(new THREE.RingGeometry(9, 20, 48), new THREE.MeshStandardMaterial({ color: 0xe6e8ef, roughness: 1, transparent: true, opacity: 0.55, depthWrite: false }));
+  eyecta.rotation.x = -Math.PI / 2;
+  poner(eyecta, PUNTOS.impacto, 0, 0.6);
+  // Huellas de botas: dos filas de pisadas
+  const bota = new THREE.BoxGeometry(0.28, 0.04, 0.55), matBota = mat(0x6f7280, { roughness: 1 });
+  for (let i = 0; i < 26; i++) {
+    const x = PUNTOS.huellas.x - 10 + i * 0.8, z = PUNTOS.huellas.z + Math.sin(i * 0.3) * 1.5 + (i % 2 ? 0.35 : -0.35);
+    const p = new THREE.Mesh(bota, matBota);
+    p.position.set(x, altura(x, z) + 0.03, z); p.rotation.y = Math.PI / 2;
+    grupo.add(p);
+  }
   // Huellas del rover: desde la base hasta donde está estacionado y hasta el cráter de hielo
   grupo.add(huella([[-25, 22], [-40, 32], [-62, 42], [-80, 60], [PUNTOS.rover.x + 2, PUNTOS.rover.z - 1]], calidad));
   grupo.add(huella([[30, -14], [60, -48], [95, -88], [118, -112]], calidad));
@@ -360,5 +383,5 @@ export function crearExploracion(calidad) {
 /** Altura del punto (para etiquetas y cámara). */
 export function alturaPunto(id) {
   const { x, z } = PUNTOS[id];
-  return altura(x, z) + ({ antena: 13, rover: 4.5, cima: 6, hielo: 4 }[id] || 4);
+  return altura(x, z) + ({ antena: 13, rover: 4.5, cima: 6, hielo: 4, roca: 7, tubo: 3, impacto: 3, huellas: 2 }[id] || 4);
 }
