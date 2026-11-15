@@ -100,6 +100,7 @@ async function cargar() {
   A.aplicar(G.mundo);
   landing();
   avisoModo2D();
+  if (new URLSearchParams(location.search).has('demo')) demo();
 }
 
 // ───────────────────────── Landing (primera pantalla) ─────────────────────────
@@ -111,6 +112,48 @@ function landing() {
     alJugar: inicio, alHistoria: () => historia(),
     alCambiarIdioma: async () => { setIdioma(getIdioma() === 'es' ? 'en' : 'es'); G.historia = null; await cargarIdioma(); landing(); },
   });
+}
+
+// ───────────────────────── Modo demo (?demo=1) ─────────────────────────
+// Para grabar el video: siempre la misma historia (~50 s). No guarda progreso ni envía resultados. Esc lo detiene.
+async function demo() {
+  G.demo = true;
+  G.eval.saltoInicial = true;
+  const q = new URLSearchParams(location.search);
+  const lento = Number(q.get('ritmo')) || 1; // ?demo=1&ritmo=1.5 para ir más lento
+  let parar = false;
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') parar = true; });
+  const espera = (ms) => new Promise((r, x) => setTimeout(() => (parar ? x(new Error('demo detenida')) : r()), ms * lento));
+  const clic = async (sel, ms = 900) => { const el = document.querySelector(sel); if (!el) throw new Error(`demo: falta ${sel}`); el.focus?.(); await espera(250); el.click(); await espera(ms); };
+  const avanzarHasta = async (fin, paso = 650) => { for (let i = 0; i < 60 && !fin(); i++) { const b = document.getElementById('dia1'); if (!b) break; b.click(); await espera(paso); } };
+  try {
+    // 1. Landing con el recorrido de cámara
+    await espera(2500);
+    const l = document.getElementById('landing');
+    for (let i = 1; i <= 30; i++) { l.scrollTop = (l.scrollHeight - l.clientHeight) * 0.24 * (i / 30); await espera(70); }
+    await espera(1500);
+    l.scrollTop = 0; await espera(600);
+    await clic('#lJugar', 1800);
+    // 2. Misión 1 con el diseño sugerido (falla en la noche lunar)
+    const i1 = G.misiones.findIndex((m) => m.id === 'noche');
+    await clic(`[data-mision="${i1}"]`, 2200);
+    await clic('#entendido', 1200);
+    await clic('#lanzar', 1500);
+    await clic('[data-pred="agua"]', 1500);
+    await avanzarHasta(() => document.querySelector('.modal'));
+    await espera(4500);
+    // 3. Rediseñar: reactor de fisión, menos paneles, sin baterías
+    await clic('#redisenar', 1200);
+    Object.assign(G.config, { panel: 3, bateria: 0, reactor: true, blindaje: 1, reciclador: true, invernadero: false, o2: 10, agua: 175, comida: 185 });
+    construir(); resaltar('reactor'); sfx.modulo();
+    await espera(2500);
+    await clic('#lanzar', 1500);
+    await clic('[data-pred="exito"]', 1500);
+    for (let i = 0; i < 12 && !document.querySelector('.modal'); i++) { (document.getElementById('dia5') || document.getElementById('dia1')).click(); await espera(900); }
+    await espera(6000);
+  } catch (err) {
+    console.info('Demo:', err.message);
+  }
 }
 
 // ───────────────────────── Teclado ─────────────────────────
@@ -670,7 +713,7 @@ function final() {
     refugio: false, tripulacion: res.exito ? m.tripulacion : 0, polvo: Boolean(e.polvo), planeta: m.planeta || 'luna',
   }, 'resultado');
   const estrellas = res.exito ? (G.rebobinados === 0 ? 3 : G.rebobinados <= 2 ? 2 : 1) : 0;
-  api.enviarPartida({
+  if (!G.demo) api.enviarPartida({
     mision: m.id, exito: res.exito, motivo: res.motivo || null, dias: e.dia, ciencia: e.ciencia,
     rebobinados: G.rebobinados, estrellas, config: e.config, nombre: G.jugador.nombre, aula: G.jugador.aula, prediccion: G.prediccion,
   });
@@ -678,15 +721,17 @@ function final() {
   const c = modal();
   if (res.exito) sfx.exito(); else sfx.falla();
   if (res.exito) {
-    G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
-    guardar('horizonte.progreso', G.progreso);
+    if (!G.demo) {
+      G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
+      guardar('horizonte.progreso', G.progreso);
+    }
     // Lo que sobró pasa como reserva a la siguiente misión de la campaña (la mitad, redondeada)
     const destino = m.reserva_a && G.misiones.find((x) => x.id === m.reserva_a);
-    if (destino) {
-      G.reservas[destino.id] = { o2: Math.round(Math.max(0, e.o2) * 5) / 10, agua: Math.round(Math.max(0, e.agua) / 2), comida: Math.round(Math.max(0, e.comida) / 2) };
+    const reserva = destino && { o2: Math.round(Math.max(0, e.o2) * 5) / 10, agua: Math.round(Math.max(0, e.agua) / 2), comida: Math.round(Math.max(0, e.comida) / 2) };
+    if (reserva && !G.demo) {
+      G.reservas[destino.id] = reserva;
       guardar('horizonte.reservas', G.reservas);
     }
-    const reserva = destino && G.reservas[destino.id];
     c.innerHTML = `
       <div class="centrado celebracion">
         ${personaje('llama-astronauta', 'llama-logro')}
