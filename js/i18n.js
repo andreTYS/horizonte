@@ -54,6 +54,7 @@ const EN = {
   '{n} astronautas · {d} días': '{n} astronauts · {d} days',
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
+  "Dato científico": "Scientific data",
   "Informe del comandante": "Commander's report",
   "¡Campaña completa! Incluye tu certificado": "Campaign complete! Includes your certificate",
   "Tus misiones, predicciones y bitácora": "Your missions, predictions and journal",

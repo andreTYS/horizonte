@@ -7,7 +7,7 @@
   "fsp_kw": "NASA's Fission Surface Power reactor is designed to deliver 40 kW continuously, day and night.",
   "fsp_masa_t": "NASA asked for the surface reactor to weigh less than 6 tonnes.",
   "ciclo_lunar_dias": "A full day on the Moon (sunrise to sunrise) lasts about 29.5 Earth days: almost 15 days of light and almost 15 of night.",
-  "dosis_luna_msv_dia": "On the Moon's surface, without protection, you receive about 1.37 mSv of radiation per day: about 200 times more than on Earth.",
+  "dosis_luna_msv_dia": "On the surface of the Moon, without protection, you receive about 1.37 mSv of radiation per day: about 2.6 times more than inside the International Space Station.",
   "dosis_marte_msv_dia": "Curiosity's RAD instrument measured about 0.64 mSv per day on the surface of Mars.",
   "limite_carrera_msv": "NASA limits the radiation an astronaut can receive over their whole career to 600 mSv.",
   "tormenta_mayo_2024": "Between May 9 and 13, 2024, NASA recorded 14 solar particle events and a Kp 9 geomagnetic storm, the strongest in 20 years. On the Moon there is no atmosphere or magnetic field for protection: the crew must go to the shelter.",

@@ -69,10 +69,11 @@
     "dosis_luna_msv_dia": {
       "valor": 1.37,
       "unidad": "mSv por día en la superficie lunar",
-      "texto": "En la superficie de la Luna, sin protección, se reciben unos 1,37 mSv de radiación al día: unas 200 veces más que en la Tierra.",
-      "fuente": "Zhang et al. 2020, Science Advances – First measurements of the radiation dose on the lunar surface (Chang'e-4 LND)",
-      "url": "https://www.science.org/doi/10.1126/sciadv.abc1334",
-      "verificado": false
+      "texto": "En la superficie de la Luna, sin protección, se reciben unos 1,37 mSv de radiación al día: unas 2,6 veces más que dentro de la Estación Espacial Internacional.",
+      "fuente": "Zhang et al. 2020, Science Advances 6(39) – First measurements of the radiation dose on the lunar surface (Chang'e 4, instrumento LND)",
+      "url": "https://doi.org/10.1126/sciadv.aaz1334",
+      "verificado": true,
+      "origen": "ciencia"
     },
     "dosis_marte_msv_dia": {
       "valor": 0.64,

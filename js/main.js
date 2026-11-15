@@ -305,6 +305,7 @@ function nebula(texto, animo = 'normal', extra = '') {
 function procedencia(c) {
   if (!c) return `<span class="etq juego" title="${t('Número de equilibrio del juego, no es un dato de NASA')}">${I('ajustes')} ${t('Valor del juego')}</span>`;
   if (!c.verificado) return `<span class="etq pendiente">${I('alerta')} ${t('Por verificar')}</span>`;
+  if (c.origen === 'ciencia') return `<span class="etq historico">${I('datos')} ${t('Dato científico')}</span>`;
   if (c.tipo === 'historico') return `<span class="etq historico">${I('historia')} ${t('Caso histórico · {f}', { f: esc(c.fecha) })}</span>`;
   return `<span class="etq">${I('check')} ${t('Dato de NASA')}</span>`;
 }
