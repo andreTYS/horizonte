@@ -43,6 +43,11 @@ Design → **Predict** (what fails first?) → Fast-forward with the Chronoscope
 - **Accessibility**: screen-reader announcements, "Listen" button (Nebula reads the base status), full keyboard play (A, R, C, I, B, Z, E, ?), larger text, high contrast, less motion, vibration on alarms. **0 WCAG 2 A/AA violations** in axe-core audits.
 - Voices for Nebula in Latin-American Spanish and US English; every alarm and voice line also appears as text.
 
+## Demo mode
+
+`?demo=1` always plays the same ~50-second story (landing → Mission 1 → predict → failure in the lunar night → cause → redesign with a reactor → success),
+without saving or sending results. `&ritmo=1.5` slows it down; `Esc` stops it.
+
 ## NASA data
 
 Every real number has a source, a link and a badge in the game (*NASA figure*, *historical case with date*, *to be verified*, *game value*).

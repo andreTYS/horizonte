@@ -527,6 +527,7 @@ function resultadoPrediccion(motivo) {
 }
 
 function empezarMision() {
+  for (const k of Object.keys(valoresHUD)) delete valoresHUD[k];
   G.estados = [S.crearEstado(G.mision, G.config, G.juego, G.reservas[G.mision.id] || {})];
   G.registros = [];
   G.decisiones = [];
@@ -591,7 +592,38 @@ function rebobinar(dia) {
   G.avisoRebobinado = dia;
   sfx.rebobinar();
   mision();
+  efectoRebobinar(dia);
   A.anunciar(t('El Cronoscopio te llevó al día {n}. Cambia tus decisiones y avanza.', { n: dia + 1 }));
+}
+
+/** Efecto visual del Cronoscopio: cinta que rebobina y el día grande en pantalla. */
+function efectoRebobinar(dia) {
+  if (A.pref.menosMovimiento) return;
+  document.getElementById('efecto-rebobinar')?.remove();
+  const capa = document.createElement('div');
+  capa.id = 'efecto-rebobinar';
+  capa.setAttribute('aria-hidden', 'true');
+  capa.innerHTML = `<span>${I('cronoscopio')} ${t('Día {n}', { n: dia + 1 })}</span>`;
+  document.body.appendChild(capa);
+  document.body.classList.add('rebobinando');
+  setTimeout(() => { capa.remove(); document.body.classList.remove('rebobinando'); }, 1100);
+}
+
+/** Confeti con los colores de ASU STELLAR (éxito) o destello rojo (falla). */
+function efectoFinal(exito) {
+  if (A.pref.menosMovimiento) return;
+  if (!exito) {
+    document.body.classList.add('destello-falla');
+    setTimeout(() => document.body.classList.remove('destello-falla'), 900);
+    return;
+  }
+  const capa = document.createElement('div');
+  capa.className = 'confeti';
+  capa.setAttribute('aria-hidden', 'true');
+  const colores = ['#ffd600', '#00d9f2', '#c92dd7', '#ff7900', '#5be3b0', '#ffffff'];
+  capa.innerHTML = Array.from({ length: 60 }, (_, i) => `<i style="left:${Math.random() * 100}%;background:${colores[i % colores.length]};animation-delay:${Math.random() * 0.6}s;animation-duration:${2.2 + Math.random() * 1.6}s;--giro:${Math.random() * 720 - 360}deg;--deriva:${Math.random() * 160 - 80}px"></i>`).join('');
+  document.body.appendChild(capa);
+  setTimeout(() => capa.remove(), 4500);
 }
 
 function pistaNebula(e, ultimo) {
@@ -604,10 +636,14 @@ function pistaNebula(e, ultimo) {
   return '';
 }
 
+const valoresHUD = {};
 function recurso(icono, nombre, valor, max, texto, invertir = false) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (valor / max) * 100)) : 0;
+  const previo = valoresHUD[nombre];
+  valoresHUD[nombre] = valor;
+  const cambio = previo === undefined || Math.abs(valor - previo) < 0.05 ? '' : (valor > previo) !== invertir ? 'sube' : 'baja';
   const clase = invertir ? (pct > 80 ? 'peligro' : pct > 55 ? 'alerta' : '') : (pct < 20 ? 'peligro' : pct < 40 ? 'alerta' : '');
-  return `<div class="recurso ${clase}" title="${nombre}" role="img" aria-label="${texto} ${nombre}"><span class="ico" aria-hidden="true">${icono}</span>
+  return `<div class="recurso ${clase} ${cambio}" style="--pct:${pct}%" title="${nombre}" role="img" aria-label="${texto} ${nombre}"><span class="ico" aria-hidden="true">${icono}</span>
     <span class="val"><b>${texto}</b><small>${nombre}</small></span><i style="width:${pct}%"></i></div>`;
 }
 
@@ -720,6 +756,7 @@ function final() {
 
   const c = modal();
   if (res.exito) sfx.exito(); else sfx.falla();
+  efectoFinal(res.exito);
   if (res.exito) {
     if (!G.demo) {
       G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);

@@ -35,6 +35,11 @@ Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 
 **Personajes:** Nebula es el gato piloto (voz y pistas); la astronauta peruana guía con preguntas (paso *Predice*); la llama presenta las fichas de ciencia y los logros.
 
+## Modo demo (para el video)
+
+`?demo=1` reproduce siempre la misma historia (~50 s): landing → misión 1 → predice → falla en la noche lunar → causa → rediseño con reactor → éxito.
+No guarda progreso ni envía resultados. `&ritmo=1.5` lo hace más lento; `Esc` lo detiene.
+
 ## Accesibilidad
 
 - **Panel de accesibilidad** (botón con la figura o tecla `?`): texto más grande, alto contraste, menos movimiento, vibración en las alarmas y lectura del estado cada día.

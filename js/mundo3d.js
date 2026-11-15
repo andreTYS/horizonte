@@ -394,11 +394,16 @@ export class Mundo {
     this.ultimaConfig = { ...c };
     this.#limpiar(this.base);
     this.modulos = [];
+    // Los módulos nuevos (que no estaban en la base anterior) bajan del cielo con un rebote
+    const antes = this.conteoAnterior || null;
+    const conteo = {};
     const poner = (tipo, x, z, extra = {}) => {
       const m = this.#fabricar(tipo);
       m.position.set(x, SUELO_Y, z);
       if (extra.rot) m.rotation.y = extra.rot;
       m.userData.tipo = tipo;
+      conteo[tipo] = (conteo[tipo] || 0) + 1;
+      if (antes && conteo[tipo] > (antes[tipo] || 0) && !this.quieto) m.userData.entra = 0;
       this.base.add(m);
       this.modulos.push(m);
       return m;
@@ -431,6 +436,7 @@ export class Mundo {
     if (c.extractor) unir(...POS.extractor);
     if (c.moxie) unir(...POS.moxie);
 
+    this.conteoAnterior = conteo;
     this.#crearEtiquetas(c);
     this.#aplicarDinamico();
   }
@@ -600,6 +606,14 @@ export class Mundo {
     p.needsUpdate = true;
   }
 
+  #nubePolvo(x, z) {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.6, 1.3, 32), new THREE.MeshBasicMaterial({ color: 0xcfc8bd, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, SUELO_Y + 0.08, z);
+    this.escena.add(m);
+    (this.nubes3d ||= []).push({ mesh: m, t: 0 });
+  }
+
   // ── Cámara cinematográfica (portada / landing) ──
   /** Activa el recorrido de cámara; p (0–1) es el avance del scroll de la landing. */
   cinematografia(p) {
@@ -724,6 +738,23 @@ export class Mundo {
       const ang = u.f + t * u.v * u.dir;
       as.position.set(Math.cos(ang) * u.r, SUELO_Y + Math.abs(Math.sin(t * 4 + u.f)) * 0.12, Math.sin(ang) * u.r);
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);
+    }
+
+    // Módulos que aterrizan: caen, rebotan y levantan polvo
+    for (const m of this.modulos) {
+      const u = m.userData;
+      if (u.entra === undefined || u.entra >= 1) continue;
+      u.entra = Math.min(1, u.entra + dt * 1.8);
+      const k = u.entra, c1 = 1.70158, c3 = c1 + 1;
+      const rebote = 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); // easeOutBack
+      m.position.y = SUELO_Y + (1 - Math.min(1, k * 1.25)) * 9;
+      m.scale.setScalar(Math.max(0.01, rebote));
+      if (k >= 0.8 && !u.polvo) { u.polvo = true; this.#nubePolvo(m.position.x, m.position.z); }
+      if (k >= 1) { m.scale.setScalar(1); m.position.y = SUELO_Y; }
+    }
+    if (this.nubes3d?.length) {
+      for (const n of this.nubes3d) { n.t += dt; n.mesh.scale.setScalar(1 + n.t * 5); n.mesh.material.opacity = Math.max(0, 0.6 - n.t * 0.8); }
+      this.nubes3d = this.nubes3d.filter((n) => { if (n.t > 0.8) { this.escena.remove(n.mesh); n.mesh.geometry.dispose(); n.mesh.material.dispose(); return false; } return true; });
     }
 
     // Anillo de resaltado
