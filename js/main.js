@@ -9,6 +9,7 @@ import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido } from '
 import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz } from './voz.js';
 import { mostrarLanding } from './landing.js';
 import * as A from './accesibilidad.js';
+import * as R from './recompensas.js';
 
 const $app = document.getElementById('app');
 const $svg = document.getElementById('fondo-svg');
@@ -27,7 +28,9 @@ const G = {
   eval: leer('horizonte.evaluacion', {}),
   reservas: leer('horizonte.reservas', {}), // lo que sobra de una misión de la campaña pasa a la siguiente
   notas: leer('horizonte.notas', {}),
-  historial: leer('horizonte.historial', []), // cada intento terminado (para el informe del comandante)       // bitácora del estudiante («Cuéntalo»)
+  historial: leer('horizonte.historial', []), // cada intento terminado (para el informe del comandante)
+  rec: { ...R.estadoInicial(), ...leer('horizonte.recompensas', {}) },   // créditos, compras, objetos, insignias
+  tripulacion: leer('horizonte.tripulacion', R.TRIPULACION_INICIAL.map((x) => ({ ...x }))),       // bitácora del estudiante («Cuéntalo»)
   prediccion: null,
   aula: leer('horizonte.modoAula', { activo: false, tranquilo: false }), // modo aula (enlace del docente)
   mundo: null,
@@ -61,6 +64,8 @@ async function iniciarMundo() {
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
     A.aplicar(G.mundo);
     G.mundo.alTocar((tipo) => fichaModulo(tipo));
+    G.mundo.alVisitar = (id) => { if (!G.rec.visitados.includes(id)) { G.rec.visitados.push(id); guardarRec(); revisarInsignias(); } };
+    aplicarPersonalizacion();
   } catch (err) {
     console.warn('Modo 2D:', err);
     G.motivo2D = err.message || String(err);
@@ -109,7 +114,7 @@ async function cargar() {
 function landing() {
   document.getElementById('ficha-modulo')?.remove();
   callar();
-  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 4, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
   mostrarLanding({
     app: $app, mundo: G.mundo, misiones: G.misiones, nasa: G.nasa,
     alJugar: inicio, alHistoria: () => historia(),
@@ -157,6 +162,123 @@ async function demo() {
   } catch (err) {
     console.info('Demo:', err.message);
   }
+}
+
+// ───────────────────────── Recompensas, tripulación y objetos ─────────────────────────
+function guardarRec() { guardar('horizonte.recompensas', G.rec); }
+
+function coloresTripulacion() {
+  const color = (id) => R.CATALOGO.find((x) => x.id === id)?.color;
+  return G.tripulacion.map((a) => ({ traje: color(a.traje), acento: color(a.acento), visor: color(a.visor) }));
+}
+
+function aplicarPersonalizacion() {
+  try {
+    G.mundo?.vestir(coloresTripulacion());
+    G.mundo?.objetos(G.rec.objetos);
+  } catch (err) { console.warn('Personalización 3D:', err); } // nunca debe tumbar el 3D
+}
+
+/** Suma los créditos de la misión y revisa insignias. Devuelve lo ganado para mostrarlo. */
+function darRecompensa(m, res, estrellas) {
+  const intentos = G.historial.filter((x) => x.mision === m.id);
+  const r = R.calcularRecompensa({
+    exito: res.exito, estrellas, rebobinados: G.rebobinados, sinPistas: Boolean(m.sin_pistas),
+    predijo: Boolean(G.prediccion), acerto: G.prediccion === (res.exito ? 'exito' : res.motivo),
+    falloAntes: intentos.slice(0, -1).some((x) => !x.exito),
+  });
+  G.rec.creditos += r.total;
+  guardarRec();
+  return { ...r, insignias: revisarInsignias(false) };
+}
+
+/** Busca insignias nuevas; si `avisar`, las celebra con un aviso. */
+function revisarInsignias(avisar = true) {
+  const nuevas = R.nuevasInsignias({ historial: G.historial, progreso: G.progreso, visitados: G.rec.visitados, fichas: G.rec.fichas, notas: G.notas }, G.rec.insignias);
+  if (!nuevas.length) return [];
+  G.rec.insignias.push(...nuevas);
+  G.rec.creditos += nuevas.length * 10; // cada insignia trae 10 créditos
+  guardarRec();
+  if (avisar) for (const id of nuevas) avisoInsignia(id);
+  return nuevas;
+}
+
+function avisoInsignia(id) {
+  const b = R.INSIGNIAS.find((x) => x.id === id);
+  if (!b) return;
+  const el = document.createElement('div');
+  el.className = 'aviso-insignia';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="medalla">${I(b.icono)}</span><span><small>${t('¡Nueva insignia!')} · +10 ${I('estrella')}</small><b>${t(b.nombre)}</b></span>`;
+  document.body.appendChild(el);
+  A.anunciar(`${t('¡Nueva insignia!')} ${t(b.nombre)}`);
+  setTimeout(() => el.remove(), 4200);
+}
+
+function bloquePremio(p) {
+  if (!p) return '';
+  return `<div class="premio">
+    <div class="premio-total">${I('estrella')} <b>+${p.total + p.insignias.length * 10}</b> <span>${t('créditos estelares')}</span> <small>${t('Total: {n}', { n: G.rec.creditos })}</small></div>
+    <ul>${p.desglose.map((d) => `<li>${t(d.texto)}${d.n ? ` ×${d.n}` : ""} <b>+${d.creditos}</b></li>`).join('')}${p.insignias.map((id) => `<li class="nueva">${I(R.INSIGNIAS.find((x) => x.id === id).icono)} ${t('Insignia')}: ${t(R.INSIGNIAS.find((x) => x.id === id).nombre)} <b>+10</b></li>`).join('')}</ul>
+    <button class="fantasma chico" id="irTripulacion">${I('tripulacion')} ${t('Personalizar tripulación y base')}</button>
+  </div>`;
+}
+
+const chipCreditos = () => `<button class="chip-creditos" id="chipCreditos" aria-label="${t('Créditos estelares: {n}. Abrir tripulación', { n: G.rec.creditos })}">${I('estrella')} ${G.rec.creditos}</button>`;
+
+/** Pantalla de la tripulación: personalizar astronautas, comprar y colocar objetos, ver insignias. */
+function pantallaTripulacion(aviso = '') {
+  document.body.dataset.pantalla = 'modal';
+  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 4, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  const tiene = (id) => G.rec.comprados.includes(id);
+  const muestra = (it, actual) => `<button class="muestra ${tiene(it.id) ? '' : 'bloqueada'} ${actual === it.id ? 'elegida' : ''}" data-item="${it.id}" style="--c:#${it.color.toString(16).padStart(6, '0')}"
+    aria-label="${t(it.nombre)}${tiene(it.id) ? '' : ` · ${it.precio} ${t('créditos')}`}" aria-pressed="${actual === it.id}" title="${t(it.nombre)}${tiene(it.id) ? '' : ` · ${it.precio}`}">${tiene(it.id) ? '' : I('candado')}</button>`;
+  const fila = (tipo, etiqueta, a, i) => `<div class="fila-muestras"><small>${etiqueta}</small><div data-astro="${i}" data-tipo="${tipo}">${R.CATALOGO.filter((x) => x.tipo === tipo).map((it) => muestra(it, a[tipo])).join('')}</div></div>`;
+  const tarjetas = G.tripulacion.map((a, i) => `<div class="astro-carta" style="--traje:#${R.CATALOGO.find((x) => x.id === a.traje).color.toString(16).padStart(6, '0')};--acento:#${R.CATALOGO.find((x) => x.id === a.acento).color.toString(16).padStart(6, '0')};--visor:#${R.CATALOGO.find((x) => x.id === a.visor).color.toString(16).padStart(6, '0')}">
+      <div class="astro-figura" aria-hidden="true"><i class="casco"><i class="visor"></i></i><i class="cuerpo"><i class="cinto"></i></i></div>
+      <label class="astro-nombre">${t('Nombre')} <input data-nombre="${i}" maxlength="16" value="${esc(a.nombre)}"></label>
+      ${fila('traje', t('Traje'), a, i)}${fila('acento', t('Franjas'), a, i)}${fila('visor', t('Visor'), a, i)}
+    </div>`).join('');
+  const objetos = R.CATALOGO.filter((x) => x.tipo === 'objeto').map((it) => {
+    const mio = tiene(it.id), puesto = G.rec.objetos.includes(it.id);
+    return `<div class="objeto-tienda ${mio ? '' : 'bloqueado'}"><b>${t(it.nombre)}</b>
+      ${mio ? `<label class="casilla"><input type="checkbox" data-objeto="${it.id}" ${puesto ? 'checked' : ''}> ${t('En la base')}</label>` : `<button class="secundario chico" data-comprar="${it.id}">${I('estrella')} ${it.precio}</button>`}</div>`;
+  }).join('');
+  const insignias = R.INSIGNIAS.map((b) => { const ok = G.rec.insignias.includes(b.id); return `<div class="insignia ${ok ? 'ganada' : ''}" title="${t(b.desc)}"><span class="medalla">${I(ok ? b.icono : 'candado')}</span><b>${t(b.nombre)}</b><small>${t(b.desc)}</small></div>`; }).join('');
+  const c = modal({ ancho: true, cerrable: true });
+  c.innerHTML = `
+    <div class="entre"><div><p class="lema">${t('Tu expedición')}</p><h2>${I('tripulacion')} ${t('Tripulación y recompensas')}</h2></div>
+      <div class="creditos-grandes">${I('estrella')} <b>${G.rec.creditos}</b><small>${t('créditos estelares')}</small></div></div>
+    <p class="suave chico">${t('Ganas créditos al cumplir misiones, al acertar tus predicciones, al no rebobinar y al ganar insignias. Úsalos para personalizar a tu tripulación y tu base.')}</p>
+    ${aviso ? `<div class="toast alerta" role="status">${aviso}</div>` : ''}
+    <h3>${t('Astronautas')}</h3><div class="tripulacion-grid">${tarjetas}</div>
+    <h3>${t('Objetos de la base')}</h3><div class="objetos-grid">${objetos}</div>
+    <h3>${t('Insignias')} <small class="suave">${G.rec.insignias.length}/${R.INSIGNIAS.length}</small></h3><div class="insignias-grid">${insignias}</div>`;
+  c.querySelectorAll('[data-nombre]').forEach((inp) => inp.addEventListener('change', () => { G.tripulacion[+inp.dataset.nombre].nombre = inp.value.trim() || R.TRIPULACION_INICIAL[+inp.dataset.nombre].nombre; guardar('horizonte.tripulacion', G.tripulacion); }));
+  c.querySelectorAll('[data-item]').forEach((b) => b.addEventListener('click', () => {
+    const cont = b.parentElement, i = +cont.dataset.astro, tipo = cont.dataset.tipo, id = b.dataset.item;
+    const it = R.CATALOGO.find((x) => x.id === id);
+    if (!tiene(id)) {
+      const r = R.comprar(G.rec, id);
+      if (!r.ok) return pantallaTripulacion(t('Te faltan {n} créditos para «{x}».', { n: it.precio - G.rec.creditos, x: t(it.nombre) }));
+      guardarRec(); sfx.exito?.();
+    }
+    G.tripulacion[i][tipo] = id;
+    guardar('horizonte.tripulacion', G.tripulacion);
+    aplicarPersonalizacion();
+    pantallaTripulacion();
+  }));
+  c.querySelectorAll('[data-comprar]').forEach((b) => b.addEventListener('click', () => {
+    const it = R.CATALOGO.find((x) => x.id === b.dataset.comprar);
+    const r = R.comprar(G.rec, it.id);
+    if (!r.ok) return pantallaTripulacion(t('Te faltan {n} créditos para «{x}».', { n: it.precio - G.rec.creditos, x: t(it.nombre) }));
+    guardarRec(); aplicarPersonalizacion(); sfx.modulo(); pantallaTripulacion();
+  }));
+  c.querySelectorAll('[data-objeto]').forEach((cb) => cb.addEventListener('change', () => {
+    const id = cb.dataset.objeto;
+    G.rec.objetos = cb.checked ? [...new Set([...G.rec.objetos, id])] : G.rec.objetos.filter((x) => x !== id);
+    guardarRec(); aplicarPersonalizacion();
+  }));
 }
 
 // ───────────────────────── Teclado ─────────────────────────
@@ -334,7 +456,7 @@ function inicio() {
   ambienteEstado({});
   callar();
   olvidarUltimo();
-  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
+  pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 4, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
   let nCampana = 0, nExtra = 0;
   const boton = (m, i) => {
     const p = G.progreso[m.id] || 0;
@@ -353,6 +475,7 @@ function inicio() {
       ${botonSonido()}
       ${botonVoz()}
       ${botonAcc()}
+      ${chipCreditos()}
       ${chipAula()}
     </div>
     <header class="marca">
@@ -372,7 +495,7 @@ function inicio() {
         <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
         <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
       </details>
-      <div class="fila"><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
+      <div class="fila"><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
     </aside>
     <p class="pista-gesto">${I('mano')} ${t('Arrastra para girar la base · pellizca para acercar')}</p>`;
@@ -389,6 +512,8 @@ function inicio() {
   document.getElementById('fuentes').addEventListener('click', fuentes);
   document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('aLanding').addEventListener('click', landing);
+  document.getElementById('tripulacionBtn').addEventListener('click', () => pantallaTripulacion());
+  document.getElementById('chipCreditos').addEventListener('click', () => pantallaTripulacion());
   document.getElementById('idioma').addEventListener('click', async () => {
     setIdioma(getIdioma() === 'es' ? 'en' : 'es');
     G.historia = null;
@@ -616,6 +741,14 @@ function fichaModulo(tipo) {
     extractor: [t('Extractor de hielo'), t('Saca agua del hielo escondido en el suelo.'), `${j.extractor.masa_t} t · +${j.extractor.agua_kg_dia} kg ${t('agua')}/${t('día')}`, 'lcross_hielo'],
     moxie: ['MOXIE', t('Fabrica oxígeno a partir del CO₂ del aire de Marte, sin gastar agua.'), `${j.moxie.masa_t} t · ${j.moxie.o2_kg_dia} kg O₂/${t('día')}`, 'moxie_o2'],
     lander: [t('Módulo de aterrizaje'), t('La nave que trajo a la tripulación y su carga.'), '', null],
+    'obj-bandera': [t('Bandera del Perú'), t('La primera base de la expedición peruana. En la Luna no hay viento: la bandera va sostenida por una barra, como en las misiones Apolo.'), '', null],
+    'obj-contenedores': [t('Contenedores de carga'), t('Cada kilo que llega en el cohete cuenta. Aquí se guardan repuestos, comida y agua de reserva.'), '', null],
+    'obj-torre': [t('Torre meteorológica'), t('Mide el viento, la temperatura y el polvo. En Marte avisa cuando se acerca una tormenta de polvo.'), '', 'polvo_marte_2018'],
+    'obj-telescopio': [t('Telescopio'), t('Sin aire que haga titilar las estrellas, desde la Luna se ve el cielo muy nítido. También vigila el Sol.'), '', null],
+    'obj-huerto': [t('Huerto de papas andinas'), t('Papas nativas del Perú. El Centro Internacional de la Papa (Lima) y la NASA probaron si las papas pueden crecer en condiciones parecidas a las de Marte.'), '', 'veggie'],
+    'obj-antena': [t('Antena de espacio profundo'), t('Habla con la Tierra. Desde Marte, cada mensaje tarda entre unos 4 y 24 minutos en llegar.'), '', 'retraso_tierra_marte'],
+    'obj-dron': [t('Dron explorador'), t('Explora desde el aire. En Marte, el helicóptero Ingenuity de la NASA demostró que se puede volar aunque el aire sea muy delgado.'), '', null],
+    'obj-llama': [t('Estatua de la llama'), t('Homenaje a la mascota de la expedición. Las llamas viven a más de 4000 metros de altura, donde el aire tiene menos oxígeno.'), '', null],
   }[tipo];
   if (!F) return;
   const [nombre, que, costo, dato] = F;
@@ -631,10 +764,12 @@ function fichaModulo(tipo) {
     <p>${que}</p>${costo ? `<p class="costo-modulo">${I('masa')} ${esc(costo)} ${procedencia(null)}</p>` : ''}${estado}
     ${c ? `<div class="dato-modulo">${procedencia(c)}<p>${esc(c.texto)}</p><a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${t('Fuente: {x}', { x: esc(c.fuente) })}</a></div>` : ''}`;
   document.body.appendChild(f);
-  f.querySelector('button').addEventListener('click', () => f.remove());
+  const cerrar = () => { f.remove(); G.mundo?.soltarEnfoque(); };
+  f.querySelector('button').addEventListener('click', cerrar);
   A.anunciar(`${nombre}. ${que}`);
   clearTimeout(G.cierraFicha);
-  G.cierraFicha = setTimeout(() => f.remove(), 15000);
+  G.cierraFicha = setTimeout(() => { if (f.isConnected) cerrar(); }, 20000);
+  if (!G.rec.fichas.includes(tipo)) { G.rec.fichas.push(tipo); guardarRec(); revisarInsignias(); }
 }
 
 /** Efecto visual del Cronoscopio: cinta que rebobina y el día grande en pantalla. */
@@ -803,6 +938,7 @@ function final() {
   const c = modal();
   if (res.exito) sfx.exito(); else sfx.falla();
   efectoFinal(res.exito);
+  const premio = G.demo ? null : darRecompensa(m, res, estrellas);
   if (res.exito) {
     if (!G.demo) {
       G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
@@ -823,6 +959,7 @@ function final() {
         <div class="estrellas-res" aria-label="${t('{n} de 3 estrellas', { n: estrellas })}">${'★'.repeat(estrellas)}<span>${'★'.repeat(3 - estrellas)}</span></div>
       </div>
       ${resultadoPrediccion(null)}
+      ${bloquePremio(premio)}
       <div class="resumen-diseno">
         <div class="dato bien"><small>${t('Sobrevivieron')}</small><b>${t('{a} de {b}', { a: m.tripulacion, b: m.tripulacion })}</b></div>
         <div class="dato"><small>${t('Días')}</small><b>${m.dias}</b></div>
@@ -849,6 +986,7 @@ function final() {
     document.getElementById('nota').addEventListener('change', guardarNota);
     document.getElementById('sig')?.addEventListener('click', () => { guardarNota(); G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; construir(); });
     document.getElementById('inicio').addEventListener('click', () => { guardarNota(); inicio(); });
+    document.getElementById('irTripulacion')?.addEventListener('click', () => { guardarNota(); pantallaTripulacion(); });
     setTimeout(decirNebula, 1600); // después de la fanfarria
     return;
   }
@@ -859,6 +997,7 @@ function final() {
     <div class="sello">${t('FALLA · DÍA {n}', { n: e.dia })}</div>
     <h2>${I('alerta', 'rojo')} ${esc(a.titulo)}</h2>
     ${resultadoPrediccion(res.motivo)}
+    ${bloquePremio(premio)}
     <p class="suave">${t('Así ocurrió:')}</p>
     <ol class="cadena">${a.cadena.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
     ${a.datos.map(cifraNasa).join('')}
@@ -869,6 +1008,7 @@ function final() {
     </div>`;
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
   document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; olvidarUltimo(); construir(); });
+  document.getElementById('irTripulacion')?.addEventListener('click', () => pantallaTripulacion());
   setTimeout(decirNebula, 1400);
 }
 

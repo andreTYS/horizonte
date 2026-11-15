@@ -48,6 +48,14 @@ No guarda progreso ni envía resultados. `&ritmo=1.5` lo hace más lento; `Esc` 
 - **Jugar con teclado**: `A` avanzar, `5` ×5, `R` refugio, `C` ración, `I` invernadero, `B` bitácora, `Z` rebobinar un día, `Esc` cerrar. El foco no se pierde al avanzar.
 - Las alarmas siempre tienen texto (y vibran en el celular); la voz de Nebula siempre tiene su globo escrito. Sin violaciones WCAG 2 A/AA en la auditoría automática de axe-core (landing, menú, diseño, Predice, misión, panel).
 
+## Recompensas, tripulación y base
+
+- **Créditos estelares** al terminar cada misión: misión cumplida, estrellas, sin rebobinar, sin pistas, lograrlo después de un error y **predicción acertada** (también cuando la misión falla). Las reglas están en `js/recompensas.js` (con pruebas).
+- **12 insignias** (Buen pronóstico, El error es la lección, Guardián de la noche, Explorador, Científico curioso…), +10 créditos cada una.
+- **Tripulación personalizable** (Killa, Inti, Wayra, Sami): nombre, color del traje, franjas y visor; los colores nuevos se compran con créditos y se ven en el 3D.
+- **Objetos de la base** (`js/objetos3d.js`): bandera del Perú, contenedores, torre meteorológica, y por créditos telescopio, huerto de papas andinas, antena de espacio profundo, dron explorador y estatua de la llama.
+- **Primer plano**: al tocar un módulo, un objeto o un lugar del mapa, la cámara se acerca y se abre su ficha (qué hace, cuánto cuesta y su dato de NASA).
+
 ## Informe del comandante
 
 Desde *Tu aprendizaje* → **Informe del comandante**: misiones con estrellas, intentos, predicciones acertadas, prueba inicial → final, ganancia,

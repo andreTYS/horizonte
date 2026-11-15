@@ -868,3 +868,46 @@ body.destello-falla .modal { animation: temblor .45s ease-in-out; }
   .informe-nombre input { color: #160c2b !important; border-bottom-color: #6500a8; }
   .informe-datos div { background: #f4effc !important; border-color: #cbbeea !important; }
 }
+
+/* ═══════════ Recompensas y tripulación ═══════════ */
+.chip-creditos { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: rgba(255, 214, 0, .14); border: 1px solid var(--acento); color: var(--acento); font: 800 1rem var(--numeros); }
+.chip-creditos .i { width: 18px; height: 18px; }
+.premio { margin: 10px 0; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(255, 214, 0, .14), rgba(201, 45, 215, .12)); border: 1px solid rgba(255, 214, 0, .5); }
+.premio-total { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.premio-total .i { width: 22px; height: 22px; color: var(--acento); align-self: center; }
+.premio-total b { font: 800 1.6rem var(--titulo); color: var(--acento); }
+.premio-total small { margin-left: auto; color: var(--suave); }
+.premio ul { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: .92rem; }
+.premio li { display: flex; gap: 6px; align-items: center; } .premio li b { margin-left: auto; color: var(--acento); font-family: var(--numeros); }
+.premio li .i { width: 16px; height: 16px; } .premio li.nueva { color: var(--ok); font-weight: 700; }
+.aviso-insignia { position: fixed; z-index: 45; left: 50%; top: calc(max(10px, env(safe-area-inset-top)) + 70px); transform: translateX(-50%); display: flex; gap: 12px; align-items: center; padding: 10px 18px 10px 10px; border-radius: 999px; background: var(--fondo-2); border: 2px solid var(--acento); box-shadow: 0 0 40px rgba(255, 214, 0, .45); animation: insignia-entra 4.2s ease both; }
+.aviso-insignia small { display: flex; gap: 4px; align-items: center; color: var(--acento); font: 700 .78rem var(--boton); } .aviso-insignia small .i { width: 12px; height: 12px; }
+.aviso-insignia b { display: block; font: 800 1.05rem var(--titulo); }
+@keyframes insignia-entra { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.8); } 10%, 85% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -10px); } }
+.medalla { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; flex: none; background: radial-gradient(circle at 35% 30%, #ffe449, #ff7900); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .25), 0 0 14px rgba(255, 214, 0, .5); }
+.medalla .i { width: 24px; height: 24px; color: #160c2b; }
+.creditos-grandes { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 16px; background: rgba(255, 214, 0, .12); border: 1px solid var(--acento); }
+.creditos-grandes .i { width: 22px; height: 22px; color: var(--acento); } .creditos-grandes b { font: 800 1.5rem var(--numeros); color: var(--acento); } .creditos-grandes small { color: var(--suave); }
+.tripulacion-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.astro-carta { padding: 12px; border-radius: 16px; background: rgba(255, 255, 255, .04); border: 1px solid var(--borde); }
+.astro-figura { position: relative; height: 92px; display: grid; justify-items: center; align-content: end; margin-bottom: 6px; }
+.astro-figura .casco { position: relative; width: 40px; height: 40px; border-radius: 50%; background: var(--traje); box-shadow: inset -4px -4px 0 rgba(0, 0, 0, .15); z-index: 1; }
+.astro-figura .visor { position: absolute; left: 8px; top: 10px; width: 26px; height: 18px; border-radius: 50% 50% 45% 45%; background: linear-gradient(135deg, #fff 0 12%, var(--visor) 30%); }
+.astro-figura .cuerpo { position: relative; width: 46px; height: 50px; margin-top: -4px; border-radius: 18px 18px 10px 10px; background: var(--traje); box-shadow: inset -5px -4px 0 rgba(0, 0, 0, .15); }
+.astro-figura .cinto { position: absolute; left: 0; right: 0; top: 24px; height: 7px; background: var(--acento); }
+.astro-nombre { display: block; font-size: .85rem; color: var(--suave); }
+.astro-nombre input { display: block; width: 100%; margin-top: 2px; font: 800 1.05rem var(--boton); color: var(--texto); background: var(--fondo-2); border: 1px solid var(--borde-fuerte); border-radius: 10px; padding: 6px 10px; }
+.fila-muestras { margin-top: 8px; } .fila-muestras small { color: var(--suave); }
+.fila-muestras > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.muestra { width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; background: var(--c); border: 2px solid rgba(255, 255, 255, .25); display: grid; place-items: center; }
+.muestra.elegida { outline: 3px solid var(--acento); outline-offset: 2px; }
+.muestra.bloqueada { filter: saturate(.5) brightness(.7); } .muestra .i { width: 14px; height: 14px; color: #160c2b; }
+.objetos-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.objeto-tienda { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .04); border: 1px solid var(--borde); }
+.objeto-tienda.bloqueado { border-style: dashed; } .objeto-tienda .casilla { margin: 0; }
+.objeto-tienda button { display: inline-flex; gap: 6px; align-items: center; align-self: flex-start; } .objeto-tienda button .i { width: 16px; height: 16px; color: var(--acento); }
+.insignias-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.insignia { display: grid; justify-items: center; text-align: center; gap: 4px; padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px solid var(--borde); opacity: .55; }
+.insignia.ganada { opacity: 1; border-color: var(--acento); }
+.insignia:not(.ganada) .medalla { background: #3a3150; box-shadow: none; } .insignia:not(.ganada) .medalla .i { color: var(--suave); }
+.insignia b { font: 800 .9rem var(--boton); } .insignia small { color: var(--suave); font-size: .75rem; }

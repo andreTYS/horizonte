@@ -11,6 +11,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
+import { FABRICAS_OBJETOS, POS_OBJETOS, animarObjeto } from './objetos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
 import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
 
@@ -483,14 +484,78 @@ export class Mundo {
     const r = this.renderer.domElement.getBoundingClientRect();
     const ray = new THREE.Raycaster();
     ray.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), this.camara);
-    const [hit] = ray.intersectObjects(this.modulos, true);
+    const [hit] = ray.intersectObjects([...this.modulos, ...(this.grupoObjetos?.children || [])], true);
     if (!hit) return;
     let o = hit.object;
     while (o && !o.userData.tipo) o = o.parent;
     if (!o) return;
-    this.resaltar(o.userData.tipo);
-    this.#caminarHacia(o.position);
+    if (o.userData.tipo !== 'obj-dron') this.#caminarHacia(o.position);
+    this.enfocar(o);
     this.alTocarModulo?.(o.userData.tipo);
+  }
+
+  /** Lleva la cámara a primer plano del objeto (módulo, objeto de la base). */
+  enfocar(o) {
+    const caja = new THREE.Box3().setFromObject(o);
+    const centro = caja.getCenter(new THREE.Vector3());
+    const tam = caja.getSize(new THREE.Vector3());
+    const r = Math.max(tam.x, tam.y, tam.z);
+    const lejos = Math.max(4.5, r * 1.9) * (window.innerHeight > window.innerWidth ? 1.5 : 1);
+    const dir = this.camara.position.clone().sub(centro).setY(0);
+    if (dir.lengthSq() < 0.01) dir.set(1, 0, 1);
+    dir.normalize();
+    this.controles.minDistance = 2;
+    this.controles.autoRotate = false;
+    this.enfocado = true;
+    if (this.capaEtiquetas) this.capaEtiquetas.hidden = true; // en primer plano, sin etiquetas encima
+    this.#volar(centro.clone(), centro.clone().addScaledVector(dir, lejos).add(new THREE.Vector3(0, Math.max(1.8, r * 0.7), 0)), 1.1);
+  }
+
+  /** Sale del primer plano y vuelve a la vista de la pantalla actual. */
+  soltarEnfoque() {
+    if (!this.enfocado) return;
+    this.enfocado = false;
+    this.vista(this.modo);
+  }
+
+  /** Objetos decorativos de la base (ids de recompensas.js). */
+  objetos(ids = []) {
+    const clave = ids.slice().sort().join(',');
+    if (clave === this.claveObjetos) return;
+    this.claveObjetos = clave;
+    if (this.grupoObjetos) { this.escena.remove(this.grupoObjetos); this.#limpiar(this.grupoObjetos); }
+    this.grupoObjetos = new THREE.Group();
+    for (const id of ids) {
+      const f = FABRICAS_OBJETOS[id];
+      if (!f) continue;
+      const o = f();
+      const [x, z] = POS_OBJETOS[id];
+      o.position.set(x, Math.max(altura(x, z), SUELO_Y - 0.05), z);
+      o.rotation.y = Math.atan2(-x, -z) || 0; // mirando a la base
+      o.userData.tipo = id;
+      o.userData.id = id;
+      o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+      this.grupoObjetos.add(o);
+    }
+    this.escena.add(this.grupoObjetos);
+  }
+
+  /** Colores de cada astronauta: [{ traje, acento, visor }] (números hex). */
+  vestir(colores = []) {
+    this.colores = colores;
+    this.astronautas.forEach((a, i) => this.#pintarAstronauta(a, colores[i]));
+  }
+
+  #pintarAstronauta(a, c) {
+    if (!c) return;
+    a.traverse((m) => {
+      if (!m.isMesh || !m.material) return;
+      if (!m.userData.matPropio) { m.material = m.material.clone(); m.userData.matPropio = true; m.userData.matNombre = m.material.name; }
+      const n = m.userData.matNombre;
+      if (n === 'traje' || n === 'blanco') m.material.color.setHex(n === 'traje' ? c.traje : new THREE.Color(c.traje).lerp(new THREE.Color(0xffffff), 0.45).getHex());
+      if (n === 'naranja') m.material.color.setHex(c.acento);
+      if (n === 'oro') { m.material.color.setHex(c.visor); if (m.material.emissive) { m.material.emissive.setHex(c.visor); m.material.emissiveIntensity = 0.15; } }
+    });
   }
 
   /** El astronauta más cercano camina hasta el módulo, se queda un rato y vuelve a su ronda. */
@@ -508,6 +573,7 @@ export class Mundo {
       const a = this.#fabricar('astronauta');
       const i = this.astronautas.length;
       a.userData = { r: 6 + i * 1.6, v: 0.18 + i * 0.05, f: i * 1.7, dir: i % 2 ? 1 : -1 };
+      this.#pintarAstronauta(a, this.colores?.[i]);
       this.escena.add(a);
       this.astronautas.push(a);
     }
@@ -601,6 +667,8 @@ export class Mundo {
   vista(modo) {
     if (this.cinematica) { this.cinematica = null; this.controles.enabled = true; }
     this.modo = modo;
+    this.enfocado = false;
+    this.controles.minDistance = 10;
     this.controles.autoRotate = modo === 'portada' && !this.quieto;
     const destino = { portada: [44, 26, 44], diseno: [30, 40, 34], mision: [32, 24, 30], resultado: [26, 18, 28] }[modo] || [40, 30, 40];
     this.#volar(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...destino));
@@ -790,6 +858,8 @@ export class Mundo {
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);
     }
 
+    if (this.grupoObjetos) for (const o of this.grupoObjetos.children) animarObjeto(o, t);
+
     // Módulos que aterrizan: caen, rebotan y levantan polvo
     for (const m of this.modulos) {
       const u = m.userData;
@@ -919,7 +989,10 @@ export class Mundo {
     const { x, z } = PUNTOS[id];
     const y = altura(x, z);
     const desde = new THREE.Vector3(x, y + 1, z).sub(this.camara.position).setY(0).normalize();
-    const lejos = (id === 'hielo' ? 70 : 26) * (window.innerHeight > window.innerWidth ? 1.6 : 1);
+    const lejos = (id === 'hielo' ? 55 : 14) * (window.innerHeight > window.innerWidth ? 1.5 : 1);
+    this.controles.minDistance = 2;
+    this.enfocado = true;
+    this.alVisitar?.(id);
     this.#volar(new THREE.Vector3(x, y + 1, z), new THREE.Vector3(x - desde.x * lejos, y + lejos * 0.6, z - desde.z * lejos), 0.55);
     this.controles.autoRotate = false;
     const info = this.infoPuntos[id];

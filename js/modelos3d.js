@@ -216,11 +216,16 @@ export function lander() {
 export function astronauta() {
   const g = new THREE.Group();
   g.name = 'astronauta';
-  const cuerpo = malla(new THREE.CapsuleGeometry(0.28, 0.6, 4, 12), M.blanco); cuerpo.position.y = 0.7;
-  const casco = malla(new THREE.SphereGeometry(0.26, 20, 16), M.blanco); casco.position.y = 1.45;
-  const visor = malla(new THREE.SphereGeometry(0.2, 20, 12, -Math.PI / 2, Math.PI, 0.4, 1.4), M.oro); visor.position.set(0, 1.45, 0.08);
+  // Materiales con nombre (como en el modelo de Blender) para poder personalizar cada astronauta
+  const traje = Object.assign(M.blanco.clone(), { name: 'traje' });
+  const acento = Object.assign(M.naranja.clone(), { name: 'naranja' });
+  const oro = Object.assign(M.oro.clone(), { name: 'oro' });
+  const cuerpo = malla(new THREE.CapsuleGeometry(0.28, 0.6, 4, 12), traje); cuerpo.position.y = 0.7;
+  const casco = malla(new THREE.SphereGeometry(0.26, 20, 16), traje); casco.position.y = 1.45;
+  const visor = malla(new THREE.SphereGeometry(0.2, 20, 12, -Math.PI / 2, Math.PI, 0.4, 1.4), oro); visor.position.set(0, 1.45, 0.08);
   const mochila = caja(0.4, 0.5, 0.2, M.gris); mochila.position.set(0, 0.85, -0.3);
-  g.add(cuerpo, casco, visor, mochila);
+  const cinto = malla(new THREE.TorusGeometry(0.29, 0.04, 8, 20), acento); cinto.rotation.x = Math.PI / 2; cinto.position.y = 0.62;
+  g.add(cuerpo, casco, visor, mochila, cinto);
   return g;
 }
 
