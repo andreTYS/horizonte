@@ -111,6 +111,7 @@ const resaltar = (tipo) => G.mundo?.resaltar(tipo);
 
 async function iniciarMundo() {
   try {
+    if (leer('horizonte.vista', '') === '2d') throw new Error('ligero');
     const { Mundo, soportaWebGL } = await import('./mundo3d.js');
     if (!soportaWebGL()) throw new Error(`sin WebGL${soportaWebGL.motivo ? ': ' + soportaWebGL.motivo : ''}`);
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
@@ -129,16 +130,30 @@ async function iniciarMundo() {
 // Si el 3D no arranca (o la tarjeta gráfica lo pierde), se explica por qué y se ofrece reintentar.
 function avisoModo2D() {
   if (!document.body.classList.contains('modo-2d') || document.getElementById('aviso-2d')) return;
+  const ligero = G.motivo2D === 'ligero';
   const sinWebGL = /WebGL/i.test(G.motivo2D || '');
   const bloqueado = /block|bloque/i.test(G.motivo2D || '');
   const a = document.createElement('div');
   a.id = 'aviso-2d';
-  a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${bloqueado ? t('Chrome bloqueó el 3D en este sitio después de un fallo de la tarjeta gráfica. Cierra Chrome por completo, vuelve a abrirlo y recarga.') : sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
-    <button class="secundario" id="reintentar3d">${t('Reintentar 3D')}</button><button class="fantasma" id="cerrar2d" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
+  a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${ligero ? t('Elegiste la vista ligera para que el juego vaya fluido en este equipo.') : bloqueado ? t('Chrome bloqueó el 3D en este sitio después de un fallo de la tarjeta gráfica. Cierra Chrome por completo, vuelve a abrirlo y recarga.') : sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
+    <button class="secundario" id="reintentar3d">${ligero ? t('Volver al 3D') : t('Reintentar 3D')}</button><button class="fantasma" id="cerrar2d" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
   document.body.appendChild(a);
-  a.querySelector('#reintentar3d').addEventListener('click', () => location.reload());
+  a.querySelector('#reintentar3d').addEventListener('click', () => { guardar('horizonte.vista', ''); location.reload(); });
   a.querySelector('#cerrar2d').addEventListener('click', () => a.remove());
 }
+// Si el 3D va muy lento aun con la calidad al mínimo, se ofrece (una vez) la vista 2D ligera.
+window.addEventListener('mundo-calidad', (ev) => {
+  if (ev.detail.escalon < 3 || ev.detail.fps >= 12 || G.ofrecio2D || document.getElementById('aviso-lento')) return;
+  G.ofrecio2D = true;
+  const a = document.createElement('div');
+  a.id = 'aviso-lento';
+  a.setAttribute('role', 'status');
+  a.innerHTML = `<b>${t('Tu equipo va lento con el 3D')}</b> <span>${t('Bajamos los efectos. Si aún va lento, usa la vista 2D ligera: el juego es el mismo.')}</span>
+    <button class="secundario" id="usar2d">${t('Usar vista 2D')}</button><button class="fantasma" id="seguir3d">${t('Seguir en 3D')}</button>`;
+  document.body.appendChild(a);
+  a.querySelector('#usar2d').addEventListener('click', () => { guardar('horizonte.vista', '2d'); location.reload(); });
+  a.querySelector('#seguir3d').addEventListener('click', () => a.remove());
+});
 window.addEventListener('mundo-perdido', () => {
   G.motivo2D = t('la tarjeta gráfica se reinició');
   document.body.classList.add('modo-2d');
@@ -1139,12 +1154,13 @@ function final() {
   const c = modal();
   if (res.exito) sfx.exito(); else sfx.falla();
   efectoFinal(res.exito);
+  // El progreso se guarda antes de la recompensa: así las insignias de la misión (noche, cosecha, escudo, comandante) se ganan en esta misma pantalla
+  if (res.exito && !G.demo) {
+    G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
+    guardar('horizonte.progreso', G.progreso);
+  }
   const premio = G.demo ? null : darRecompensa(m, res, estrellas);
   if (res.exito) {
-    if (!G.demo) {
-      G.progreso[m.id] = Math.max(G.progreso[m.id] || 0, estrellas);
-      guardar('horizonte.progreso', G.progreso);
-    }
     // Lo que sobró pasa como reserva a la siguiente misión de la campaña (la mitad, redondeada)
     const destino = m.reserva_a && G.misiones.find((x) => x.id === m.reserva_a);
     const reserva = destino && { o2: Math.round(Math.max(0, e.o2) * 5) / 10, agua: Math.round(Math.max(0, e.agua) / 2), comida: Math.round(Math.max(0, e.comida) / 2) };

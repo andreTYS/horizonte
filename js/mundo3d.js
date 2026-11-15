@@ -771,7 +771,30 @@ export class Mundo {
     this.composer?.setSize(w, h);
   }
 
+  /**
+   * Calidad automática: mide los cuadros por segundo y, si el equipo no da abasto, baja un escalón
+   * (1: sin posproceso, 2: menos resolución, 3: sin sombras). No sube de nuevo para no parpadear.
+   */
+  #vigilarRendimiento() {
+    const ahora = performance.now();
+    const r = this.rend ||= { desde: ahora + 4000, cuadros: 0, escalon: 0 }; // los primeros 4 s (carga) no cuentan
+    if (ahora < r.desde || document.hidden) { r.cuadros = 0; r.inicio = ahora; return; }
+    r.inicio ??= ahora;
+    r.cuadros += 1;
+    if (ahora - r.inicio < 3000) return;
+    const fps = (r.cuadros * 1000) / (ahora - r.inicio);
+    r.cuadros = 0; r.inicio = ahora; this.fps = Math.round(fps);
+    if (fps >= 24 || r.escalon >= 3) return;
+    r.escalon += 1;
+    if (r.escalon === 1 && this.composer) { this.composer = null; if (this.destello) this.destello.visible = false; }
+    else if (r.escalon <= 2) { r.escalon = 2; this.renderer.setPixelRatio(Math.min(1, window.devicePixelRatio) * 0.8); this.redimensionar(); }
+    else { this.renderer.shadowMap.enabled = false; this.sol.castShadow = false; this.escena.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); }
+    this.calidadAuto = r.escalon;
+    window.dispatchEvent(new CustomEvent('mundo-calidad', { detail: { escalon: r.escalon, fps: Math.round(fps) } }));
+  }
+
   animar() {
+    this.#vigilarRendimiento();
     const dt = Math.min(this.reloj.getDelta(), 0.05);
     const t = this.reloj.elapsedTime;
     const k = 1 - Math.exp(-dt * 2.5);

@@ -734,6 +734,9 @@ body[data-pantalla="landing"] #puntos, body[data-pantalla="landing"] #etiquetas 
 #aviso-2d { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; width: min(620px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--vidrio-fuerte); border: 1px solid var(--acento); box-shadow: var(--sombra); font-size: .92rem; }
 #aviso-2d b { color: var(--acento); font-family: var(--boton); }
 #aviso-2d span { flex: 1 1 260px; }
+#aviso-lento { position: fixed; left: 50%; top: calc(70px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 45; width: min(560px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--vidrio-fuerte); border: 1px solid var(--acento); box-shadow: var(--sombra); font-size: .92rem; }
+#aviso-lento b { color: var(--acento); font-family: var(--boton); flex: 1 1 100%; }
+#aviso-lento span { flex: 1 1 100%; }
 #aviso-2d #cerrar2d { min-height: 36px; width: 36px; padding: 0; }
 
 /* ═══════════ Accesibilidad ═══════════ */
