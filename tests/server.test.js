@@ -80,6 +80,17 @@ test('modo aula: solo el docente pausa; el juego consulta el estado', async () =
   assert.equal((await (await fetch(`${BASE}/api/aula?aula=3B`)).json()).pausa, false);
 });
 
+test('progreso: se guarda por aula + nombre, no se pisa con uno más viejo, y el docente ve los logros', async () => {
+  const guardar = (datos, actualizado) => fetch(`${BASE}/api/progreso`, { method: 'POST', body: JSON.stringify({ aula: 'lg-1', nombre: 'Ana', datos, actualizado }) });
+  assert.equal((await guardar({ rec: { creditos: 50, insignias: ['primera'] }, progreso: { cero: 3 } }, 2000)).status, 200);
+  assert.equal((await guardar({ rec: { creditos: 5, insignias: [] }, progreso: {} }, 1000)).status, 200); // más viejo: se ignora
+  const r = await (await fetch(`${BASE}/api/progreso?aula=LG-1&nombre=Ana`)).json();
+  assert.equal(r.datos.rec.creditos, 50);
+  assert.equal((await fetch(`${BASE}/api/progreso`, { method: 'POST', body: JSON.stringify({ aula: 'x' }) })).status, 400);
+  const d = await (await fetch(`${BASE}/api/resultados?aula=lg-1`, { headers: { Authorization: 'Bearer secreto' } })).json();
+  assert.deepEqual(d.logros.map((x) => [x.nombre, x.creditos, x.insignias.length, x.misiones]), [['Ana', 50, 1, 1]]);
+});
+
 test('sin NASA_API_KEY el proxy de DONKI lo dice claramente', async () => {
   assert.equal((await fetch(`${BASE}/api/donki?tipo=GST&inicio=2024-05-01&fin=2024-05-31`)).status, 503);
 });

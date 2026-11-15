@@ -68,3 +68,20 @@ export async function estadoAula(aula) {
     return r.ok ? await r.json() : null;
   } catch { return null; }
 }
+
+/** Progreso del estudiante en el servidor (por aula + nombre). */
+export async function guardarProgreso(aula, nombre, datos, actualizado) {
+  if (!disponible || !aula || !nombre) return false;
+  try {
+    const r = await fetch('api/progreso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aula, nombre, datos, actualizado }) });
+    return r.ok;
+  } catch { return false; }
+}
+
+export async function leerProgreso(aula, nombre) {
+  if (!disponible || !aula || !nombre) return null;
+  try {
+    const r = await fetch(`api/progreso?aula=${encodeURIComponent(aula)}&nombre=${encodeURIComponent(nombre)}`, { cache: 'no-store' });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}

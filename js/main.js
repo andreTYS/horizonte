@@ -31,8 +31,9 @@ const G = {
   historial: leer('horizonte.historial', []), // cada intento terminado (para el informe del comandante)
   rec: { ...R.estadoInicial(), ...leer('horizonte.recompensas', {}) },
   introVista: leer('horizonte.intro', false),
-  coachVisto: {},   // créditos, compras, objetos, insignias
-  tripulacion: leer('horizonte.tripulacion', R.TRIPULACION_INICIAL.map((x) => ({ ...x }))),       // bitácora del estudiante («Cuéntalo»)
+  coachVisto: {},
+  tripulacion: leer('horizonte.tripulacion', R.TRIPULACION_INICIAL.map((x) => ({ ...x }))),
+  actualizado: leer('horizonte.actualizado', 0), // última vez que cambió el progreso (para sincronizar con el servidor)
   prediccion: null,
   aula: leer('horizonte.modoAula', { activo: false, tranquilo: false }), // modo aula (enlace del docente)
   mundo: null,
@@ -41,8 +42,57 @@ const G = {
 function leer(clave, porDefecto) {
   try { return JSON.parse(localStorage.getItem(clave)) ?? porDefecto; } catch { return porDefecto; }
 }
+const CLAVES_PROGRESO = ['horizonte.recompensas', 'horizonte.tripulacion', 'horizonte.progreso', 'horizonte.historial', 'horizonte.notas', 'horizonte.evaluacion', 'horizonte.reservas'];
 function guardar(clave, valor) {
   try { localStorage.setItem(clave, JSON.stringify(valor)); } catch { /* sin almacenamiento: el juego sigue */ }
+  if (CLAVES_PROGRESO.includes(clave) && !G.restaurando) cambioProgreso();
+}
+
+// ── Progreso en el servidor (por aula + nombre): no se pierde al cambiar de celular ──
+function cambioProgreso() {
+  G.actualizado = Date.now();
+  try { localStorage.setItem('horizonte.actualizado', JSON.stringify(G.actualizado)); } catch { /* sin almacenamiento */ }
+  clearTimeout(G.sincronizando);
+  G.sincronizando = setTimeout(subirProgreso, 1500);
+}
+
+function subirProgreso() {
+  const { aula, nombre } = G.jugador;
+  if (!aula || !nombre || G.demo) return;
+  api.guardarProgreso(aula, nombre, {
+    rec: G.rec, tripulacion: G.tripulacion, progreso: G.progreso, historial: G.historial.slice(-150), notas: G.notas, eval: G.eval, reservas: G.reservas,
+  }, G.actualizado);
+}
+
+/** Si el servidor tiene un progreso más nuevo (otro celular), lo usa; si el de aquí es más nuevo, lo sube. */
+async function restaurarProgreso() {
+  const { aula, nombre } = G.jugador;
+  if (!aula || !nombre || G.demo) return;
+  const r = await api.leerProgreso(aula, nombre);
+  if (!r) return;
+  if (!r.datos || r.actualizado < G.actualizado) { if (G.actualizado) subirProgreso(); return; }
+  if (r.actualizado === G.actualizado) return;
+  const d = r.datos;
+  G.restaurando = true;
+  G.rec = { ...R.estadoInicial(), ...(d.rec || {}) };
+  G.tripulacion = d.tripulacion || G.tripulacion;
+  G.progreso = d.progreso || {};
+  G.historial = d.historial || [];
+  G.notas = d.notas || {};
+  G.eval = d.eval || G.eval;
+  G.reservas = d.reservas || {};
+  for (const [k, v] of [['recompensas', G.rec], ['tripulacion', G.tripulacion], ['progreso', G.progreso], ['historial', G.historial], ['notas', G.notas], ['evaluacion', G.eval], ['reservas', G.reservas]]) guardar(`horizonte.${k}`, v);
+  G.restaurando = false;
+  G.actualizado = r.actualizado;
+  try { localStorage.setItem('horizonte.actualizado', JSON.stringify(G.actualizado)); } catch { /* sin almacenamiento */ }
+  aplicarPersonalizacion();
+  if (document.body.dataset.pantalla === 'portada') inicio();
+  const aviso = document.createElement('div');
+  aviso.className = 'aviso-insignia';
+  aviso.setAttribute('role', 'status');
+  aviso.innerHTML = `<span class="medalla">${I('ok')}</span><span><small>${esc(G.jugador.nombre)} · ${esc(G.jugador.aula)}</small><b>${t('Recuperamos tu progreso')}</b></span>`;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 4200);
 }
 
 // ───────────────────────── Mundo (3D o, si no hay WebGL, SVG) ─────────────────────────
@@ -105,7 +155,7 @@ async function cargar() {
   G.orig = { nasa, misiones, evaluacion };
   await cargarIdioma();
   leerEnlaceDocente();
-  api.detectar().then(vigilarPausa); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
+  api.detectar().then(() => { vigilarPausa(); restaurarProgreso(); }); // en el VPS hay API; en GitHub Pages no, y el juego funciona igual
   A.aplicar(G.mundo);
   landing();
   avisoModo2D();
@@ -650,7 +700,7 @@ function inicio() {
   }));
   $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje, informe: informeComandante })[b.dataset.eval]()));
   for (const id of ['nombre', 'aula']) {
-    document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
+    document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); restaurarProgreso(); });
   }
   document.getElementById('modoAula').addEventListener('change', (ev) => { G.aula.activo = ev.target.checked; guardar('horizonte.modoAula', G.aula); if (!G.aula.activo) mostrarPausa(false); inicio(); });
   document.getElementById('ritmoTranquilo').addEventListener('change', (ev) => { G.aula.tranquilo = ev.target.checked; guardar('horizonte.modoAula', G.aula); });

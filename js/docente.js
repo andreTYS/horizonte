@@ -100,7 +100,11 @@ function pintar() {
     <p class="chico suave">Al terminar una misión escriben qué cambiaron o qué protegieron. Es la evidencia de su explicación.</p>
     ${d.notas.length ? `<ul class="lista-notas">${d.notas.slice(0, 100).map((n) => `<li><p>«${esc(n.nota)}»</p><small>${esc(n.nombre || 'Sin nombre')} · ${esc(nombreMision(n.mision))} · ${esc(fecha(n.fecha))}</small></li>`).join('')}</ul>` : '<p class="suave">Aún no hay frases en la bitácora.</p>'}
   </section>`;
-  $('salida').innerHTML = `${tarjetaAula()}${aprendizaje}${predicciones}${bitacora}
+  const logros = `<section class="tarjeta"><h3>${I('estrella')} Logros de tus estudiantes</h3>
+    <p class="chico suave">Créditos estelares e insignias ganadas en el juego (se guardan cuando el estudiante escribe su nombre y el código de aula).</p>
+    ${d.logros?.length ? tabla(d.logros, [['nombre', 'Estudiante'], ['misiones', 'Misiones cumplidas'], ['insignias', 'Insignias', (x) => String(x.length)], ['creditos', 'Créditos'], ['actualizado', 'Última vez', (x) => new Date(x).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })]]) : '<p class="suave">Aún no hay progreso guardado.</p>'}
+  </section>`;
+  $('salida').innerHTML = `${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
     <section class="tarjeta"><h3>Resumen por misión</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión', nombreMision], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
     <section class="tarjeta"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión', nombreMision], ['motivo', 'Causa', (m) => MOTIVOS[m] || esc(m)], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
     <section class="tarjeta"><div class="entre"><h3>Partidas</h3><div class="fila-botones"><button class="secundario" id="csvPartidas">${I('descargar')} Partidas (CSV)</button><button class="secundario" id="csvNotas">${I('descargar')} Bitácoras (CSV)</button></div></div>

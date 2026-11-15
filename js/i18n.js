@@ -54,6 +54,7 @@ const EN = {
   '{n} astronautas · {d} días': '{n} astronauts · {d} days',
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
+  'Recuperamos tu progreso': 'We restored your progress',
   "Aquí ves si tu base alcanza: energía de día y de noche, agua, comida y radiación. Verde = alcanza, rojo = no alcanza.": "Here you see if your base has enough: energy by day and night, water, food and radiation. Green = enough, red = not enough.",
   "Lanza la misión tal como está. ¿Aguantará la noche?": "Launch the mission as it is. Will it last the night?",
   "Antes de lanzar, predice qué fallará primero. Si aciertas, ganas créditos estelares.": "Before launch, predict what will fail first. If you're right, you earn star credits.",
