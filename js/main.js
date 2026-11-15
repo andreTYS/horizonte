@@ -59,6 +59,7 @@ async function iniciarMundo() {
     if (!soportaWebGL()) throw new Error(`sin WebGL${soportaWebGL.motivo ? ': ' + soportaWebGL.motivo : ''}`);
     G.mundo = new Mundo(document.getElementById('mundo'), document.getElementById('etiquetas'));
     A.aplicar(G.mundo);
+    G.mundo.alTocar((tipo) => fichaModulo(tipo));
   } catch (err) {
     console.warn('Modo 2D:', err);
     G.motivo2D = err.message || String(err);
@@ -105,6 +106,7 @@ async function cargar() {
 
 // ───────────────────────── Landing (primera pantalla) ─────────────────────────
 function landing() {
+  document.getElementById('ficha-modulo')?.remove();
   callar();
   pintar({ config: { panel: 8, bateria: 6, reactor: true, reciclador: true, invernadero: true, blindaje: 1 }, luz: true, carga: 0.9, tripulacion: 3, tormenta: false, polvo: false, refugio: false, apagados: [], danados: 0, invernaderoOn: true, planeta: 'luna' }, 'portada');
   mostrarLanding({
@@ -325,6 +327,7 @@ function modal({ ancho = false, cerrable = false } = {}) {
 
 // ───────────────────────── Portada ─────────────────────────
 function inicio() {
+  document.getElementById('ficha-modulo')?.remove();
   document.body.dataset.pantalla = 'portada';
   ambienteEstado({});
   callar();
@@ -461,7 +464,7 @@ function construir() {
 
     <button class="nebula-mini" id="ayuda" aria-label="${t('Ver la pista de Nebula')}">${CARA_NEBULA}</button>
     ${G.briefingVisto[m.id] ? '' : `<div class="briefing">${nebula(esc(m.nebula.briefing) + '<br><br>' + esc(m.nebula.construir), 'pensando')}<button class="primario" id="entendido">${t('¡Entendido!')}</button></div>`}
-    ${excedido ? `<div class="toasts"><div class="toast peligro">${t('El cohete no puede despegar: quita masa.')}</div></div>` : ''}
+    ${excedido ? `<div class="toasts"><div class="toast peligro">${t('El cohete no puede despegar: quita masa.')}</div></div>` : `<p class="pista-tocar">${I('mano')} ${t('Toca un módulo en el mapa para ver qué hace')}</p>`}
 
     <footer class="dock">
       <div class="cartas">
@@ -594,6 +597,42 @@ function rebobinar(dia) {
   mision();
   efectoRebobinar(dia);
   A.anunciar(t('El Cronoscopio te llevó al día {n}. Cambia tus decisiones y avanza.', { n: dia + 1 }));
+}
+
+/** Ficha de un módulo al tocarlo en el mapa 3D: qué hace, cuánto cuesta y el dato de NASA que lo respalda. */
+function fichaModulo(tipo) {
+  const m = G.mision, j = G.juego.modulos, n = G.nasa.cifras;
+  const marte = m?.planeta === 'marte';
+  const e = document.body.dataset.pantalla === 'mision' ? actual() : null;
+  const F = {
+    habitat: [t('Hábitat'), t('Donde vive la tripulación. Fabrica oxígeno partiendo agua y gasta energía todo el día.'), `${G.juego.habitat.masa_t} t · ${G.juego.habitat.kwh_dia_base} kWh/${t('día')} + ${G.juego.habitat.kwh_dia_persona} ${t('por persona')}`, 'o2_persona_dia'],
+    panel: [t('Paneles solares'), t('Producen energía solo cuando hay luz del Sol.'), t('{t} t · {k} kWh/día con luz', { t: j.panel.masa_t, k: j.panel.kwh_dia_luz }), marte ? 'luz_marte' : 'ciclo_lunar_dias'],
+    bateria: [t('Baterías'), t('Guardan la energía que sobra de día para usarla de noche o en una tormenta.'), `${j.bateria.masa_t} t · ${j.bateria.capacidad_kwh} kWh`, 'ciclo_lunar_dias'],
+    reactor: [t('Reactor'), t('Da energía de día y de noche, sin depender del Sol.'), `${n.fsp_masa_t.valor} t · ${n.fsp_kw.valor} kW`, 'fsp_kw'],
+    reciclador: [t('Reciclador'), t('Limpia y recupera casi toda el agua que usa la tripulación.'), `${j.reciclador.masa_t} t · ${j.reciclador.kwh_dia} kWh/${t('día')}`, 'recuperacion_agua'],
+    invernadero: [t('Invernadero'), t('Produce parte de la comida, pero gasta agua y energía.'), `${j.invernadero.masa_t} t · ${j.invernadero.kwh_dia} kWh/${t('día')}`, 'veggie'],
+    extractor: [t('Extractor de hielo'), t('Saca agua del hielo escondido en el suelo.'), `${j.extractor.masa_t} t · +${j.extractor.agua_kg_dia} kg ${t('agua')}/${t('día')}`, 'lcross_hielo'],
+    moxie: ['MOXIE', t('Fabrica oxígeno a partir del CO₂ del aire de Marte, sin gastar agua.'), `${j.moxie.masa_t} t · ${j.moxie.o2_kg_dia} kg O₂/${t('día')}`, 'moxie_o2'],
+    lander: [t('Módulo de aterrizaje'), t('La nave que trajo a la tripulación y su carga.'), '', null],
+  }[tipo];
+  if (!F) return;
+  const [nombre, que, costo, dato] = F;
+  const estado = e && tipo === 'bateria' ? `<p class="estado-modulo">${I('bateria')} ${t('Carga ahora: {x} kWh', { x: fmt(e.energia) })}</p>`
+    : e && (e.apagados || G.registros[G.registros.length - 1]?.apagados || []).some((a) => a.startsWith(tipo)) ? `<p class="estado-modulo mal">${I('alerta')} ${t('Apagado por falta de energía')}</p>` : '';
+  document.getElementById('ficha-modulo')?.remove();
+  const f = document.createElement('aside');
+  f.id = 'ficha-modulo';
+  f.setAttribute('role', 'dialog');
+  f.setAttribute('aria-label', nombre);
+  const c = dato && n[dato];
+  f.innerHTML = `<div class="entre"><b>${nombre}</b><button class="boton-icono" aria-label="${t('Cerrar')}">${I('cerrar')}</button></div>
+    <p>${que}</p>${costo ? `<p class="costo-modulo">${I('masa')} ${esc(costo)} ${procedencia(null)}</p>` : ''}${estado}
+    ${c ? `<div class="dato-modulo">${procedencia(c)}<p>${esc(c.texto)}</p><a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${t('Fuente: {x}', { x: esc(c.fuente) })}</a></div>` : ''}`;
+  document.body.appendChild(f);
+  f.querySelector('button').addEventListener('click', () => f.remove());
+  A.anunciar(`${nombre}. ${que}`);
+  clearTimeout(G.cierraFicha);
+  G.cierraFicha = setTimeout(() => f.remove(), 15000);
 }
 
 /** Efecto visual del Cronoscopio: cinta que rebobina y el día grande en pantalla. */
@@ -738,6 +777,7 @@ function mision() {
 
 // ───────────────────────── Resultado ─────────────────────────
 function final() {
+  document.getElementById('ficha-modulo')?.remove();
   document.body.dataset.pantalla = 'resultado';
   const m = G.mision, e = actual();
   const res = S.resultado(e, m);

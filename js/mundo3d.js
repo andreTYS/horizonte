@@ -205,6 +205,13 @@ export class Mundo {
     this.redimensionar();
     this.animar = this.animar.bind(this);
     this.renderer.setAnimationLoop(this.animar);
+    // Tocar un módulo (sin arrastrar): ficha del módulo y un astronauta camina hasta él
+    let toque = null;
+    canvas.addEventListener('pointerdown', (ev) => { toque = { x: ev.clientX, y: ev.clientY, t: performance.now() }; });
+    canvas.addEventListener('pointerup', (ev) => {
+      if (!toque || Math.hypot(ev.clientX - toque.x, ev.clientY - toque.y) > 6 || performance.now() - toque.t > 450) return;
+      this.#tocar(ev);
+    });
     canvas.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); window.dispatchEvent(new CustomEvent('mundo-perdido')); });
     canvas.addEventListener('webglcontextrestored', () => location.reload());
     document.addEventListener('visibilitychange', () => this.renderer.setAnimationLoop(document.hidden ? null : this.animar));
@@ -466,6 +473,34 @@ export class Mundo {
     if (c.invernadero) agregar(NOMBRES.invernadero, new THREE.Vector3(POS.invernadero[0], 0, POS.invernadero[1]), 3.6, 'invernadero');
     if (c.extractor) agregar(NOMBRES.extractor, new THREE.Vector3(POS.extractor[0], 0, POS.extractor[1]), 5.5, 'extractor');
     if (c.moxie) agregar(NOMBRES.moxie, new THREE.Vector3(POS.moxie[0], 0, POS.moxie[1]), 3.4, 'moxie');
+  }
+
+  /** fn(tipo) se llama cuando el jugador toca un módulo en el diseño o en la misión. */
+  alTocar(fn) { this.alTocarModulo = fn; }
+
+  #tocar(ev) {
+    if (this.cinematica || !['diseno', 'mision'].includes(this.modo)) return;
+    const r = this.renderer.domElement.getBoundingClientRect();
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), this.camara);
+    const [hit] = ray.intersectObjects(this.modulos, true);
+    if (!hit) return;
+    let o = hit.object;
+    while (o && !o.userData.tipo) o = o.parent;
+    if (!o) return;
+    this.resaltar(o.userData.tipo);
+    this.#caminarHacia(o.position);
+    this.alTocarModulo?.(o.userData.tipo);
+  }
+
+  /** El astronauta más cercano camina hasta el módulo, se queda un rato y vuelve a su ronda. */
+  #caminarHacia(pos) {
+    const visibles = this.astronautas.filter((a) => a.visible);
+    if (!visibles.length) return;
+    const a = visibles.reduce((m, x) => (x.position.distanceTo(pos) < m.position.distanceTo(pos) ? x : m));
+    const haciaCentro = new THREE.Vector3(-pos.x, 0, -pos.z).normalize().multiplyScalar(2.4);
+    a.userData.destino = new THREE.Vector3(pos.x + haciaCentro.x, 0, pos.z + haciaCentro.z);
+    a.userData.espera = 0;
   }
 
   #astronautas(n) {
@@ -735,6 +770,21 @@ export class Mundo {
     for (const as of this.astronautas) {
       if (!as.visible) continue;
       const u = as.userData;
+      if (u.destino) { // camina hacia el módulo que tocó el jugador
+        const d = new THREE.Vector3(u.destino.x - as.position.x, 0, u.destino.z - as.position.z);
+        const dist = d.length();
+        if (dist > 0.15) {
+          d.normalize().multiplyScalar(Math.min(dist, dt * 3.2));
+          as.position.x += d.x; as.position.z += d.z;
+          as.position.y = SUELO_Y + Math.abs(Math.sin(t * 9)) * 0.14;
+          as.rotation.y = Math.atan2(d.x, d.z);
+        } else if ((u.espera += dt) > 6) { // vuelve a su ronda desde donde está
+          u.r = Math.max(4, Math.hypot(as.position.x, as.position.z));
+          u.f = Math.atan2(as.position.z, as.position.x) - t * u.v * u.dir;
+          u.destino = null;
+        }
+        continue;
+      }
       const ang = u.f + t * u.v * u.dir;
       as.position.set(Math.cos(ang) * u.r, SUELO_Y + Math.abs(Math.sin(t * 4 + u.f)) * 0.12, Math.sin(ang) * u.r);
       as.rotation.y = -ang + (u.dir > 0 ? Math.PI : 0);

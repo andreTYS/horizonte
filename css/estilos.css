@@ -811,3 +811,19 @@ body.destello-falla .modal { animation: temblor .45s ease-in-out; }
 .confeti i { position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 3px; animation: cae linear forwards; }
 .confeti i:nth-child(3n) { width: 8px; height: 8px; border-radius: 50%; }
 @keyframes cae { to { transform: translate(var(--deriva), 110vh) rotate(var(--giro)); } }
+
+/* Ficha de módulo (al tocarlo en el mapa 3D) */
+#ficha-modulo { position: fixed; z-index: 20; left: 50%; top: calc(max(10px, env(safe-area-inset-top)) + 74px); transform: translateX(-50%); width: min(400px, calc(100vw - 24px)); padding: 14px 16px; border-radius: 18px; background: var(--vidrio-fuerte); border: 2px solid var(--acento-2); box-shadow: 0 0 30px rgba(0, 217, 242, .3), var(--sombra); animation: ficha-entra .3s ease-out; }
+@keyframes ficha-entra { from { opacity: 0; transform: translate(-50%, -12px); } }
+#ficha-modulo .entre b { font: 800 1.15rem var(--titulo); color: var(--acento-2); }
+#ficha-modulo .boton-icono { width: 36px; height: 36px; min-height: 36px; }
+#ficha-modulo p { margin: 6px 0; font-size: .95rem; }
+.costo-modulo, .estado-modulo { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font: 700 .9rem var(--numeros); color: var(--suave); }
+.costo-modulo .i, .estado-modulo .i { width: 16px; height: 16px; }
+.estado-modulo { color: var(--ok); } .estado-modulo.mal { color: var(--peligro); }
+.dato-modulo { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(0, 217, 242, .08); border: 1px solid rgba(0, 217, 242, .3); }
+.dato-modulo p { font-size: .88rem !important; }
+.pista-tocar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(215px + var(--seguro-abajo)); margin: 0; padding: 6px 14px; border-radius: 999px; background: rgba(14, 6, 36, .7); font: 700 .85rem var(--boton); color: var(--suave); pointer-events: none; white-space: nowrap; }
+.pista-tocar .i { width: 14px; height: 14px; vertical-align: -2px; }
+@media (min-width: 760px) { .pista-tocar { bottom: 205px; } #ficha-modulo { left: auto; right: 16px; transform: none; top: 96px; } @keyframes ficha-entra { from { opacity: 0; transform: translateY(-12px); } } }
+@media (max-width: 759px) { #ficha-modulo { top: auto; bottom: calc(180px + var(--seguro-abajo)); } }
