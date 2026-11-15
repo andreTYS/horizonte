@@ -205,7 +205,7 @@ async function cargarIdioma() {
   G.mundo?.puntos?.({
     hielo: { nombre: t("Cráter en sombra"), texto: t("En el fondo de los cráteres polares que nunca reciben sol hay hielo de agua: lo confirmó la misión LCROSS en 2009."), textoMarte: t("En Marte también hay hielo de agua bajo el suelo: algunos cráteres recientes lo dejaron a la vista.") },
     rover: { nombre: t("Rover"), texto: t("Los rovers exploran lejos de la base y traen muestras sin que los astronautas se expongan."), textoMarte: t("Los rovers Curiosity y Perseverance llevan años explorando Marte.") },
-    antena: { nombre: t("Antena"), texto: t("Una señal de radio tarda cerca de 1,3 segundos en ir de la Luna a la Tierra."), textoMarte: t("Desde Marte, una señal tarda entre 3 y 22 minutos en llegar a la Tierra: no se puede pedir ayuda al instante.") },
+    antena: { nombre: t("Antena"), texto: t("Una señal de radio tarda cerca de 1,3 segundos en ir de la Luna a la Tierra."), textoMarte: t("Desde Marte, una señal tarda entre unos 4 y 24 minutos en llegar a la Tierra: no se puede pedir ayuda al instante.") },
     cima: { nombre: t("Cima iluminada"), texto: t("Algunas cimas cerca del polo sur de la Luna reciben luz del Sol la mayor parte del año: buen lugar para paneles."), textoMarte: t("El cielo de Marte de día es color caramelo por el polvo fino que flota en el aire.") },
   }, {
     volver: t("Volver a la base"),
@@ -255,10 +255,18 @@ function nebula(texto, animo = 'normal', extra = '') {
   return `<div class="nebula ${extra}"><div class="cara ${animo}" aria-hidden="true">${CARA_NEBULA}</div><div class="globo"><span class="quien">Nebula · ${t('gato piloto')}</span>${texto}</div></div>`;
 }
 
+/** Procedencia de cada número (como hacen los mejores rivales): dato de NASA, caso histórico con fecha, por verificar o valor del juego. */
+function procedencia(c) {
+  if (!c) return `<span class="etq juego" title="${t('Número de equilibrio del juego, no es un dato de NASA')}">${I('ajustes')} ${t('Valor del juego')}</span>`;
+  if (!c.verificado) return `<span class="etq pendiente">${I('alerta')} ${t('Por verificar')}</span>`;
+  if (c.tipo === 'historico') return `<span class="etq historico">${I('historia')} ${t('Caso histórico · {f}', { f: esc(c.fecha) })}</span>`;
+  return `<span class="etq">${I('check')} ${t('Dato de NASA')}</span>`;
+}
+
 function cifraNasa(clave) {
   const c = G.nasa.cifras[clave];
   if (!c) return '';
-  return `<div class="cifra-nasa">${personaje('llama-astronauta', 'llama-ficha')}<div class="etiqueta">${t('FICHA DE CIENCIA · DATOS DE NASA')}</div><p>${esc(c.texto)}</p>
+  return `<div class="cifra-nasa">${personaje('llama-astronauta', 'llama-ficha')}<div class="etiqueta">${t('FICHA DE CIENCIA · DATOS DE NASA')}</div>${procedencia(c)}<p>${esc(c.texto)}</p>
     <a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${t('Fuente: {x}', { x: esc(c.fuente) })}</a></div>`;
 }
 
@@ -266,7 +274,7 @@ function cifraNasa(clave) {
 function modal({ ancho = false, cerrable = false } = {}) {
   $app.innerHTML = `<div class="velo"></div><section class="modal ${ancho ? 'ancho' : ''}" role="dialog" aria-modal="true">
     ${cerrable ? `<button class="cerrar" aria-label="${t('Cerrar')}">${I('cerrar')}</button>` : ''}<div class="contenido"></div></section>`;
-  if (cerrable) $app.querySelector('.cerrar').addEventListener('click', inicio);
+  if (cerrable) $app.querySelector('.cerrar').addEventListener('click', () => { const volver = G.volverDeFuentes || inicio; G.volverDeFuentes = null; volver(); });
   const c = $app.querySelector('.contenido');
   c.scrollTop = 0;
   return c;
@@ -392,6 +400,7 @@ function construir() {
     <header class="barra-superior">
       <button id="volver" class="boton-icono" aria-label="${t('Volver a misiones')}">${I('volver')}</button>
       <div class="titulo-barra"><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small><b>${esc(m.titulo)}</b></div>
+      <button class="boton-icono" id="deDonde" aria-label="${t('¿De dónde salen estos números?')}" title="${t('¿De dónde salen estos números?')}">${I('datos')}</button>
       <div class="masa ${excedido ? 'peligro' : pct > 85 ? 'alerta' : ''}" title="${t('Masa que lleva el cohete')}">
         <div class="entre"><span>${I('cohete')} ${t('Masa')}</span><b>${fmt(masa, 2)} / ${m.presupuesto_t} t</b></div>
         <div class="barra"><span style="width:${pct}%"></span></div>
@@ -435,6 +444,7 @@ function construir() {
   dock.addEventListener('scroll', () => { G.scrollDock = dock.scrollLeft; }, { passive: true });
 
   document.getElementById('volver').addEventListener('click', () => { G.scrollDock = 0; inicio(); });
+  document.getElementById('deDonde').addEventListener('click', () => { fuentes(); G.volverDeFuentes = construir; });
   document.getElementById('entendido')?.addEventListener('click', () => { G.briefingVisto[m.id] = true; construir(); });
   document.getElementById('ayuda').addEventListener('click', () => { G.briefingVisto[m.id] = false; construir(); });
   const tipoDe = (k) => (['o2', 'agua', 'comida'].includes(k) ? 'habitat' : k);
@@ -851,13 +861,27 @@ function fuentes() {
   document.body.dataset.pantalla = 'modal';
   const filas = Object.values(G.nasa.cifras).map((c) => `<tr><td>${esc(c.texto)}<br>
     <a class="chico" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.fuente)}</a></td>
-    <td><span class="etq ${c.verificado ? '' : 'pendiente'}">${c.verificado ? t('verificado') : t('por verificar')}</span></td></tr>`).join('');
+    <td>${procedencia(c)}</td></tr>`).join('');
+  const j = G.juego.modulos;
+  const valoresJuego = [
+    [t('Panel solar'), t('{t} t · {k} kWh/día con luz', { t: j.panel.masa_t, k: j.panel.kwh_dia_luz })],
+    [t('Batería'), `${j.bateria.masa_t} t · ${j.bateria.capacidad_kwh} kWh`],
+    [t('Reciclador'), `${j.reciclador.masa_t} t · ${j.reciclador.kwh_dia} kWh/día`],
+    [t('Invernadero'), `${j.invernadero.masa_t} t · ${j.invernadero.kwh_dia} kWh/día`],
+    [t('Hábitat'), `${G.juego.habitat.masa_t} t · ${G.juego.habitat.kwh_dia_base} kWh/día + ${G.juego.habitat.kwh_dia_persona} kWh/día ${t('por persona')}`],
+  ].map(([n, v]) => `<tr><td><b>${n}</b> · ${esc(v)}</td><td>${procedencia(null)}</td></tr>`).join('');
   const c = modal({ ancho: true, cerrable: true });
   c.innerHTML = `
     <p class="lema">${t('Fuentes')}</p>
     <h2>${I('datos')} ${t('Datos NASA usados')}</h2>
     <p class="suave">${t('Cada número de la simulación tiene una fuente. Los valores de equilibrio del juego (masa de los paneles, energía del invernadero…) están aparte en <code>data/juego.json</code> y no se presentan como datos NASA.')}</p>
+    <div class="leyenda-procedencia">${procedencia({ verificado: true })}<span>${t('cifra de una fuente de NASA')}</span>
+      ${procedencia({ verificado: true, tipo: 'historico', fecha: 'AAAA' })}<span>${t('un hecho real con su fecha (archivo, no “en vivo”)')}</span>
+      ${procedencia(null)}<span>${t('número inventado para equilibrar el juego')}</span></div>
     <table class="tabla-fuentes"><tbody>${filas}</tbody></table>
+    <h3 style="margin-top:18px">${I('ajustes')} ${t('Valores del juego')}</h3>
+    <p class="suave chico">${t('Estos números hacen que el juego sea jugable en pocos minutos. No son datos de NASA y no se presentan como tales.')}</p>
+    <table class="tabla-fuentes"><tbody>${valoresJuego}</tbody></table>
     <h3 style="margin-top:18px">${t('Créditos')}</h3>
     <ul class="creditos chico">
       <li>${t('Efectos de sonido')}: “Oculus Audio Pack 01” — Oculus VR, LLC (Meta), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</li>

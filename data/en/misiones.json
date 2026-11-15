@@ -89,13 +89,13 @@
     "lugar": "Gale crater · Mars",
     "resumen": "Based on the real event of May 20, 2024, which the Curiosity rover measured on Mars. A solar alert arrives by radio, but Earth is slow to answer: this time, you make the plan.",
     "nebula": {
-      "briefing": "From Mars, a signal takes between 3 and 22 minutes to arrive from Earth. If a solar alert arrives, you can't wait for an answer: you decide when to go into the shelter.",
+      "briefing": "From Mars, a signal takes between about 4 and 24 minutes to arrive from Earth. If a solar alert arrives, you can't wait for an answer: you decide when to go into the shelter.",
       "construir": "Shielding protects every day, but it is heavy. The shelter protects a lot, but no science is done while inside.",
       "exito": "You protected your crew! This is how the astronauts who reach Mars will prepare."
     },
     "eventos": [
       "Message from Earth, received 12 minutes late: DONKI saw a big flare heading to Mars (May 20, 2024). The particles arrive tomorrow.",
-      "The solar particles arrive! The Curiosity rover measured the highest dose since it landed on Mars.",
+      "The solar particles arrive! The Curiosity rover measured the biggest radiation surge since it landed on Mars.",
       "The particle shower continues."
     ]
   }

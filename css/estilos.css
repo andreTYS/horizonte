@@ -773,3 +773,11 @@ html.alto-contraste .habilidad .txt, html.alto-contraste .habilidades > small { 
 html.alto-contraste .linea-tiempo .futuro { opacity: .75; }
 html.alto-contraste .linea-tiempo button { border: 2px solid #fff; color: #fff; }
 html.alto-contraste #puntos .pin-nombre { background: #0b0420; border: 1px solid #fff; }
+/* Procedencia de los datos */
+.etq { display: inline-flex; align-items: center; gap: 4px; font: 700 .74rem var(--boton); }
+.etq .i { width: 12px; height: 12px; }
+.etq.historico { background: rgba(0, 217, 242, .14); color: var(--acento-2); }
+.etq.juego { background: rgba(203, 190, 234, .14); color: var(--suave); }
+.cifra-nasa .etq { margin: 2px 0 6px; }
+.leyenda-procedencia { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; margin: 10px 0 14px; font-size: .88rem; color: var(--suave); }
+.leyenda-procedencia .etq { justify-self: start; }

@@ -2,6 +2,8 @@
 
 > Entrena para dirigir una base en la Luna y Marte.
 
+**English:** [README.en.md](README.en.md) · [NASA data](docs/NASA-DATA.md) · [Use of AI](docs/USE-OF-AI.md)
+
 Juego educativo del equipo **Stellar Experience** (Moquegua, Perú) para el reto
 **Build a Junior Astronaut Mission Trainer** del NASA Space Apps Challenge 2026.
 

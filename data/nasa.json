@@ -96,7 +96,9 @@
       "texto": "Entre el 9 y el 13 de mayo de 2024 la NASA registró 14 eventos de partículas solares y una tormenta geomagnética Kp 9, la más fuerte en 20 años. En la Luna no hay atmósfera ni campo magnético que proteja: la tripulación debe ir al refugio.",
       "fuente": "NASA DONKI – eventos SEP y GST de mayo 2024 (descargados con la API de api.nasa.gov)",
       "url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/",
-      "verificado": true
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2024-05-10"
     },
     "gravedad_luna": {
       "valor": 1.62,
@@ -120,7 +122,9 @@
       "texto": "En 2009 la misión LCROSS de la NASA impactó el cráter Cabeus, en el polo sur lunar, y midió que su suelo tiene alrededor de 5,6 % de hielo de agua.",
       "fuente": "Colaprete et al. 2010, Science – Detection of Water in the LCROSS Ejecta Plume",
       "url": "https://science.nasa.gov/mission/lcross/",
-      "verificado": true
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2009-10-09"
     },
     "moxie_o2": {
       "valor": 12,
@@ -128,7 +132,9 @@
       "texto": "MOXIE, a bordo del rover Perseverance, fabricó oxígeno a partir del CO₂ de Marte: hasta 12 g por hora y 122 g en total. Una planta para astronautas tendría que ser cientos de veces más grande.",
       "fuente": "NASA – NASA's Oxygen-Generating Experiment MOXIE Completes Mars Mission",
       "url": "https://www.nasa.gov/solar-system/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/",
-      "verificado": true
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2021–2023"
     },
     "polvo_marte_2018": {
       "valor": "2018",
@@ -136,7 +142,9 @@
       "texto": "En 2018 una tormenta de polvo cubrió todo Marte durante semanas y tapó tanto el Sol que el rover Opportunity, que funcionaba con paneles solares, se quedó sin energía para siempre.",
       "fuente": "NASA – Opportunity rover mission summary",
       "url": "https://science.nasa.gov/mission/mer-opportunity/",
-      "verificado": true
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2018-06"
     },
     "luz_marte": {
       "valor": 0.43,
@@ -147,20 +155,22 @@
       "verificado": true
     },
     "tormenta_marte_mayo_2024": {
-      "valor": 8.1,
-      "unidad": "mGy",
-      "texto": "El 20 de mayo de 2024 una tormenta solar llegó a Marte. El instrumento RAD del rover Curiosity midió 8,1 miligrays: la dosis más alta desde que llegó a Marte, como unas 30 radiografías de tórax.",
-      "fuente": "NASA · Curiosity RAD (mayo 2024)",
-      "url": "https://www.nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasa-watches-mars-light-up-during-epic-solar-storm/",
-      "verificado": false
+      "valor": 30,
+      "unidad": "radiografías de tórax",
+      "texto": "En mayo de 2024 una tormenta solar llegó a Marte. El instrumento RAD del rover Curiosity midió la mayor subida de radiación desde que llegó en 2012: para un astronauta a su lado, habría sido como recibir unas 30 radiografías de tórax.",
+      "fuente": "NASA JPL – NASA Watches Mars Light Up During Epic Solar Storm (2024)",
+      "url": "https://www.jpl.nasa.gov/news/nasa-watches-mars-light-up-during-epic-solar-storm/",
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2024-05-20"
     },
     "retraso_tierra_marte": {
-      "valor": "3–22",
+      "valor": "4–24",
       "unidad": "min",
-      "texto": "Una señal de radio tarda entre unos 3 y 22 minutos en viajar entre la Tierra y Marte, según dónde estén los dos planetas en su órbita.",
-      "fuente": "NASA · Comunicaciones con Marte",
-      "url": "https://science.nasa.gov/mars/",
-      "verificado": false
+      "texto": "Una señal de radio tarda unos 4 minutos entre la Tierra y Marte cuando están más cerca, y unos 24 minutos cuando están más lejos.",
+      "fuente": "NASA – Space Communications: 7 Things You Need to Know",
+      "url": "https://www.nasa.gov/missions/tech-demonstration/space-communications-7-things-you-need-to-know/",
+      "verificado": true
     }
   }
 }

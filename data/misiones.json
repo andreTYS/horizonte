@@ -192,7 +192,7 @@
         "dia": 7,
         "tipo": "tormenta_solar",
         "fecha_real": "2024-05-20",
-        "texto": "¡Llegan las partículas solares! El rover Curiosity midió la dosis más alta desde que llegó a Marte.",
+        "texto": "¡Llegan las partículas solares! El rover Curiosity midió la mayor subida de radiación desde que llegó a Marte.",
         "dosis_msv": 9,
         "dato": "tormenta_marte_mayo_2024"
       },
@@ -219,7 +219,7 @@
       "comida": 125
     },
     "nebula": {
-      "briefing": "En Marte una señal tarda entre 3 y 22 minutos en llegar de la Tierra. Si llega una alerta solar, no podrás esperar la respuesta: tú decides cuándo entrar al refugio.",
+      "briefing": "En Marte una señal tarda entre unos 4 y 24 minutos en llegar de la Tierra. Si llega una alerta solar, no podrás esperar la respuesta: tú decides cuándo entrar al refugio.",
       "construir": "El blindaje protege todos los días, pero pesa. El refugio protege mucho, pero mientras estén dentro no se hace ciencia.",
       "exito": "¡Protegiste a tu tripulación! Así se prepararán los astronautas que lleguen a Marte."
     }
