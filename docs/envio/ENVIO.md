@@ -34,16 +34,16 @@ De las 10 categorías, las nuestras: **Local Impact**, **Most Inspirational**, *
 
 **NASA data and science sources**
 - NASA Life Support Baseline Values and Assumptions Document (BVAD), NASA/TP-2015-218570/REV2: https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document
-- NASA BVAD, NASA/TP-2015-218570/REV1, tabla 4-20 (base planetaria): https://ntrs.nasa.gov/citations/20180001338
-- NASA Life Support Baseline Values and Assumptions Document (BVAD), NASA/TP-2015-218570/REV1, tabla 3-33: https://ntrs.nasa.gov/citations/20180001338
+- NASA BVAD, NASA/TP-2015-218570/REV1, Table 4-20 (planetary base): https://ntrs.nasa.gov/citations/20180001338
+- NASA Life Support Baseline Values and Assumptions Document (BVAD), NASA/TP-2015-218570/REV1, Table 3-33: https://ntrs.nasa.gov/citations/20180001338
 - NASA – NASA Achieves Water Recovery Milestone on International Space Station (2023): https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/
-- Estequiometría de la electrólisis; el Oxygen Generation Assembly de la ISS usa este proceso: https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/
+- Electrolysis stoichiometry; the ISS Oxygen Generation Assembly uses this process: https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/
 - NASA Glenn – Fission Surface Power Project: https://www.nasa.gov/centers-and-facilities/glenn/nasas-fission-surface-power-project-energizes-lunar-exploration/
 - NASA Science – Moon Facts: https://science.nasa.gov/moon/facts/
-- Zhang et al. 2020, Science Advances 6(39) – First measurements of the radiation dose on the lunar surface (Chang'e 4, instrumento LND): https://doi.org/10.1126/sciadv.aaz1334
+- Zhang et al. 2020, Science Advances 6(39) – First measurements of the radiation dose on the lunar surface (Chang'e 4, LND instrument): https://doi.org/10.1126/sciadv.aaz1334
 - Hassler et al. 2014, Science – Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover: https://www.science.org/doi/10.1126/science.1244797
 - NASA Human Research Program – Space Radiation (NASA-STD-3001): https://www.nasa.gov/hrp/radiation/
-- NASA DONKI – eventos SEP y GST de mayo 2024 (descargados con la API de api.nasa.gov): https://kauai.ccmc.gsfc.nasa.gov/DONKI/
+- NASA DONKI – SEP and GST events of May 2024 (downloaded with the api.nasa.gov API): https://kauai.ccmc.gsfc.nasa.gov/DONKI/
 - NASA NSSDC – Moon Fact Sheet: https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
 - NASA Science – Veggie: https://science.nasa.gov/mission/veggie/
 - Colaprete et al. 2010, Science – Detection of Water in the LCROSS Ejecta Plume: https://science.nasa.gov/mission/lcross/
