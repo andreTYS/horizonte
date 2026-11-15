@@ -227,7 +227,7 @@ export function escena(o) {
   }
   const extra = c.panel > SLOTS.panel.length ? etiqueta(1.5, 3.6, 4, `+${c.panel - SLOTS.panel.length} paneles`) : '';
 
-  return `<svg class="escena ${o.luz ? 'dia' : 'noche'}" viewBox="44 22 552 352" role="img" aria-label="Vista de la base lunar${o.luz ? ' con luz solar' : ' durante la noche lunar'}">
+  return `<svg class="escena ${o.luz ? 'dia' : 'noche'}" viewBox="44 22 552 352" role="img" aria-label="${o.planeta === 'marte' ? `Vista de la base en Marte${o.luz ? ' con luz solar' : ' de noche'}` : `Vista de la base lunar${o.luz ? ' con luz solar' : ' durante la noche lunar'}`}">
   <defs>
     <linearGradient id="cielo-dia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05081a"/><stop offset="1" stop-color="#1b2450"/></linearGradient>
     <linearGradient id="cielo-noche" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#02030b"/><stop offset="1" stop-color="#0b1026"/></linearGradient>

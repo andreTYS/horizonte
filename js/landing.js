@@ -40,7 +40,7 @@ export function mostrarLanding({ app, mundo, misiones, nasa, alJugar, alHistoria
       <div class="landing-nav-acciones">
         <button class="boton-idioma" id="lIdioma" aria-label="${t('Idioma')}"><span class="${getIdioma() === 'es' ? 'activo' : ''}">ES</span><span class="${getIdioma() === 'en' ? 'activo' : ''}">EN</span></button>
         <button class="boton-icono" id="lAcc" aria-label="${t('Accesibilidad')}" aria-haspopup="dialog">${I('accesibilidad')}</button>
-        <a class="boton-enlace fantasma" href="docente.html">${I('aula')} <span>${t('Soy docente')}</span></a>
+        <a class="boton-enlace fantasma" href="docente.html" aria-label="${t('Panel docente')}" title="${t('Panel docente')}">${I('aula')} <span>${t('Soy docente')}</span></a>
       </div>
     </nav>
 

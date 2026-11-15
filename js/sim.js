@@ -177,6 +177,8 @@ export function analizarFalla(motivo, historial, estado, mision, nasa) {
   const c = estado.config;
   const primerApagado = (id) => historial.find((r) => r.apagados.some((a) => a.startsWith(id)));
   const primerNoche = historial.find((r) => !r.luz);
+  // Lo que dice la cadena depende del plan: si no había baterías, no «se vaciaron»: no existían.
+  const fraseBaterias = (dia) => (c.bateria > 0 ? `Día ${dia + 1}: las baterías se vaciaron` : `Día ${dia + 1}: no instalaste baterías, no había dónde guardar energía`);
 
   if (motivo === 'energia' || motivo === 'o2') {
     const apagado = motivo === 'energia' ? historial[historial.length - 1] : primerApagado('electrolizador');
@@ -197,18 +199,20 @@ export function analizarFalla(motivo, historial, estado, mision, nasa) {
     if (apagado && conPolvo && !c.reactor) {
       return {
         titulo: 'La tormenta de polvo tapó tus paneles',
-        cadena: [`Día ${conPolvo.dia + 1}: llegó la tormenta de polvo y los paneles recibieron solo un cuarto de la luz`, `Día ${apagado.dia + 1}: las baterías se vaciaron`, motivo === 'o2' ? 'Sin energía, no se fabricó oxígeno' : 'El soporte vital se apagó'],
+        cadena: [`Día ${conPolvo.dia + 1}: llegó la tormenta de polvo y los paneles recibieron solo un cuarto de la luz`, fraseBaterias(apagado.dia), motivo === 'o2' ? 'Sin energía, no se fabricó oxígeno' : 'El soporte vital se apagó'],
         dia: apagado.dia, datos: ['polvo_marte_2018', 'luz_marte', 'fsp_kw'],
-        consejo: 'En Marte el Sol es débil y el polvo puede taparlo por días. Lleva baterías para aguantar la tormenta… o un reactor, que no depende del Sol.',
+        consejo: c.bateria > 0 ? 'En Marte el Sol es débil y el polvo puede taparlo por días. Lleva más baterías para aguantar la tormenta… o un reactor, que no depende del Sol.' : 'No llevaste baterías. En Marte el polvo puede tapar el Sol por días: añade baterías… o un reactor, que no depende del Sol.',
+        arreglo: c.bateria > 0 ? 'Añade más baterías o el reactor' : 'Añade baterías o el reactor',
         redisenar: true,
       };
     }
     if (apagado && !apagado.luz && !c.reactor) {
       return {
         titulo: 'La noche lunar dejó tu base sin energía',
-        cadena: [`Día ${(primerNoche?.dia ?? apagado.dia) + 1}: se puso el Sol y los paneles dejaron de producir`, `Día ${apagado.dia + 1}: las baterías se vaciaron`, motivo === 'o2' ? 'Sin energía, el electrolizador dejó de fabricar oxígeno' : 'El soporte vital se apagó'],
+        cadena: [`Día ${(primerNoche?.dia ?? apagado.dia) + 1}: se puso el Sol y los paneles dejaron de producir`, fraseBaterias(apagado.dia), motivo === 'o2' ? 'Sin energía, el electrolizador dejó de fabricar oxígeno' : 'El soporte vital se apagó'],
         dia: apagado.dia, datos: ['ciclo_lunar_dias', 'fsp_kw', 'o2_persona_dia'],
-        consejo: 'La noche lunar dura casi 15 días. Necesitas muchas baterías… o un reactor que funcione día y noche.',
+        consejo: c.bateria > 0 ? 'La noche lunar dura casi 15 días y tus baterías no alcanzaron. Necesitas más baterías… o un reactor que funcione día y noche.' : 'No instalaste baterías: al ponerse el Sol no quedó energía guardada. Añade baterías… o un reactor que funcione día y noche.',
+        arreglo: c.bateria > 0 ? 'Añade más baterías o el reactor' : 'Añade baterías o el reactor',
         redisenar: true,
       };
     }

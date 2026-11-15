@@ -49,7 +49,7 @@ export const ATAJOS = () => [
 ];
 
 /** Panel de accesibilidad (capa encima de todo, no reemplaza la pantalla). */
-export function abrirPanel({ mundo, I, alCerrar }) {
+export function abrirPanel({ mundo, I, alCerrar, alVista2D }) {
   document.getElementById('panel-acc')?.remove();
   const previo = document.activeElement;
   const capa = document.createElement('div');
@@ -66,6 +66,7 @@ export function abrirPanel({ mundo, I, alCerrar }) {
     ${casilla('menosMovimiento', 'mano', t('Menos movimiento'), t('Sin animaciones ni cámara que gira sola.'))}
     ${casilla('vibracion', 'vibrar', t('Vibrar en las alarmas'), t('En el celular, cada alarma también vibra.'))}
     ${casilla('leerEstado', 'escuchar', t('Leer el estado cada día'), t('Nebula dice cómo está la base después de avanzar.'))}
+    ${mundo && alVista2D ? `<button class="secundario" id="vista2d">${I('capas')} ${t('Usar vista ligera (2D)')}</button><p class="chico suave">${t('Para equipos lentos. Tu misión sigue igual.')}</p>` : ''}
     <h3>${I('teclado')} ${t('Atajos de teclado en la misión')}</h3>
     <dl class="atajos">${ATAJOS().map(([k, d]) => `<div><dt><kbd>${k}</kbd></dt><dd>${d}</dd></div>`).join('')}</dl>
     <p class="chico suave">${t('Las alarmas siempre aparecen también como texto, y la voz de Nebula siempre tiene su globo escrito.')}</p>
@@ -83,6 +84,7 @@ export function abrirPanel({ mundo, I, alCerrar }) {
   document.addEventListener('keydown', teclas, true);
   capa.addEventListener('click', (ev) => { if (ev.target === capa) cerrar(); });
   capa.querySelector('#cerrarAcc').addEventListener('click', cerrar);
+  capa.querySelector('#vista2d')?.addEventListener('click', () => { cerrar(); alVista2D(); });
   capa.querySelectorAll('[data-pref]').forEach((c) => c.addEventListener('change', () => { pref[c.dataset.pref] = c.checked; guardarPref(mundo); }));
   capa.querySelector('#cerrarAcc').focus();
 }

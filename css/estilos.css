@@ -1188,3 +1188,24 @@ body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d 
 .recorrido-globo .fantasma { color: #5b54c4; }
 .recorrido-n { font: 700 .8rem var(--numeros); color: #6b7090; }
 .menos-movimiento .recorrido-foco, .menos-movimiento .recorrido-globo { transition: none; }
+
+.mas-datos summary { cursor: pointer; font-weight: 700; color: var(--acento-2); display: inline-flex; gap: 6px; align-items: center; min-height: 44px; }
+.mas-datos[open] summary { margin-bottom: 8px; }
+
+/* HUD del diseño: estado en texto además del color; en el celular solo 3 indicadores fijos */
+.widget .estado-txt { display: block; font-style: normal; font-size: .72rem; font-weight: 700; }
+.widget.bien .estado-txt { color: var(--ok); }
+.widget.mal .estado-txt { color: var(--peligro); }
+.ver-todos { display: none; }
+@media (max-width: 759px) {
+  .widgets-diseno { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; overflow: visible !important; }
+  .widgets-diseno .widget { min-width: 0; padding: 6px 8px; }
+  .widgets-diseno .widget b { font-size: .85rem; }
+  .widgets-diseno .widget small { font-size: .68rem; }
+  .widgets-diseno .widget.extra { display: none; }
+  .widgets-diseno.abierto .widget.extra { display: flex; }
+  .ver-todos { display: block; grid-column: 1 / -1; min-height: 40px; padding: 4px 10px; font-size: .85rem; }
+}
+
+#aviso-lento.en-espera, #nebula-flotante.en-espera { display: none !important; }
+#nebula-globo .volver-lugar { position: static; width: auto; margin-top: 6px; font-size: .8rem; color: #5b54c4; }

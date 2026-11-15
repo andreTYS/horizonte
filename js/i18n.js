@@ -34,7 +34,7 @@ export function tr(s) {
   return s;
 }
 export const trLista = (lista) => lista.map((x) => tr(x));
-export const trAnalisis = (a) => (idioma === 'en' ? { ...a, titulo: tr(a.titulo), cadena: a.cadena.map(tr), consejo: tr(a.consejo) } : a);
+export const trAnalisis = (a) => (idioma === 'en' ? { ...a, titulo: tr(a.titulo), cadena: a.cadena.map(tr), consejo: tr(a.consejo), arreglo: a.arreglo && tr(a.arreglo) } : a);
 
 const EN = {
   // Portada
@@ -55,6 +55,22 @@ const EN = {
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
   'Recuperamos tu progreso': 'We restored your progress',
+  'Usar vista ligera (2D)': 'Use light view (2D)',
+  'Para equipos lentos. Tu misión sigue igual.': 'For slow devices. Your mission continues as is.',
+  'Volver a su lugar': 'Back to her place',
+  'Nebula: pedir una pista (puedes arrastrarla o moverla con las flechas)': 'Nebula: ask for a hint (drag her or move her with the arrow keys)',
+  'En riesgo': 'At risk',
+  'Suficiente': 'Enough',
+  'Ver menos': 'Show less',
+  'Ver todos ({n})': 'Show all ({n})',
+  'Qué cambiar:': 'What to change:',
+  'Ver el dato NASA ({n})': 'See the NASA data ({n})',
+  'Rediseñar': 'Redesign',
+  'Revisar el día {n}': 'Review day {n}',
+  'Panel docente': 'Teacher panel',
+  'Vista ligera activada': 'Light view on',
+  'Tu misión sigue igual: mismo día, mismo diseño.': 'Your mission continues: same day, same design.',
+  'Para volver al 3D hay que recargar el juego. Tu misión en curso se reiniciará (tus créditos e insignias se guardan). ¿Continuar?': 'Going back to 3D reloads the game. Your current mission will restart (credits and badges are saved). Continue?',
   'Más opciones': 'More options',
   'Mi aula': 'My class',
   'Globo': 'Globe',
@@ -646,6 +662,12 @@ const EN = {
   'Lleva más agua o instala el reciclador: cada kilo de oxígeno cuesta 1,125 kg de agua. En Marte, MOXIE fabrica oxígeno con el aire, sin gastar agua.': 'Bring more water or install the recycler: every kilo of oxygen costs 1.125 kg of water. On Mars, MOXIE makes oxygen from the air without using water.',
   'En Marte el Sol es débil y el polvo puede taparlo por días. Lleva baterías para aguantar la tormenta… o un reactor, que no depende del Sol.': 'On Mars the Sun is weak and dust can block it for days. Bring batteries to ride out the storm… or a reactor, which does not depend on the Sun.',
   'La noche lunar dura casi 15 días. Necesitas muchas baterías… o un reactor que funcione día y noche.': 'The lunar night lasts almost 15 days. You need many batteries… or a reactor that works day and night.',
+  'La noche lunar dura casi 15 días y tus baterías no alcanzaron. Necesitas más baterías… o un reactor que funcione día y noche.': 'The lunar night lasts almost 15 days and your batteries were not enough. You need more batteries… or a reactor that works day and night.',
+  'No instalaste baterías: al ponerse el Sol no quedó energía guardada. Añade baterías… o un reactor que funcione día y noche.': 'You installed no batteries: when the Sun set there was no stored energy. Add batteries… or a reactor that works day and night.',
+  'En Marte el Sol es débil y el polvo puede taparlo por días. Lleva más baterías para aguantar la tormenta… o un reactor, que no depende del Sol.': 'On Mars the Sun is weak and dust can block it for days. Bring more batteries to ride out the storm… or a reactor, which does not depend on the Sun.',
+  'No llevaste baterías. En Marte el polvo puede tapar el Sol por días: añade baterías… o un reactor, que no depende del Sol.': 'You brought no batteries. On Mars dust can block the Sun for days: add batteries… or a reactor, which does not depend on the Sun.',
+  'Añade más baterías o el reactor': 'Add more batteries or the reactor',
+  'Añade baterías o el reactor': 'Add batteries or the reactor',
   'Añade paneles o baterías, o apaga el invernadero en los días críticos.': 'Add panels or batteries, or turn off the greenhouse on critical days.',
   'Lleva más oxígeno de reserva.': 'Bring more oxygen in reserve.',
   'La ISS recupera el 98 % de su agua. Con reciclador, una misión larga necesita muy poca agua de reserva.': 'The ISS recovers 98 % of its water. With a recycler, a long mission needs very little reserve water.',
@@ -660,6 +682,7 @@ const EN = {
 const PATRONES = [
   [/^Día (\d+): se puso el Sol y los paneles dejaron de producir$/, 'Day $1: the Sun set and the panels stopped producing'],
   [/^Día (\d+): las baterías se vaciaron$/, 'Day $1: the batteries ran empty'],
+  [/^Día (\d+): no instalaste baterías, no había dónde guardar energía$/, 'Day $1: you installed no batteries, so there was nowhere to store energy'],
   [/^Día (\d+): la energía no alcanzó$/, 'Day $1: there was not enough energy'],
   [/^Día (\d+): no quedaba agua suficiente$/, 'Day $1: there was not enough water left'],
   [/^Día (\d+): llegó la tormenta de polvo y los paneles recibieron solo un cuarto de la luz$/, 'Day $1: the dust storm arrived and the panels got only a quarter of the light'],

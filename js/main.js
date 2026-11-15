@@ -98,6 +98,7 @@ async function restaurarProgreso() {
 // ───────────────────────── Mundo (3D o, si no hay WebGL, SVG) ─────────────────────────
 let ultimoSVG = {};
 function pintar(o, vista) {
+  G.ultimoPintar = { o: { ...(G.ultimoPintar?.o || {}), ...o }, vista: vista || G.ultimoPintar?.vista };
   if (G.mundo) {
     G.mundo.actualizar(o);
     if (vista && vista !== G.mundo.modo) G.mundo.vista(vista);
@@ -127,6 +128,25 @@ async function iniciarMundo() {
   }
 }
 
+/** Cambia a la vista 2D ligera EN CALIENTE: la misión, el día, el diseño y la predicción siguen igual (no se recarga). */
+function pasarA2D() {
+  if (!G.mundo) return;
+  try { G.mundo.pausar?.(); } catch { /* sin 3D */ }
+  G.mundo = null;
+  G.motivo2D = 'ligero';
+  guardar('horizonte.vista', '2d'); // las próximas veces arranca en 2D
+  for (const id of ['mundo', 'etiquetas', 'puntos']) { const el = document.getElementById(id); if (el) el.hidden = true; }
+  document.getElementById('ficha-modulo')?.remove();
+  document.body.classList.add('modo-2d');
+  if (G.ultimoPintar) pintar(G.ultimoPintar.o, G.ultimoPintar.vista);
+  const aviso = document.createElement('div');
+  aviso.className = 'aviso-insignia';
+  aviso.setAttribute('role', 'status');
+  aviso.innerHTML = `<span class="medalla">${I('ok')}</span><span><b>${t('Vista ligera activada')}</b><small>${t('Tu misión sigue igual: mismo día, mismo diseño.')}</small></span>`;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 4200);
+}
+
 // Si el 3D no arranca (o la tarjeta gráfica lo pierde), se explica por qué y se ofrece reintentar.
 function avisoModo2D() {
   if (!document.body.classList.contains('modo-2d') || document.getElementById('aviso-2d')) return;
@@ -138,7 +158,10 @@ function avisoModo2D() {
   a.innerHTML = `<b>${t('Vista 2D')}</b> <span>${ligero ? t('Elegiste la vista ligera para que el juego vaya fluido en este equipo.') : bloqueado ? t('Chrome bloqueó el 3D en este sitio después de un fallo de la tarjeta gráfica. Cierra Chrome por completo, vuelve a abrirlo y recarga.') : sinWebGL ? t('Tu navegador no tiene el 3D activo. En Chrome: Configuración → Sistema → «Usar aceleración de gráficos», y recarga.') : t('El 3D no pudo iniciar en este equipo ({x}).', { x: esc(G.motivo2D || '?') })}</span>
     <button class="secundario" id="reintentar3d">${ligero ? t('Volver al 3D') : t('Reintentar 3D')}</button><button class="fantasma" id="cerrar2d" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
   document.body.appendChild(a);
-  a.querySelector('#reintentar3d').addEventListener('click', () => { guardar('horizonte.vista', ''); location.reload(); });
+  a.querySelector('#reintentar3d').addEventListener('click', () => {
+    if (['mision', 'resultado', 'viaje'].includes(document.body.dataset.pantalla) && !confirm(t('Para volver al 3D hay que recargar el juego. Tu misión en curso se reiniciará (tus créditos e insignias se guardan). ¿Continuar?'))) return;
+    guardar('horizonte.vista', ''); location.reload();
+  });
   a.querySelector('#cerrar2d').addEventListener('click', () => a.remove());
 }
 // Si el 3D va muy lento aun con la calidad al mínimo, se ofrece (una vez) la vista 2D ligera.
@@ -152,7 +175,7 @@ window.addEventListener('mundo-calidad', (ev) => {
   a.innerHTML = `<b>${t('Tu equipo va lento con el 3D')}</b> <span>${t('Bajamos los efectos. Si aún va lento, usa la vista 2D ligera: el juego es el mismo.')}</span>
     <button class="secundario" id="usar2d">${t('Usar vista 2D')}</button><button class="fantasma" id="seguir3d">${t('Seguir en 3D')}</button>`;
   document.body.appendChild(a);
-  a.querySelector('#usar2d').addEventListener('click', () => { guardar('horizonte.vista', '2d'); location.reload(); });
+  a.querySelector('#usar2d').addEventListener('click', () => { a.remove(); pasarA2D(); });
   a.querySelector('#seguir3d').addEventListener('click', () => a.remove());
   setTimeout(() => a.remove(), 12000);
 });
@@ -659,7 +682,7 @@ function cerrarVestidor() {
 document.addEventListener('keydown', (ev) => {
   if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.closest?.('input, textarea, select') || document.getElementById('panel-acc') || document.getElementById('pausa-aula')) return;
   const tecla = ev.key.toLowerCase();
-  if (tecla === '?') { ev.preventDefault(); A.abrirPanel({ mundo: G.mundo, I }); return; }
+  if (tecla === '?') { ev.preventDefault(); A.abrirPanel({ mundo: G.mundo, I, alVista2D: pasarA2D }); return; }
   if (tecla === 'escape') { if (G.bitacoraAbierta) { G.bitacoraAbierta = false; mision(); } return; }
   if (document.body.dataset.pantalla !== 'mision' || $app.querySelector('.modal')) return;
   const accion = {
@@ -775,7 +798,7 @@ function decirNebula() {
 }
 
 function enlazarSonido() {
-  document.getElementById('accesibilidad')?.addEventListener('click', () => A.abrirPanel({ mundo: G.mundo, I }));
+  document.getElementById('accesibilidad')?.addEventListener('click', () => A.abrirPanel({ mundo: G.mundo, I, alVista2D: pasarA2D }));
   document.getElementById('escuchar')?.addEventListener('click', escucharEstado);
   document.getElementById('voz')?.addEventListener('click', (ev) => {
     const on = alternarVoz();
@@ -1041,13 +1064,21 @@ function construir() {
       </div>
     </header>
 
-    <aside class="widgets-diseno" tabindex="0" aria-label="${t('Cómo va tu diseño')}">
-      <div class="widget ${estado(e.dia >= e.demanda)}"><span>${I('energia')}</span><div><b>+${fmt(e.dia)} / −${fmt(e.demanda)}</b><small>${t('kWh/día con luz')}</small></div></div>
-      ${m.luz_permanente ? '' : `<div class="widget ${estado(e.nochesAguanta >= 15)}"><span>${I('noche')}</span><div><b>${dias(e.nochesAguanta)} ${t('días')}</b><small>${t('aguantas de noche (~15)')}</small></div></div>`}
-      <div class="widget ${estado(e.diasAgua >= m.dias)}"><span>${I('agua')}</span><div><b>${dias(e.diasAgua)} ${t('días')}</b><small>${t('de agua')}</small></div></div>
-      <div class="widget ${estado(e.diasComida >= m.dias)}"><span>${I('comida')}</span><div><b>${dias(e.diasComida)} ${t('días')}</b><small>${t('de comida')}</small></div></div>
-      <div class="widget ${estado(e.dosis <= m.limite_dosis_msv)}"><span>${I('radiacion')}</span><div><b>${fmt(e.dosis, 1)} mSv</b><small>${t('límite {n}', { n: m.limite_dosis_msv })}</small></div></div>
-      ${G.reservas[m.id] ? `<div class="widget reserva"><span>${I('caja')}</span><div><b>+${fmt(G.reservas[m.id].o2, 1)} O₂ · +${fmt(G.reservas[m.id].agua)} ${t('agua')} · +${fmt(G.reservas[m.id].comida)} ${t('comida')}</b><small>${t('kg de reserva de la misión anterior (no pesan)')}</small></div></div>` : ''}
+    <aside class="widgets-diseno ${G.widgetsAbiertos ? 'abierto' : ''}" tabindex="0" aria-label="${t('Cómo va tu diseño')}">
+      ${(() => {
+        const w = [
+          ['energia', estado(e.dia >= e.demanda), `+${fmt(e.dia)} / −${fmt(e.demanda)}`, t('kWh/día con luz')],
+          m.luz_permanente ? null : ['noche', estado(e.nochesAguanta >= 15), `${dias(e.nochesAguanta)} ${t('días')}`, t('aguantas de noche (~15)')],
+          ['agua', estado(e.diasAgua >= m.dias), `${dias(e.diasAgua)} ${t('días')}`, t('de agua')],
+          ['comida', estado(e.diasComida >= m.dias), `${dias(e.diasComida)} ${t('días')}`, t('de comida')],
+          ['radiacion', estado(e.dosis <= m.limite_dosis_msv), `${fmt(e.dosis, 1)} mSv`, t('límite {n}', { n: m.limite_dosis_msv })],
+        ].filter(Boolean);
+        // lo que está en riesgo va primero; en el celular se ven fijos los 3 primeros
+        w.sort((a, b) => (a[1] === 'mal' ? 0 : 1) - (b[1] === 'mal' ? 0 : 1));
+        const html = w.map(([ic, est, val, desc], i) => `<div class="widget ${est} ${i >= 3 ? 'extra' : ''}"><span>${I(ic)}</span><div><b>${val}</b><small>${desc}</small><em class="estado-txt">${est === 'mal' ? `⚠ ${t('En riesgo')}` : `✓ ${t('Suficiente')}`}</em></div></div>`).join('');
+        return html + (w.length > 3 ? `<button class="ver-todos" id="verTodos" aria-expanded="${Boolean(G.widgetsAbiertos)}">${G.widgetsAbiertos ? t('Ver menos') : t('Ver todos ({n})', { n: w.length })}</button>` : '');
+      })()}
+      ${G.reservas[m.id] ? `<div class="widget reserva extra"><span>${I('caja')}</span><div><b>+${fmt(G.reservas[m.id].o2, 1)} O₂ · +${fmt(G.reservas[m.id].agua)} ${t('agua')} · +${fmt(G.reservas[m.id].comida)} ${t('comida')}</b><small>${t('kg de reserva de la misión anterior (no pesan)')}</small></div></div>` : ''}
     </aside>
 
     ${G.briefingVisto[m.id] ? '' : `<div class="briefing">${nebula(esc(m.nebula.briefing) + '<br><br>' + esc(m.nebula.construir), 'pensando')}<button class="primario" id="entendido">${t('¡Entendido!')}</button></div>`}
@@ -1087,6 +1118,7 @@ function construir() {
   $app.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.toggle; c[k] = !c[k]; construir(); if (c[k]) { resaltar(k); sfx.modulo(); } }));
   $app.querySelectorAll('[data-blindaje]').forEach((b) => b.addEventListener('click', () => { c.blindaje = +b.dataset.blindaje; construir(); resaltar('habitat'); }));
   document.getElementById('lanzar').addEventListener('click', lanzar);
+  document.getElementById('verTodos')?.addEventListener('click', () => { G.widgetsAbiertos = !G.widgetsAbiertos; construir(); });
   decirNebula();
   coach();
 }
@@ -1258,7 +1290,7 @@ function estadoEnPalabras() {
 // (recuerda dónde lo dejaste) y al tocarlo da la pista de la pantalla en la que estás.
 function nebulaFlotante() {
   let b = document.getElementById('nebula-flotante');
-  const visible = ['diseno', 'mision', 'resultado'].includes(document.body.dataset.pantalla) && !G.demo;
+  const visible = ['diseno', 'mision'].includes(document.body.dataset.pantalla) && !G.demo; // en el resultado Nebula ya habla dentro del diagnóstico
   if (!visible) { b?.setAttribute('hidden', ''); document.getElementById('nebula-globo')?.remove(); return; }
   if (!b) {
     b = document.createElement('button');
@@ -1271,8 +1303,16 @@ function nebulaFlotante() {
       b.style.left = `${Math.min(w - 70, Math.max(6, x * w))}px`;
       b.style.top = `${Math.min(h - 70, Math.max(6, y * h))}px`;
     };
-    colocar(pos?.x ?? 0.02, pos?.y ?? 0.3);
-    window.addEventListener('resize', () => { const p = leer('horizonte.nebulaPos', { x: 0.02, y: 0.3 }); colocar(p.x, p.y); });
+    colocar(pos?.x ?? 0.02, pos?.y ?? 0.56);
+    window.addEventListener('resize', () => { const p = leer('horizonte.nebulaPos', { x: 0.02, y: 0.56 }); colocar(p.x, p.y); });
+    b.addEventListener('keydown', (e) => { // alternativa al arrastre: flechas del teclado
+      const d = { ArrowLeft: [-0.03, 0], ArrowRight: [0.03, 0], ArrowUp: [0, -0.04], ArrowDown: [0, 0.04] }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      const p = { x: b.offsetLeft / innerWidth + d[0], y: b.offsetTop / innerHeight + d[1] };
+      colocar(p.x, p.y); guardar('horizonte.nebulaPos', { x: b.offsetLeft / innerWidth, y: b.offsetTop / innerHeight });
+    });
+    b.reubicar = () => { guardar('horizonte.nebulaPos', null); colocar(0.02, 0.56); };
     let arrastre = null;
     b.addEventListener('pointerdown', (e) => { arrastre = { x: e.clientX, y: e.clientY, l: b.offsetLeft, t: b.offsetTop, movio: false }; b.setPointerCapture(e.pointerId); });
     b.addEventListener('pointermove', (e) => {
@@ -1294,7 +1334,7 @@ function nebulaFlotante() {
     b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pistaFlotante(); } });
   }
   b.removeAttribute('hidden');
-  b.setAttribute('aria-label', t('Nebula: pedir una pista (puedes arrastrarla)'));
+  b.setAttribute('aria-label', t('Nebula: pedir una pista (puedes arrastrarla o moverla con las flechas)'));
 }
 
 function pistaFlotante() {
@@ -1313,18 +1353,29 @@ function pistaFlotante() {
   const g = document.createElement('div');
   g.id = 'nebula-globo';
   g.setAttribute('role', 'status');
-  g.innerHTML = `<b>Nebula</b><p>${esc(texto)}</p><button class="fantasma chico" aria-label="${t('Cerrar')}">${I('cerrar')}</button>`;
+  g.innerHTML = `<b>Nebula</b><p>${esc(texto)}</p><button class="fantasma chico" aria-label="${t('Cerrar')}">${I('cerrar')}</button><button class="fantasma chico volver-lugar">↺ ${t('Volver a su lugar')}</button>`;
   document.body.appendChild(g);
   const r = b.getBoundingClientRect();
   const derecha = r.left < window.innerWidth / 2;
   g.style.top = `${Math.min(window.innerHeight - 160, Math.max(10, r.top))}px`;
   g.style[derecha ? 'left' : 'right'] = `${derecha ? r.right + 10 : window.innerWidth - r.left + 10}px`;
   g.querySelector('button').addEventListener('click', () => g.remove());
+  g.querySelector('.volver-lugar').addEventListener('click', () => { b.reubicar?.(); g.remove(); });
   leerEnVoz(texto);
   b.classList.add('vista');
 }
 
 new MutationObserver(() => nebulaFlotante()).observe(document.body, { attributes: true, attributeFilter: ['data-pantalla'] });
+
+// Una sola capa pide atención a la vez: si habla la guía del Episodio 0 o el recorrido de la llama,
+// el aviso de rendimiento espera, y Nebula (y su globo) se esconden hasta que terminen.
+function ordenarCapas() {
+  const guia = document.getElementById('coach') || document.getElementById('recorrido');
+  document.getElementById('aviso-lento')?.classList.toggle('en-espera', Boolean(guia || document.querySelector('.modal')));
+  document.getElementById('nebula-flotante')?.classList.toggle('en-espera', Boolean(guia));
+  if (guia) document.getElementById('nebula-globo')?.remove();
+}
+new MutationObserver(ordenarCapas).observe(document.body, { childList: true });
 
 function escucharEstado() {
   if (document.body.dataset.pantalla !== 'mision') return;
@@ -1645,15 +1696,15 @@ function final() {
   c.innerHTML = `
     <div class="sello">${t('FALLA · DÍA {n}', { n: e.dia })}</div>
     <h2>${I('alerta', 'rojo')} ${esc(a.titulo)}</h2>
-    ${resultadoPrediccion(res.motivo)}
-    ${bloquePremio(premio)}
     <p class="suave">${t('Así ocurrió:')}</p>
     <ol class="cadena">${a.cadena.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
-    ${a.datos.map(cifraNasa).join('')}
-    ${nebula(esc(a.consejo), 'pensando')}
+    ${nebula(`<b>${t('Qué cambiar:')}</b> ${esc(a.consejo)}`, 'pensando')}
+    ${resultadoPrediccion(res.motivo)}
+    <details class="mas-datos"><summary>${I('datos')} ${t('Ver el dato NASA ({n})', { n: a.datos.length })}</summary>${a.datos.map(cifraNasa).join('')}</details>
+    ${bloquePremio(premio)}
     <div class="fila" id="accionesFinal">
-      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('cronoscopio')} ${t('Rebobinar al día {n}', { n: diaRebobinar + 1 })}</button>
-      <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} ${t('Rediseñar la base')}</button>
+      <button class="${a.redisenar ? 'primario' : 'secundario'}" id="redisenar">${I('averia')} ${a.arreglo ? `${t('Rediseñar')}: ${esc(a.arreglo.charAt(0).toLowerCase() + a.arreglo.slice(1))}` : t('Rediseñar la base')}</button>
+      <button class="${a.redisenar ? 'secundario' : 'primario'}" id="rebobinar">${I('cronoscopio')} ${a.redisenar ? t('Revisar el día {n}', { n: diaRebobinar + 1 }) : t('Rebobinar al día {n}', { n: diaRebobinar + 1 })}</button>
     </div>`;
   accionesAlHud();
   document.getElementById('rebobinar').addEventListener('click', () => rebobinar(diaRebobinar));
