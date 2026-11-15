@@ -2,7 +2,7 @@
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=8080 DB_PATH=/app/datos/horizonte.db NODE_NO_WARNINGS=1
-COPY index.html docente.html manifest.webmanifest sw.js package.json ./
+COPY index.html docente.html manifest.webmanifest sw.js precache.json package.json ./
 COPY css ./css
 COPY js ./js
 COPY data ./data

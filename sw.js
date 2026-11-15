@@ -1,5 +1,5 @@
 // Service worker: permite jugar sin conexión (en el aula no siempre hay internet).
-const CACHE = 'horizonte-v16';
+const CACHE = 'horizonte-v17';
 const ARCHIVOS = [
   './', 'index.html', 'css/estilos.css', 'js/main.js', 'js/sim.js', 'js/escena.js', 'js/api.js', 'js/evaluacion.js', 'js/mundo3d.js', 'js/terreno3d.js', 'js/modelos3d.js', 'js/plataforma3d.js', 'js/i18n.js', 'js/sonido.js', 'js/voz.js', 'js/landing.js', 'js/accesibilidad.js', 'js/docente.js', 'vendor/qrcode/qrcode.mjs',
   'data/en/misiones.json', 'data/en/nasa.json', 'data/en/evaluacion.json',
@@ -15,7 +15,16 @@ const ARCHIVOS = [
   'manifest.webmanifest', 'icons/icon.svg', 'icons/sprite.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(ARCHIVOS); // lo esencial: si falla, no se instala
+    // Lo pesado (modelos 3D, voces, sonidos, imágenes): se guarda todo lo que se pueda, sin bloquear la instalación
+    try {
+      const lista = await (await fetch('precache.json', { cache: 'no-store' })).json();
+      for (let i = 0; i < lista.length; i += 8) await Promise.all(lista.slice(i, i + 8).map((f) => c.add(f).catch(() => {})));
+    } catch { /* sin lista: se guardará al usarlos */ }
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
@@ -26,6 +35,7 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((r) => { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); return r; })
-      .catch(() => caches.match(e.request)),
+      // Sin red: el enlace del docente (?aula=…&modo=aula) y ?demo=1 también deben abrir el juego
+      .catch(() => caches.match(e.request, { ignoreSearch: e.request.mode === 'navigate' })),
   );
 });

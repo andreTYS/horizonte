@@ -18,7 +18,7 @@ const PUERTO = Number(process.env.PORT || 8080);
 const DB_PATH = process.env.DB_PATH || path.join(RAIZ, 'datos', 'horizonte.db');
 const NASA_API_KEY = process.env.NASA_API_KEY || '';
 const DOCENTE_TOKEN = process.env.DOCENTE_TOKEN || '';
-const PUBLICO = ['index.html', 'manifest.webmanifest', 'sw.js', 'css/', 'js/', 'data/', 'icons/', 'vendor/', 'assets/', 'docente.html'];
+const PUBLICO = ['index.html', 'manifest.webmanifest', 'sw.js', 'precache.json', 'css/', 'js/', 'data/', 'icons/', 'vendor/', 'assets/', 'docente.html'];
 
 // ── Base de datos ──
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });

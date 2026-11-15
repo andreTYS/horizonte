@@ -30,3 +30,10 @@ test('los efectos de sonido existen', () => {
     assert.ok(fs.existsSync(new URL(`../assets/sonidos/${n}.mp3`, import.meta.url)), n);
   }
 });
+
+test('precache.json está al día: el juego funciona sin internet con todos los recursos', async () => {
+  const { listaPrecache } = await import('../tools/precache.mjs');
+  const guardada = JSON.parse(fs.readFileSync(new URL('../precache.json', import.meta.url)));
+  assert.deepEqual(guardada, listaPrecache(), 'Ejecuta: node tools/precache.mjs');
+  for (const f of guardada) assert.ok(fs.existsSync(new URL(`../${f}`, import.meta.url)), f);
+});
