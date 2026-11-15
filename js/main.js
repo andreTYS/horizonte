@@ -26,7 +26,8 @@ const G = {
   jugador: leer('horizonte.jugador', { nombre: '', aula: '' }),
   eval: leer('horizonte.evaluacion', {}),
   reservas: leer('horizonte.reservas', {}), // lo que sobra de una misión de la campaña pasa a la siguiente
-  notas: leer('horizonte.notas', {}),       // bitácora del estudiante («Cuéntalo»)
+  notas: leer('horizonte.notas', {}),
+  historial: leer('horizonte.historial', []), // cada intento terminado (para el informe del comandante)       // bitácora del estudiante («Cuéntalo»)
   prediccion: null,
   aula: leer('horizonte.modoAula', { activo: false, tranquilo: false }), // modo aula (enlace del docente)
   mundo: null,
@@ -378,7 +379,7 @@ function inicio() {
     const empezar = () => { G.mision = G.misiones[+b.dataset.mision]; G.config = S.configInicial(G.mision); G.rebobinados = 0; construir(); };
     if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
   }));
-  $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje })[b.dataset.eval]()));
+  $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje, informe: informeComandante })[b.dataset.eval]()));
   for (const id of ['nombre', 'aula']) {
     document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
   }
@@ -789,6 +790,10 @@ function final() {
     refugio: false, tripulacion: res.exito ? m.tripulacion : 0, polvo: Boolean(e.polvo), planeta: m.planeta || 'luna',
   }, 'resultado');
   const estrellas = res.exito ? (G.rebobinados === 0 ? 3 : G.rebobinados <= 2 ? 2 : 1) : 0;
+  if (!G.demo) {
+    G.historial.push({ mision: m.id, exito: res.exito, motivo: res.motivo || null, prediccion: G.prediccion, rebobinados: G.rebobinados, estrellas, fecha: new Date().toISOString() });
+    guardar('horizonte.historial', G.historial.slice(-300));
+  }
   if (!G.demo) api.enviarPartida({
     mision: m.id, exito: res.exito, motivo: res.motivo || null, dias: e.dia, ciencia: e.ciencia,
     rebobinados: G.rebobinados, estrellas, config: e.config, nombre: G.jugador.nombre, aula: G.jugador.aula, prediccion: G.prediccion,
@@ -887,6 +892,7 @@ function tarjetaAprendizaje() {
     <div class="entre"><h2 class="titulo-seccion">${t('Tu aprendizaje')}</h2>${ev.inicial && ev.final && ev.caso ? `<button class="fantasma" data-eval="resumen">${t('Resumen →')}</button>` : ''}</div>
     ${fila(I('prueba'), t('Prueba inicial'), ev.inicial, ev.inicial ? `${ev.inicial.puntaje}/${ev.inicial.maximo}` : t('Antes de jugar · 2 min'), ev.inicial ? null : 'inicial')}
     ${fila(I('final'), t('Prueba final'), ev.final, ev.final ? `${ev.final.puntaje}/${ev.final.maximo}` : bloqueadaFinal ? t('Completa “{x}”', { x: esc(sinNumero(ultimaMision().titulo)) }) : t('Lista para hacer'), 'final', bloqueadaFinal)}
+    ${G.historial.length ? `<div class="fila-eval informe-fila"><span class="ico">${I('estrella')}</span><span class="info"><b>${t('Informe del comandante')}</b><small class="suave">${completaCampana() ? t('¡Campaña completa! Incluye tu certificado') : t('Tus misiones, predicciones y bitácora')}</small></span><button class="secundario" data-eval="informe">${t('Ver')}</button></div>` : ''}
     ${fila(I('caso'), t('Caso Artemis-7'), ev.caso, ev.caso ? `${ev.caso.puntaje}/8 · ${ev.caso.nivel}` : t('Rúbrica 0–8 · después de la final'), 'caso', !ev.final)}
   </div>`;
 }
@@ -908,6 +914,55 @@ function pruebaFinal() {
 function casoArtemis() {
   document.body.dataset.pantalla = 'modal';
   E.mostrarCaso(modal({ ancho: true }), G.evaluacion.caso, { niveles: G.evaluacion.niveles, alTerminar: (r) => { guardarEval('caso', r); resumenAprendizaje(); } });
+}
+
+const completaCampana = () => G.misiones.filter((m) => !m.avanzada).every((m) => G.progreso[m.id]);
+
+/** Informe del comandante: misiones, predicciones, bitácora y aprendizaje en una hoja imprimible (certificado si completó la campaña). */
+function informeComandante() {
+  document.body.dataset.pantalla = 'modal';
+  const h = G.historial, ev = G.eval;
+  const certificado = completaCampana();
+  const filas = G.misiones.filter((m) => h.some((x) => x.mision === m.id) || !m.avanzada).map((m) => {
+    const intentos = h.filter((x) => x.mision === m.id);
+    const conPred = intentos.filter((x) => x.prediccion);
+    const aciertos = conPred.filter((x) => x.prediccion === (x.exito ? 'exito' : x.motivo)).length;
+    const est = G.progreso[m.id] || 0;
+    return `<tr><td><b>${esc(sinNumero(m.titulo))}</b><br><small>${esc(m.lugar)}</small></td>
+      <td>${est ? `<span class="estrellas-inf">${'★'.repeat(est)}<span>${'★'.repeat(3 - est)}</span></span>` : intentos.length ? t('En curso') : '—'}</td>
+      <td>${intentos.length || '—'}</td><td>${conPred.length ? `${aciertos}/${conPred.length}` : '—'}</td></tr>`;
+  }).join('');
+  const total = h.filter((x) => x.prediccion), ok = total.filter((x) => x.prediccion === (x.exito ? 'exito' : x.motivo)).length;
+  const g = E.ganancia(ev.inicial?.puntaje, ev.final?.puntaje, 5);
+  const frases = G.misiones.filter((m) => G.notas[m.id]).map((m) => `<li><b>${esc(sinNumero(m.titulo))}:</b> «${esc(G.notas[m.id])}»</li>`).join('');
+  const hoy = new Date().toLocaleDateString(getIdioma() === 'en' ? 'en-US' : 'es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  const c = modal({ ancho: true, cerrable: true });
+  c.innerHTML = `
+    <article class="informe ${certificado ? 'certificado' : ''}">
+      <header class="informe-cabecera">
+        <img src="assets/marca/logo-color.webp" alt="ASU STELLAR" width="1200" height="800">
+        <div><p class="lema">${certificado ? t('Certificado') : t('Informe del comandante')}</p>
+          <h2>${certificado ? t('Comandante de la Expedición · de la Luna a Marte') : t('Bitácora de la expedición')}</h2></div>
+        ${personaje('llama-astronauta', 'informe-llama')}
+      </header>
+      <p class="informe-nombre"><label>${t('Comandante')}: <input id="nombreInforme" maxlength="40" value="${esc(G.jugador.nombre)}" placeholder="${t('Escribe tu nombre')}"></label>
+        ${G.jugador.aula ? `<span>· ${t('Aula {x}', { x: esc(G.jugador.aula) })}</span>` : ''} <span>· ${hoy}</span></p>
+      ${certificado ? `<p class="informe-texto">${t('Completó las cuatro misiones de la expedición: mantuvo el aire en la noche lunar, equilibró aire y agua, logró la primera cosecha en Marte y protegió a su tripulación de una tormenta solar real.')}</p>` : ''}
+      <table class="tabla-informe"><thead><tr><th>${t('Misión')}</th><th>${t('Resultado')}</th><th>${t('Intentos')}</th><th>${t('Predicciones acertadas')}</th></tr></thead><tbody>${filas}</tbody></table>
+      <div class="informe-datos">
+        <div><small>${t('Predicciones acertadas')}</small><b>${total.length ? `${ok}/${total.length}` : '—'}</b></div>
+        <div><small>${t('Prueba inicial → final')}</small><b>${ev.inicial ? ev.inicial.puntaje : '—'} → ${ev.final ? ev.final.puntaje : '—'} / 5</b></div>
+        <div><small>${t('Ganancia de aprendizaje')}</small><b>${g != null ? Math.round(g * 100) + ' %' : '—'}</b></div>
+        <div><small>${t('Caso Artemis-7')}</small><b>${ev.caso ? `${ev.caso.puntaje}/8 · ${ev.caso.nivel}` : '—'}</b></div>
+      </div>
+      ${frases ? `<h3>${I('lapiz')} ${t('Lo que escribió en su bitácora')}</h3><ul class="informe-frases">${frases}</ul>` : ''}
+      <footer class="informe-firmas"><div><span></span>${t('Docente')}</div><div><span></span>${t('Comandante')}</div></footer>
+      <p class="informe-pie">ASU STELLAR · Horizonte · Stellar Experience, Moquegua · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
+    </article>
+    <div class="fila no-imprimir"><button class="primario" id="imprimir">${I('descargar')} ${t('Imprimir o guardar en PDF')}</button><button class="secundario" id="volverInf">${t('Menú')}</button></div>`;
+  c.querySelector('#nombreInforme').addEventListener('change', (ev2) => { G.jugador.nombre = ev2.target.value.trim(); guardar('horizonte.jugador', G.jugador); });
+  c.querySelector('#imprimir').addEventListener('click', () => window.print());
+  c.querySelector('#volverInf').addEventListener('click', inicio);
 }
 
 function resumenAprendizaje() {

@@ -827,3 +827,44 @@ body.destello-falla .modal { animation: temblor .45s ease-in-out; }
 .pista-tocar .i { width: 14px; height: 14px; vertical-align: -2px; }
 @media (min-width: 760px) { .pista-tocar { bottom: 205px; } #ficha-modulo { left: auto; right: 16px; transform: none; top: 96px; } @keyframes ficha-entra { from { opacity: 0; transform: translateY(-12px); } } }
 @media (max-width: 759px) { #ficha-modulo { top: auto; bottom: calc(180px + var(--seguro-abajo)); } }
+
+/* ═══════════ Informe del comandante (y certificado) ═══════════ */
+.informe { position: relative; padding: 22px; border-radius: 18px; background: linear-gradient(160deg, #1f1142, #0e0624); border: 2px solid var(--borde-fuerte); }
+.informe.certificado { border: 3px solid var(--acento); box-shadow: inset 0 0 0 6px rgba(255, 214, 0, .12), 0 0 40px rgba(255, 214, 0, .25); }
+.informe-cabecera { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; }
+.informe-cabecera > img { width: 110px; height: auto; flex: none; }
+.informe-cabecera h2 { font-size: clamp(1.1rem, 3.4vw, 1.5rem); margin: 0; }
+.informe-llama { width: 72px; margin-left: auto; flex: none; }
+.informe-nombre { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 1rem; }
+.informe-nombre input { font: 800 1.15rem var(--boton); color: var(--acento); background: transparent; border: 0; border-bottom: 2px dashed var(--borde-fuerte); padding: 2px 4px; min-width: 200px; }
+.informe-texto { font-size: 1rem; color: #e6defa; }
+.tabla-informe { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .92rem; }
+.tabla-informe th { text-align: left; font: 800 .8rem var(--boton); color: var(--suave); border-bottom: 1px solid var(--borde-fuerte); padding: 6px 4px; }
+.tabla-informe td { border-bottom: 1px solid var(--borde); padding: 8px 4px; vertical-align: top; }
+.estrellas-inf { color: var(--acento); letter-spacing: 2px; } .estrellas-inf span { color: rgba(255, 255, 255, .2); }
+.informe-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 10px 0; }
+.informe-datos div { padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid var(--borde); }
+.informe-datos small { display: block; color: var(--suave); font-size: .78rem; }
+.informe-datos b { font: 700 1.05rem var(--numeros); }
+.informe h3 { display: flex; gap: 8px; align-items: center; font-size: 1rem; margin: 14px 0 6px; }
+.informe h3 .i { width: 18px; height: 18px; color: var(--acento-2); }
+.informe-frases { margin: 0; padding-left: 18px; font-size: .92rem; }
+.informe-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 34px; text-align: center; font-size: .85rem; color: var(--suave); }
+.informe-firmas span { display: block; border-top: 1px solid var(--suave); margin-bottom: 4px; }
+.informe-pie { text-align: center; font-size: .75rem; color: var(--suave); margin: 14px 0 0; }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff !important; overflow: visible !important; }
+  body > *:not(#app), #app > .velo, .no-imprimir, .modal .cerrar, #aviso-2d, #puntos, #etiquetas { display: none !important; }
+  #app, .modal, .modal .contenido { position: static !important; inset: auto !important; transform: none !important; width: auto !important; max-height: none !important; overflow: visible !important; background: #fff !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+  .informe { background: #fff !important; color: #160c2b !important; border-color: #6500a8 !important; box-shadow: none !important; }
+  .informe * { color: #160c2b !important; }
+  .informe .lema, .informe .estrellas-inf { color: #6500a8 !important; }
+  .informe .estrellas-inf span { color: #d9d0ee !important; }
+  :root { color-scheme: light !important; }
+  html, html body { background: #fff !important; }
+  #mundo { display: none !important; }
+  .informe-nombre input { color: #160c2b !important; border-bottom-color: #6500a8; }
+  .informe-datos div { background: #f4effc !important; border-color: #cbbeea !important; }
+}

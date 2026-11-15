@@ -48,6 +48,17 @@ No guarda progreso ni envía resultados. `&ritmo=1.5` lo hace más lento; `Esc` 
 - **Jugar con teclado**: `A` avanzar, `5` ×5, `R` refugio, `C` ración, `I` invernadero, `B` bitácora, `Z` rebobinar un día, `Esc` cerrar. El foco no se pierde al avanzar.
 - Las alarmas siempre tienen texto (y vibran en el celular); la voz de Nebula siempre tiene su globo escrito. Sin violaciones WCAG 2 A/AA en la auditoría automática de axe-core (landing, menú, diseño, Predice, misión, panel).
 
+## Informe del comandante
+
+Desde *Tu aprendizaje* → **Informe del comandante**: misiones con estrellas, intentos, predicciones acertadas, prueba inicial → final, ganancia,
+rúbrica Artemis-7 y las frases de la bitácora, con firma del docente. Si completó las 4 misiones de la campaña se convierte en **certificado**.
+Botón *Imprimir o guardar en PDF* (hoja A4 en blanco, lista para imprimir).
+
+## Sin internet
+
+Al abrir el juego una vez, se descargan también los modelos 3D, las voces, los sonidos y las imágenes (`precache.json`, ~8 MB): después funciona
+sin conexión, incluso abriendo el enlace del aula. Tras cambiar voces o imágenes: `node tools/precache.mjs` (las pruebas avisan si falta).
+
 ## Para docentes: panel y modo aula
 
 En el VPS, `docente.html` (con la clave `DOCENTE_TOKEN`) muestra por código de aula:
