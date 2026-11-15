@@ -1,6 +1,6 @@
 // Sonido de HORIZONTE.
 // - Efectos reales: "Oculus Audio Pack 01" (Meta, CC BY 4.0) en assets/sonidos/
-// - Capas generadas con Web Audio (zumbido espacial, ruido de tormenta, retumbe del despegue)
+// - Música de fondo generada con Web Audio (acordes suaves + caja musical), ruido de tormenta y retumbe del despegue
 // - Voz de Nebula (archivos generados con Piper TTS), con el ambiente bajando mientras habla
 // El audio arranca con el primer toque del jugador (regla de los navegadores).
 
@@ -24,7 +24,6 @@ async function cargarMuestras() {
       if (r.ok) muestras[n] = await ctx.decodeAudioData(await r.arrayBuffer());
     } catch { /* sin ese archivo: se usa el sonido generado */ }
   }));
-  if (muestras.habitat && ambiente) iniciarZumbidoHabitat();
 }
 
 function iniciar() {
@@ -57,55 +56,99 @@ export function alternarSonido() {
   return activo;
 }
 
-// ── Ambiente: zumbido espacial generado + sonido real de la sala de máquinas del hábitat ──
+// ── Música de fondo: generada en el navegador, suave y amigable para niños ──
+// Acordes tipo "pad" muy suaves, un bajo cálido y una melodía de caja musical en escala pentatónica (nunca suena "mal").
+// Cambia de ánimo: de día en mayor, de noche más lenta y grave, en tormenta en menor pero sin ruido.
+const NOTA = (n) => 440 * 2 ** ((n - 69) / 12); // número MIDI → Hz
+const ANIMOS = {
+  dia: { bpm: 76, acordes: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 67]], escala: [72, 74, 76, 79, 81, 84], prob: 0.55 },
+  noche: { bpm: 60, acordes: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 55, 60, 64], [55, 59, 62, 67]], escala: [69, 72, 74, 76, 79], prob: 0.35 },
+  tormenta: { bpm: 84, acordes: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], escala: [69, 71, 72, 76, 77], prob: 0.4 },
+};
+
 function crearAmbiente() {
   const salida = ctx.createGain();
   salida.gain.value = 0;
-  const filtro = ctx.createBiquadFilter();
-  filtro.type = 'lowpass';
-  filtro.frequency.value = 420;
-  filtro.Q.value = 6;
-  const lfo = ctx.createOscillator();
-  const lfoGan = ctx.createGain();
-  lfo.frequency.value = 0.07;
-  lfoGan.gain.value = 180;
-  lfo.connect(lfoGan).connect(filtro.frequency);
-  const oscs = [55, 55.4, 82.5].map((f, i) => {
-    const o = ctx.createOscillator();
-    o.type = i === 2 ? 'triangle' : 'sawtooth';
-    o.frequency.value = f;
-    const g = ctx.createGain();
-    g.gain.value = i === 2 ? 0.05 : 0.08;
-    o.connect(g).connect(filtro);
-    o.start();
-    return o;
-  });
-  filtro.connect(salida).connect(busAmbiente);
-  lfo.start();
-  salida.gain.setTargetAtTime(0.28, ctx.currentTime, 2);
-  ambiente = { salida, filtro, oscs };
+  // Eco suave para dar sensación de espacio (sin reverb pesada)
+  const eco = ctx.createDelay(1);
+  eco.delayTime.value = 0.38;
+  const ecoVuelta = ctx.createGain();
+  ecoVuelta.gain.value = 0.28;
+  const ecoFiltro = ctx.createBiquadFilter();
+  ecoFiltro.type = 'lowpass';
+  ecoFiltro.frequency.value = 1800;
+  eco.connect(ecoFiltro).connect(ecoVuelta).connect(eco);
+  ecoFiltro.connect(salida);
+  const brillo = ctx.createBiquadFilter(); // quita lo áspero
+  brillo.type = 'lowpass';
+  brillo.frequency.value = 2600;
+  brillo.connect(salida);
+  brillo.connect(eco);
+  salida.connect(busAmbiente);
+  salida.gain.setTargetAtTime(0.9, ctx.currentTime, 2);
+  ambiente = { salida, entrada: brillo, animo: 'dia', compas: 0, proximo: ctx.currentTime + 0.3, paso: 0 };
+  setInterval(programarMusica, 120);
 }
 
-function iniciarZumbidoHabitat() {
-  const src = ctx.createBufferSource();
-  src.buffer = muestras.habitat;
-  src.loop = true;
+function voz(freq, inicio, dur, { tipo = 'sine', vol = 0.05, ataque = 0.02, armonico = 0 } = {}) {
+  const o = ctx.createOscillator();
+  o.type = tipo;
+  o.frequency.value = freq;
   const g = ctx.createGain();
-  g.gain.value = 0;
-  src.connect(g).connect(busAmbiente);
-  src.start();
-  g.gain.setTargetAtTime(0.16, ctx.currentTime, 3);
-  ambiente.habitat = g;
+  g.gain.setValueAtTime(0.0001, inicio);
+  g.gain.exponentialRampToValueAtTime(vol, inicio + ataque);
+  g.gain.exponentialRampToValueAtTime(0.0001, inicio + dur);
+  o.connect(g).connect(ambiente.entrada);
+  o.start(inicio);
+  o.stop(inicio + dur + 0.05);
+  if (armonico) { // brillo de campanita (caja musical)
+    const o2 = ctx.createOscillator();
+    o2.frequency.value = freq * 2;
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.0001, inicio);
+    g2.gain.exponentialRampToValueAtTime(vol * armonico, inicio + 0.005);
+    g2.gain.exponentialRampToValueAtTime(0.0001, inicio + dur * 0.4);
+    o2.connect(g2).connect(ambiente.entrada);
+    o2.start(inicio);
+    o2.stop(inicio + dur);
+  }
 }
 
-/** De noche el ambiente baja de tono; en tormenta se vuelve más tenso. */
+/** Programa la música un poco por adelantado (así no se corta aunque la pestaña esté ocupada). */
+function programarMusica() {
+  if (!ctx || !ambiente || ctx.state !== 'running') return;
+  const a = ANIMOS[ambiente.animo];
+  const pulso = 60 / a.bpm / 2; // corcheas
+  while (ambiente.proximo < ctx.currentTime + 0.6) {
+    const t = ambiente.proximo;
+    const paso = ambiente.paso % 16; // 16 corcheas = 2 compases por acorde
+    const acorde = a.acordes[Math.floor(ambiente.paso / 16) % a.acordes.length];
+    if (paso === 0) {
+      const dur = pulso * 16 + 0.6;
+      acorde.forEach((n, i) => voz(NOTA(n), t + i * 0.04, dur, { tipo: 'triangle', vol: 0.022, ataque: 1.2 }));
+      voz(NOTA(acorde[0] - 12), t, pulso * 7, { vol: 0.06, ataque: 0.08 });
+    }
+    if (paso === 8) voz(NOTA(acorde[0] - 12), t, pulso * 7, { vol: 0.045, ataque: 0.08 });
+    // Melodía de caja musical: notas del acorde o de la escala, no en todos los pulsos
+    if (paso % 2 === 0 && Math.random() < a.prob) {
+      const opciones = Math.random() < 0.6 ? acorde.map((n) => n + 12) : a.escala;
+      const n = opciones[Math.floor(Math.random() * opciones.length)];
+      voz(NOTA(n), t, pulso * 5, { vol: 0.035, ataque: 0.006, armonico: 0.35 });
+    }
+    ambiente.paso += 1;
+    ambiente.proximo += pulso;
+  }
+}
+
+/** De noche la música baja y se calma; en tormenta pasa a menor (sin ruido). */
 export function ambienteEstado({ noche = false, tormenta = false } = {}) {
   if (!ambiente) return;
-  const t = ctx.currentTime;
-  const base = noche ? 0.8 : 1;
-  ambiente.oscs.forEach((o, i) => o.frequency.setTargetAtTime([55, 55.4, 82.5][i] * base * (tormenta ? 1.06 : 1), t, 1.5));
-  ambiente.filtro.Q.setTargetAtTime(tormenta ? 12 : 6, t, 0.8);
-  ambiente.habitat?.gain.setTargetAtTime(noche ? 0.22 : 0.16, t, 1.5);
+  const nuevo = tormenta ? 'tormenta' : noche ? 'noche' : 'dia';
+  if (nuevo !== ambiente.animo) {
+    ambiente.animo = nuevo;
+    ambiente.paso = Math.ceil(ambiente.paso / 16) * 16; // cambia al empezar el siguiente acorde
+  }
+  ambiente.salida.gain.setTargetAtTime(noche ? 0.7 : 0.9, ctx.currentTime, 1.5);
 }
 
 // ── Utilidades ──
@@ -173,8 +216,8 @@ export const sfx = {
   polvo: () => { muestra('tormenta', { vol: 0.5, velocidad: 0.8 }); ruido(3, { vol: 0.25, frec: 500, hastaFrec: 160, tipo: 'lowpass' }); },
   despegue: () => {
     muestra('hidraulica', { vol: 0.5 });
-    ruido(2.6, { vol: 0.32, frec: 120, hastaFrec: 900, tipo: 'lowpass', desde: 0.3 });
-    tono(55, 2.4, { tipo: 'sawtooth', vol: 0.09, hasta: 170, desde: 0.3 });
+    ruido(2.6, { vol: 0.2, frec: 110, hastaFrec: 500, tipo: 'lowpass', desde: 0.3 });
+    tono(70, 2.4, { tipo: 'sine', vol: 0.1, hasta: 140, desde: 0.3 });
     muestra('despegue', { vol: 0.7, velocidad: 0.7, desde: 0.9 });
   },
   rebobinar: () => { muestra('rebobinar', { vol: 0.7, velocidad: 0.8 }); tono(1200, 0.45, { tipo: 'triangle', vol: 0.1, hasta: 180 }); },

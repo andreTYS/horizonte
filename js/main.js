@@ -917,12 +917,15 @@ function viaje(despues) {
   const espera = (ms) => new Promise((r) => { const fin = Date.now() + (reducido ? Math.min(ms, 1400) : ms); const tick = () => (saltar || Date.now() >= fin ? r() : setTimeout(tick, 60)); tick(); });
   $app.innerHTML = `
     <section class="viaje ${marte ? 'a-marte' : 'a-luna'}" aria-labelledby="viajeTitulo">
-      <div class="viaje-escena" id="viajeEscena"></div>
+      <div class="viaje-escena" id="viajeEscena"></div><div class="viaje-fondo3d" id="viajeFondo3d"></div>
       <div class="viaje-texto"><p class="lema" id="viajeFase"></p><h2 id="viajeTitulo"></h2><p class="suave" id="viajeDetalle"></p></div>
       <button class="fantasma viaje-saltar" id="viajeSaltar">${I('rapido')} ${t('Saltar viaje')}</button>
     </section>`;
   const $e = $app.querySelector('#viajeEscena');
-  const fase = (lema, titulo, detalle, escena, clase) => {
+  let v3d = null;
+  const fase = (lema, titulo, detalle, escena, clase, encima3d = '') => {
+    v3d?.fase(clase.replace('fase-', ''));
+    if (v3d) escena = encima3d;
     $app.querySelector('#viajeFase').innerHTML = lema;
     $app.querySelector('#viajeTitulo').textContent = titulo;
     $app.querySelector('#viajeDetalle').innerHTML = detalle || '';
@@ -930,24 +933,35 @@ function viaje(despues) {
     $e.innerHTML = escena;
     A.anunciar(titulo);
   };
-  const terminar = () => { if (terminado) return; terminado = true; document.removeEventListener('keydown', tecla); despues(); };
+  const terminar = () => { if (terminado) return; terminado = true; document.removeEventListener('keydown', tecla); v3d?.destruir(); G.mundo?.reanudar?.(); despues(); };
   const tecla = (ev) => { if (ev.key === 'Escape') saltar = true; };
   document.addEventListener('keydown', tecla);
   $app.querySelector('#viajeSaltar').addEventListener('click', () => { saltar = true; });
 
   (async () => {
+    // Escena 3D sencilla si el equipo tiene 3D (si no, o con menos movimiento, la versión dibujada)
+    if (G.mundo && !reducido) {
+      try {
+        const { crearViaje3D } = await import('./viaje3d.js');
+        G.mundo.pausar?.();
+        v3d = crearViaje3D($app.querySelector('#viajeFondo3d'), { marte });
+        $app.querySelector('.viaje').classList.add('con-3d');
+      } catch (err) { console.warn('Viaje 3D no disponible:', err); v3d = null; G.mundo?.reanudar?.(); }
+    }
     if (!corto) {
       // 1. Carga en la Tierra
       fase(`${I('caja')} ${t('Paso 1 de 4 · En la Tierra')}`, t('Cargando el cohete'), t('Todo lo que diseñaste sube al cohete: {t} t de {max} t.', { t: fmt(masa, 2), max: m.presupuesto_t }),
         `<div class="plataforma-tierra"><div class="torre"></div>${COHETE_SVG}</div>
-         <ul class="manifiesto">${carga.map(([ic, txt], i) => `<li style="--i:${i}"><span class="ico">${ic}</span>${esc(txt)}<span class="ok">${I('check')}</span></li>`).join('')}</ul>`, 'fase-carga');
+         <ul class="manifiesto">${carga.map(([ic, txt], i) => `<li style="--i:${i}"><span class="ico">${ic}</span>${esc(txt)}<span class="ok">${I('check')}</span></li>`).join('')}</ul>`, 'fase-carga',
+        `<ul class="manifiesto">${carga.map(([ic, txt], i) => `<li style="--i:${i}"><span class="ico">${ic}</span>${esc(txt)}<span class="ok">${I('check')}</span></li>`).join('')}</ul>`);
       sfx.modulo();
       await espera(1200 + carga.length * 260);
     }
     if (saltar) return terminar();
     // 2. Cuenta regresiva y despegue
     fase(`${I('cohete')} ${t(corto ? 'Despegue' : 'Paso 2 de 4 · Despegue')}`, t('3… 2… 1… ¡Despegue!'), t('Rumbo a {x}.', { x: esc(destino) }),
-      `<div class="plataforma-tierra"><div class="torre"></div><div class="cohete-sube">${COHETE_SVG}<div class="humo"></div></div></div><div class="cuenta" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div>`, 'fase-despegue');
+      `<div class="plataforma-tierra"><div class="torre"></div><div class="cohete-sube">${COHETE_SVG}<div class="humo"></div></div></div><div class="cuenta" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div>`, 'fase-despegue',
+      '<div class="cuenta" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div>');
     await espera(900);
     if (!saltar) sfx.despegue();
     await espera(corto ? 1600 : 2600);
@@ -957,7 +971,8 @@ function viaje(despues) {
       fase(`${I('lugar')} ${t('Paso 3 de 4 · El viaje')}`, marte ? t('Unos 7 meses hasta Marte') : t('Unos 4 días hasta la Luna'), `${esc(dato?.texto || '')} <span class="etq">${I('datos')} ${t('Dato NASA')}</span>`,
         `<div class="ruta"><div class="planeta tierra"></div><svg class="arco" viewBox="0 0 600 200" aria-hidden="true"><path d="M60 150 Q300 -40 540 150" fill="none" stroke="#c9cfee" stroke-width="3" stroke-dasharray="8 10"/></svg>
          <div class="nave-ruta">${COHETE_SVG}</div><div class="planeta ${marte ? 'marte' : 'luna'}"></div></div>
-         <div class="contador-viaje">${Array.from({ length: marte ? 7 : 4 }, (_, i) => `<span style="--i:${i}">${marte ? t('Mes {n}', { n: i + 1 }) : t('Día {n}', { n: i + 1 })}</span>`).join('')}</div>`, 'fase-viaje');
+         <div class="contador-viaje">${Array.from({ length: marte ? 7 : 4 }, (_, i) => `<span style="--i:${i}">${marte ? t('Mes {n}', { n: i + 1 }) : t('Día {n}', { n: i + 1 })}</span>`).join('')}</div>`, 'fase-viaje',
+        `<div class="contador-viaje">${Array.from({ length: marte ? 7 : 4 }, (_, i) => `<span style="--i:${i}">${marte ? t('Mes {n}', { n: i + 1 }) : t('Día {n}', { n: i + 1 })}</span>`).join('')}</div>`);
       await espera(3600);
       if (saltar) return terminar();
     }

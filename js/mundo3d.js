@@ -215,8 +215,12 @@ export class Mundo {
     });
     canvas.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); window.dispatchEvent(new CustomEvent('mundo-perdido')); });
     canvas.addEventListener('webglcontextrestored', () => location.reload());
-    document.addEventListener('visibilitychange', () => this.renderer.setAnimationLoop(document.hidden ? null : this.animar));
+    document.addEventListener('visibilitychange', () => this.renderer.setAnimationLoop(document.hidden || this.pausado ? null : this.animar));
   }
+
+  /** Pausa el dibujo (por ejemplo durante la escena del viaje) y lo reanuda. */
+  pausar() { this.pausado = true; this.renderer.setAnimationLoop(null); }
+  reanudar() { this.pausado = false; if (!document.hidden) this.renderer.setAnimationLoop(this.animar); }
 
   #elegirCalidad() {
     try {

@@ -1028,3 +1028,11 @@ body.destello-falla .modal { animation: temblor .45s ease-in-out; }
 body[data-pantalla="viaje"] #mundo, body[data-pantalla="viaje"] #etiquetas { visibility: hidden; }
 body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d { display: none; }
 .viaje-saltar { background: rgba(24, 32, 63, .78); color: #f5f6ff; border: 1px solid rgba(245, 246, 255, .35); border-radius: 99px; padding: 8px 14px; }
+/* Viaje en 3D: el lienzo va detrás y encima solo quedan la lista de carga, la cuenta y el contador */
+.viaje { grid-template-areas: "escena" "texto"; }
+.viaje-escena, .viaje-fondo3d { grid-area: escena; }
+.viaje-texto { grid-area: texto; }
+.viaje-fondo3d { position: relative; z-index: 0; }
+.viaje-escena { z-index: 1; }
+.viaje-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.viaje.con-3d .viaje-escena { background: none !important; animation: none !important; filter: none !important; }

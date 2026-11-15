@@ -109,6 +109,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 |---|---|
 | `js/sim.js` | Motor de simulación puro (sin DOM): recursos, energía, radiación, eventos y análisis de fallas |
 | `js/mundo3d.js` | Mapa 3D: cielo, luces día/noche, sombras, bloom, tormenta, escudo, astronautas, cámara para explorar |
+| `js/viaje3d.js` | Viaje en 3D antes de cada misión: plataforma en la Tierra, despegue, ruta Tierra→Luna/Marte y aterrizaje en el puesto de avanzada |
 | `js/terreno3d.js` | Terreno de 920 × 920 m: relieve, cordillera, cráteres, texturas generadas, huellas de rover y puntos de interés |
 | `js/modelos3d.js` | Modelos 3D de cada módulo (exportables a `.glb` para Blender) |
 | `js/escena.js` | Escena isométrica SVG de respaldo (equipos sin WebGL) |
@@ -116,7 +117,7 @@ npm test       # pruebas del motor y del servidor (node --test)
 | `tools/visor.html` | Visor 3D: prueba estados y exporta modelos a `.glb` |
 | `js/main.js` | Pantallas, HUD, decisiones, línea de tiempo y rebobinado |
 | `js/i18n.js` | Español / inglés: textos de la interfaz y traducción del análisis de fallas (datos en `data/en/`) |
-| `js/sonido.js` | Efectos reales (`assets/sonidos/`) + capas generadas con Web Audio (ambiente, tormentas, despegue) |
+| `js/sonido.js` | Efectos reales (`assets/sonidos/`) + música de fondo generada con Web Audio (acordes suaves y caja musical, cambia de día, de noche y en tormenta) + tormentas y despegue |
 | `js/voz.js` | Voz de Nebula: audios pregenerados (`assets/voz/`) y voz del navegador como respaldo |
 | `tools/voz/` | Genera la voz de Nebula con Piper TTS (`textos.mjs` lista las frases, `generar.py` las sintetiza) |
 | `js/evaluacion.js` | Prueba inicial y final, caso Artemis-7 con rúbrica 0–8 (escala MINEDU) |
