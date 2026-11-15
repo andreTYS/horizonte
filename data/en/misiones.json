@@ -98,5 +98,16 @@
       "The solar particles arrive! The Curiosity rover measured the biggest radiation surge since it landed on Mars.",
       "The particle shower continues."
     ]
+  },
+  "cero": {
+    "titulo": "Episode 0 · Training",
+    "lugar": "Training base · Moon",
+    "resumen": "Your first day as commander: a small base, two astronauts and six days. Learn to design, predict, advance, see the cause of a failure and fix it.",
+    "nebula": {
+      "briefing": "Welcome, commander! I'm Nebula. This is a training base: two astronauts, six days. In three days the Sun sets.",
+      "construir": "First let's launch the base as it is, to see what happens. Making mistakes here is part of the training.",
+      "exito": "Training complete! You know how to design, predict, advance and fix things with the Chronoscope. The expedition is waiting for you."
+    },
+    "eventos": []
   }
 }

@@ -1,5 +1,43 @@
 [
   {
+    "id": "cero",
+    "titulo": "Episodio 0 · Entrenamiento",
+    "tutorial": true,
+    "resumen": "Tu primer día como comandante: una base pequeña, dos astronautas y seis días. Aprende a diseñar, predecir, avanzar, ver la causa de una falla y corregirla.",
+    "lugar": "Base de entrenamiento · Luna",
+    "tripulacion": 2,
+    "dias": 6,
+    "fase_inicial": 12,
+    "presupuesto_t": 8,
+    "limite_dosis_msv": 40,
+    "objetivo_ciencia": 3,
+    "eventos": [],
+    "modulos": [
+      "panel",
+      "bateria",
+      "reciclador",
+      "blindaje"
+    ],
+    "sugerido": {
+      "panel": 2,
+      "bateria": 0,
+      "reactor": false,
+      "reciclador": true,
+      "invernadero": false,
+      "blindaje": 0,
+      "o2": 6,
+      "agua": 30,
+      "comida": 20,
+      "extractor": false,
+      "moxie": false
+    },
+    "nebula": {
+      "briefing": "¡Bienvenido, comandante! Soy Nebula. Esta es una base de entrenamiento: dos astronautas, seis días. En tres días se pone el Sol.",
+      "construir": "Primero lancemos la base tal como está, para ver qué pasa. Equivocarse aquí es parte del entrenamiento.",
+      "exito": "¡Entrenamiento completo! Ya sabes diseñar, predecir, avanzar y corregir con el Cronoscopio. La expedición te espera."
+    }
+  },
+  {
     "id": "noche",
     "titulo": "Misión 1 · La noche larga",
     "resumen": "Primera parada: la Luna. Cuatro astronautas, 30 días. A los pocos días el Sol se pone y llega la noche lunar: casi 15 días sin luz. Mantén el aire hasta el amanecer.",

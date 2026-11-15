@@ -105,7 +105,7 @@ test('todas las misiones: diseño sugerido dentro del presupuesto y datos NASA e
 });
 
 test('campaña: 4 misiones en orden (Luna → Marte); la última abre la prueba final', () => {
-  const campana = misiones.filter((m) => !m.avanzada).map((m) => m.id);
+  const campana = misiones.filter((m) => !m.avanzada && !m.tutorial).map((m) => m.id);
   assert.deepEqual(campana, ['noche', 'amanecer', 'marte', 'tormenta_marte']);
   assert.equal(misiones.filter((m) => m.evaluacion).map((m) => m.id).join(), 'tormenta_marte');
   for (const m of misiones) if (m.reserva_a) assert.ok(M[m.reserva_a], m.id);
@@ -125,4 +125,15 @@ test('reserva: lo que sobró entra a la siguiente misión sin pesar en el cohete
   assert.equal(e.o2, amanecer.sugerido.o2 + 2);
   assert.equal(e.agua, amanecer.sugerido.agua + 10);
   assert.equal(e.comida, amanecer.sugerido.comida + 5);
+});
+
+test('episodio 0: sin baterías la noche apaga la base; con 2 baterías se gana', () => {
+  const m = M.cero;
+  assert.equal(misiones[0].id, 'cero');
+  const sin = S.simular(m, m.sugerido, nasa, juego);
+  assert.equal(sin.resultado.motivo, 'energia');
+  assert.match(S.analizarFalla('energia', sin.historial, sin.estado, m, nasa).titulo, /noche/);
+  const con = { ...m.sugerido, bateria: 2 };
+  assert.ok(S.masa(con, juego, nasa) <= m.presupuesto_t);
+  assert.equal(S.simular(m, con, nasa, juego).resultado.exito, true);
 });

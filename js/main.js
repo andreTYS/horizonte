@@ -29,7 +29,9 @@ const G = {
   reservas: leer('horizonte.reservas', {}), // lo que sobra de una misión de la campaña pasa a la siguiente
   notas: leer('horizonte.notas', {}),
   historial: leer('horizonte.historial', []), // cada intento terminado (para el informe del comandante)
-  rec: { ...R.estadoInicial(), ...leer('horizonte.recompensas', {}) },   // créditos, compras, objetos, insignias
+  rec: { ...R.estadoInicial(), ...leer('horizonte.recompensas', {}) },
+  introVista: leer('horizonte.intro', false),
+  coachVisto: {},   // créditos, compras, objetos, insignias
   tripulacion: leer('horizonte.tripulacion', R.TRIPULACION_INICIAL.map((x) => ({ ...x }))),       // bitácora del estudiante («Cuéntalo»)
   prediccion: null,
   aula: leer('horizonte.modoAula', { activo: false, tranquilo: false }), // modo aula (enlace del docente)
@@ -162,6 +164,148 @@ async function demo() {
   } catch (err) {
     console.info('Demo:', err.message);
   }
+}
+
+// ───────────────────────── Episodio 0: guía paso a paso ─────────────────────────
+// Resalta un elemento y explica qué hacer. Los pasos avanzan con «Siguiente» o al tocar lo resaltado.
+const PASOS_COACH = () => [
+  { id: 'widgets', en: 'diseno', sel: '.widgets-diseno', txt: t('Aquí ves si tu base alcanza: energía de día y de noche, agua, comida y radiación. Verde = alcanza, rojo = no alcanza.'), si: () => !G.tutorialFallo },
+  { id: 'lanzar1', en: 'diseno', sel: '#lanzar', txt: t('Lanza la misión tal como está. ¿Aguantará la noche?'), accion: true, si: () => !G.tutorialFallo },
+  { id: 'predice', en: 'predice', sel: '.opciones', txt: t('Antes de lanzar, predice qué fallará primero. Si aciertas, ganas créditos estelares.'), accion: true },
+  { id: 'recursos', en: 'mision', sel: '.recursos', txt: t('Estos son tus recursos. Si uno llega a cero, la base falla.') },
+  { id: 'avanzar', en: 'mision', sel: '#dia1', txt: t('Toca AVANZAR para pasar un día. Mira cómo cambian las barras.'), accion: true },
+  { id: 'crono', en: 'mision', sel: '.cronoscopio', txt: t('Este es el Cronoscopio: cada día queda guardado. Si algo sale mal, puedes volver a un día pasado.'), si: () => actual().dia >= 1 },
+  { id: 'noche', en: 'mision', sel: '.reloj-dia', txt: t('Se puso el Sol: los paneles ya no producen. Sigue avanzando y mira qué pasa.'), si: () => !S.hayLuz(G.mision, actual().dia, G.nasa) },
+  { id: 'causa', en: 'resultado-falla', sel: '.cadena', txt: t('Aquí está la causa: así ocurrió la falla, paso a paso. El error es la lección.') },
+  { id: 'redisenar', en: 'resultado-falla', sel: '#redisenar', txt: t('Ahora rediseña la base para que aguante la noche.'), accion: true },
+  { id: 'baterias', en: 'diseno', sel: '[data-mas="bateria"]', txt: t('Agrega baterías: guardan la energía del día para usarla de noche. Pon 2.'), accion: true, si: () => G.tutorialFallo && G.config.bateria < 2, repetir: true },
+  { id: 'lanzar2', en: 'diseno', sel: '#lanzar', txt: t('¡Ahora sí! Lanza otra vez.'), accion: true, si: () => G.tutorialFallo && G.config.bateria >= 2 },
+  { id: 'premio', en: 'resultado-exito', sel: '.premio', txt: t('¡Lo lograste! Ganaste créditos estelares. Úsalos en «Tripulación» para personalizar a tus astronautas y tu base.') },
+];
+
+function coach() {
+  document.getElementById('coach')?.remove();
+  if (G.mision?.id !== 'cero' || G.demo) return;
+  const en = document.querySelector('.guia-pregunta') ? 'predice'
+    : document.body.dataset.pantalla === 'resultado' ? (document.querySelector('.premio') && !document.querySelector('#redisenar') ? 'resultado-exito' : 'resultado-falla')
+    : document.body.dataset.pantalla;
+  const paso = PASOS_COACH().find((p) => p.en === en && (!G.coachVisto[p.id] || p.repetir) && (!p.si || p.si()) && document.querySelector(p.sel));
+  if (!paso) return;
+  const el = document.querySelector(paso.sel);
+  const r = el.getBoundingClientRect();
+  const capa = document.createElement('div');
+  capa.id = 'coach';
+  const abajo = r.top < innerHeight / 2;
+  capa.innerHTML = `<div class="coach-foco" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px"></div>
+    <div class="coach-globo ${abajo ? 'abajo' : 'arriba'}" role="dialog" aria-live="polite" style="left:${Math.max(12, Math.min(innerWidth - 332, r.left + r.width / 2 - 160))}px;${abajo ? `top:${Math.min(innerHeight - 170, r.bottom + 14)}px` : `bottom:${Math.min(innerHeight - 170, innerHeight - r.top + 14)}px`}">
+      <div class="coach-cara">${CARA_NEBULA}</div><p>${paso.txt}</p>
+      <div class="fila">${paso.accion ? `<small class="suave">${t('Toca lo resaltado')}</small>` : `<button class="primario chico" id="coachSig">${t('Siguiente')} →</button>`}<button class="fantasma chico" id="coachSaltar">${t('Saltar guía')}</button></div>
+    </div>`;
+  document.body.appendChild(capa);
+  A.anunciar(paso.txt);
+  const marcar = () => { G.coachVisto[paso.id] = true; };
+  capa.querySelector('#coachSig')?.addEventListener('click', () => { marcar(); coach(); });
+  capa.querySelector('#coachSaltar').addEventListener('click', () => { PASOS_COACH().forEach((p) => { G.coachVisto[p.id] = true; }); G.coachSalteado = true; capa.remove(); });
+  if (paso.accion) el.addEventListener('click', () => { marcar(); setTimeout(coach, 350); }, { once: true, capture: true });
+  if (G.coachSalteado) capa.remove();
+}
+addEventListener('resize', () => { if (document.getElementById('coach')) coach(); });
+
+// ───────────────────────── Introducción rápida, guía y personajes ─────────────────────────
+function introRapida(i = 0) {
+  const pasos = [
+    [personaje('astronauta', 'retrato-grande'), t('Eres el comandante'), t('Eres el astronauta peruano al mando de una expedición que va de la Luna a Marte. Tu trabajo: que tu tripulación sobreviva.')],
+    [personaje('gato-piloto', 'retrato-grande'), t('Diseña, predice y avanza'), t('Arma tu base, predice qué fallará primero y adelanta el tiempo día por día. Nebula, el gato piloto, te da pistas.')],
+    [personaje('llama-astronauta', 'retrato-grande'), t('El error es la lección'), t('Si algo falla, verás la causa con datos reales de NASA y podrás volver atrás con el Cronoscopio. Nunca hay game over.')],
+  ];
+  const [img, titulo, texto] = pasos[i];
+  const c = modal();
+  c.innerHTML = `<div class="intro-rapida">${img}<p class="lema">${t('Introducción rápida')} · ${i + 1}/3</p><h2>${titulo}</h2><p>${texto}</p>
+    <div class="puntos-historia" aria-hidden="true">${pasos.map((_, k) => `<span class="${k === i ? 'actual' : ''}"></span>`).join('')}</div>
+    <div class="fila">${i < 2 ? `<button class="primario" id="introSig">${t('Siguiente')} →</button><button class="fantasma" id="introSaltar">${t('Saltar')}</button>`
+      : `<button class="primario" id="introCero">${I('cohete')} ${t('Jugar el Episodio 0')}</button><button class="secundario" id="introGuia">${I('info')} ${t('Ver la guía')}</button>`}</div></div>`;
+  c.querySelector('#introSig')?.addEventListener('click', () => introRapida(i + 1));
+  c.querySelector('#introSaltar')?.addEventListener('click', inicio);
+  c.querySelector('#introGuia')?.addEventListener('click', () => guia());
+  c.querySelector('#introCero')?.addEventListener('click', () => { G.mision = G.misiones.find((m) => m.id === 'cero'); G.config = S.configInicial(G.mision); G.rebobinados = 0; G.tutorialFallo = false; G.coachVisto = {}; G.coachSalteado = false; construir(); });
+}
+
+function guia() {
+  document.body.dataset.pantalla = 'modal';
+  const ficha = (ic, nombre, txt) => `<div class="guia-item"><span class="guia-ico">${I(ic)}</span><div><b>${nombre}</b><p>${txt}</p></div></div>`;
+  const c = modal({ ancho: true, cerrable: true });
+  c.innerHTML = `
+    <p class="lema">${t('Guía del juego')}</p><h2>${I('info')} ${t('¿Qué estás jugando?')}</h2>
+    <p>${t('ASU STELLAR · Horizonte es un simulador de bases espaciales. Diriges una base en la Luna y luego en Marte: eliges qué módulos llevar en el cohete, decides cada día y aprendes por qué una base falla, con datos reales de NASA.')}</p>
+    <h3>${t('Cómo se juega')}</h3>
+    <ol class="guia-pasos">
+      <li><b>${t('Diseña')}</b> — ${t('elige paneles, baterías, reactor, reciclador, invernadero, blindaje y provisiones, sin pasarte de la masa del cohete.')}</li>
+      <li><b>${t('Predice')}</b> — ${t('antes de lanzar, di qué crees que fallará primero.')}</li>
+      <li><b>${t('Avanza')}</b> — ${t('cada día puedes activar el refugio, reducir la ración o apagar el invernadero.')}</li>
+      <li><b>${t('Mira la causa')}</b> — ${t('si la base falla, ves la cadena causa → efecto y el dato de NASA que la explica.')}</li>
+      <li><b>${t('Rebobina')}</b> — ${t('con el Cronoscopio vuelves a un día pasado y cambias una decisión, o rediseñas la base.')}</li>
+      <li><b>${t('Cuéntalo')}</b> — ${t('al ganar, escribe en tu bitácora qué cambiaste.')}</li>
+    </ol>
+    <h3>${t('Tus recursos (arriba)')}</h3>
+    <div class="guia-grid">
+      ${ficha('energia', t('Energía'), t('La producen los paneles (solo con luz) y el reactor. Las baterías la guardan para la noche.'))}
+      ${ficha('o2', t('Oxígeno'), t('Se fabrica partiendo agua con energía. Sin energía, no hay oxígeno nuevo.'))}
+      ${ficha('agua', t('Agua'), t('Para beber, cocinar y fabricar oxígeno. El reciclador recupera casi toda.'))}
+      ${ficha('comida', t('Comida'), t('Cada astronauta come unos 1,5 kg al día. El invernadero produce una parte.'))}
+      ${ficha('radiacion', t('Radiación'), t('Se suma cada día. El blindaje y el refugio protegen. No pases el límite.'))}
+      ${ficha('salud', t('Salud'), t('Baja si la tripulación come poco muchos días seguidos.'))}
+      ${ficha('ciencia', t('Ciencia'), t('Cada día fuera del refugio suman ciencia. Hay que llegar a la meta de la misión.'))}
+    </div>
+    <h3>${t('Los módulos de tu base')}</h3>
+    <div class="guia-grid">
+      ${ficha('panel', t('Paneles solares'), t('Producen energía solo cuando hay luz del Sol.'))}
+      ${ficha('bateria', t('Baterías'), t('Guardan la energía que sobra de día para usarla de noche o en una tormenta.'))}
+      ${ficha('reactor', t('Reactor'), t('Da energía de día y de noche, sin depender del Sol.'))}
+      ${ficha('reciclador', t('Reciclador'), t('Limpia y recupera casi toda el agua que usa la tripulación.'))}
+      ${ficha('invernadero', t('Invernadero'), t('Produce parte de la comida, pero gasta agua y energía.'))}
+      ${ficha('blindaje', t('Blindaje'), t('Capa de regolito que protege de la radiación todos los días, pero pesa.'))}
+      ${ficha('extractor', t('Extractor de hielo'), t('Saca agua del hielo escondido en el suelo.'))}
+      ${ficha('moxie', 'MOXIE', t('Fabrica oxígeno a partir del CO₂ del aire de Marte, sin gastar agua.'))}
+    </div>
+    <h3>${t('Decisiones de cada día')}</h3>
+    <div class="guia-grid">
+      ${ficha('refugio', t('Refugio'), t('Protege 90 % de la radiación de tormenta; ese día no hay ciencia'))}
+      ${ficha('racion', t('Ración'), t('Comen 20 % menos; baja la salud'))}
+      ${ficha('invernadero', t('Invernadero'), t('Apágalo para ahorrar energía y agua'))}
+    </div>
+    <h3>${t('Lo demás')}</h3>
+    <div class="guia-grid">
+      ${ficha('cronoscopio', t('Cronoscopio'), t('La línea de días de abajo. Toca un día pasado para volver a él.'))}
+      ${ficha('predecir', t('Predice'), t('Antes de cada lanzamiento eliges qué fallará. Acertar da créditos.'))}
+      ${ficha('caja', t('Reserva'), t('Lo que sobra de una misión de la campaña pasa a la siguiente, sin pesar en el cohete.'))}
+      ${ficha('estrella', t('Créditos e insignias'), t('Se ganan al cumplir misiones, predecir bien, no rebobinar y aprender de un error. Sirven para personalizar tu tripulación y tu base.'))}
+      ${ficha('datos', t('Datos de NASA'), t('Cada número tiene fuente. Las etiquetas dicen si es dato de NASA, caso histórico o valor del juego.'))}
+      ${ficha('lugar', t('Explorar el mapa'), t('Toca un módulo, un objeto o un marcador del mapa para acercarte y ver su ficha.'))}
+    </div>
+    <div class="fila"><button class="primario" id="guiaCero">${I('cohete')} ${t('Jugar el Episodio 0')}</button><button class="secundario" id="guiaVolver">${t('Menú')}</button></div>`;
+  c.querySelector('#guiaVolver').addEventListener('click', inicio);
+  c.querySelector('#guiaCero').addEventListener('click', () => { G.mision = G.misiones.find((m) => m.id === 'cero'); G.config = S.configInicial(G.mision); G.rebobinados = 0; G.tutorialFallo = false; G.coachVisto = {}; G.coachSalteado = false; construir(); });
+}
+
+function personajes() {
+  document.body.dataset.pantalla = 'modal';
+  const p = (img, nombre, rol, txt) => `<figure class="personaje-carta"><img src="assets/marca/${img}.webp" alt="" loading="lazy"><figcaption><b>${nombre}</b><span class="rol">${rol}</span><p>${txt}</p></figcaption></figure>`;
+  const color = (id) => `#${R.CATALOGO.find((x) => x.id === id).color.toString(16).padStart(6, '0')}`;
+  const c = modal({ ancho: true, cerrable: true });
+  c.innerHTML = `
+    <p class="lema">${t('Galería')}</p><h2>${I('persona')} ${t('Personajes de la expedición')}</h2>
+    <div class="personajes-grid">
+      ${p('astronauta', t('Astronauta peruano'), t('Protagonista · tú'), t('Comandas la expedición. Tomas las decisiones de diseño y de cada día, y explicas qué cambiaste en tu bitácora.'))}
+      ${p('astronauta-peruana', t('Astronauta peruana'), t('Guía de misión'), t('Enseña con preguntas: antes de cada lanzamiento te pide que predigas qué fallará primero.'))}
+      ${p('gato-piloto', t('Nebula, el gato piloto'), t('Viajes y pistas'), t('Pilota la nave de la Luna a Marte, te habla en voz alta y te da pistas en las misiones de la campaña.'))}
+      ${p('llama-astronauta', t('Llama astronauta'), t('Ciencia y logros'), t('Presenta las fichas con datos de NASA y celebra cuando cumples una misión.'))}
+    </div>
+    <h3>${t('Tu tripulación')}</h3>
+    <p class="suave chico">${t('Los cuatro astronautas que ves caminar por la base. Sus nombres están en quechua: Killa (luna), Inti (sol), Wayra (viento) y Sami (suerte). Puedes cambiar sus nombres y colores en «Tripulación».')}</p>
+    <div class="tripulacion-mini">${G.tripulacion.map((a) => `<div class="astro-carta" style="--traje:${color(a.traje)};--acento:${color(a.acento)};--visor:${color(a.visor)}"><div class="astro-figura" aria-hidden="true"><i class="casco"><i class="visor"></i></i><i class="cuerpo"><i class="cinto"></i></i></div><b>${esc(a.nombre)}</b></div>`).join('')}</div>
+    <div class="fila"><button class="primario" id="perTrip">${I('tripulacion')} ${t('Personalizar tripulación')}</button><button class="secundario" id="perVolver">${t('Menú')}</button></div>`;
+  c.querySelector('#perTrip').addEventListener('click', () => pantallaTripulacion());
+  c.querySelector('#perVolver').addEventListener('click', inicio);
 }
 
 // ───────────────────────── Recompensas, tripulación y objetos ─────────────────────────
@@ -460,8 +604,9 @@ function inicio() {
   let nCampana = 0, nExtra = 0;
   const boton = (m, i) => {
     const p = G.progreso[m.id] || 0;
-    const num = m.avanzada ? `+${++nExtra}` : `0${++nCampana}`;
-    return `<button class="mision-btn ${m.avanzada ? 'avanzada' : ''} ${m.planeta === 'marte' ? 'marte' : ''}" data-mision="${i}">
+    const num = m.tutorial ? '00' : m.avanzada ? `+${++nExtra}` : `0${++nCampana}`;
+    const empezar = m.tutorial && !G.progreso[m.id];
+    return `<button class="mision-btn ${m.avanzada ? 'avanzada' : ''} ${m.tutorial ? 'tutorial' : ''} ${empezar ? 'empieza' : ''} ${m.planeta === 'marte' ? 'marte' : ''}" data-mision="${i}">${empezar ? `<span class="cinta-empieza">${t('Empieza aquí')}</span>` : ''}
       <span class="num">${num}</span>
       <span class="info"><b>${esc(sinNumero(m.titulo))}</b><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small>${G.reservas[m.id] ? `<small class="con-reserva">${I('caja')} ${t('Con reserva de la misión anterior')}</small>` : ''}</span>
       <span class="estrellas-mini" aria-label="${t('{n} de 3 estrellas', { n: p })}">${'★'.repeat(p)}<span>${'★'.repeat(3 - p)}</span></span></button>`;
@@ -495,12 +640,12 @@ function inicio() {
         <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
         <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
       </details>
-      <div class="fila"><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
+      <div class="fila"><button id="guiaBtn" class="secundario">${I('info')} ${t('Guía del juego')}</button><button id="personajesBtn" class="secundario">${I('persona')} ${t('Personajes')}</button><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
     </aside>
     <p class="pista-gesto">${I('mano')} ${t('Arrastra para girar la base · pellizca para acercar')}</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
-    const empezar = () => { G.mision = G.misiones[+b.dataset.mision]; G.config = S.configInicial(G.mision); G.rebobinados = 0; construir(); };
+    const empezar = () => { G.mision = G.misiones[+b.dataset.mision]; G.config = S.configInicial(G.mision); G.rebobinados = 0; G.tutorialFallo = false; G.coachVisto = {}; G.coachSalteado = false; construir(); };
     if (!G.eval.inicial && !G.eval.saltoInicial) pruebaInicial(empezar); else empezar();
   }));
   $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje, informe: informeComandante })[b.dataset.eval]()));
@@ -513,6 +658,8 @@ function inicio() {
   document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('aLanding').addEventListener('click', landing);
   document.getElementById('tripulacionBtn').addEventListener('click', () => pantallaTripulacion());
+  document.getElementById('guiaBtn').addEventListener('click', () => guia());
+  document.getElementById('personajesBtn').addEventListener('click', () => personajes());
   document.getElementById('chipCreditos').addEventListener('click', () => pantallaTripulacion());
   document.getElementById('idioma').addEventListener('click', async () => {
     setIdioma(getIdioma() === 'es' ? 'en' : 'es');
@@ -521,6 +668,7 @@ function inicio() {
     inicio();
   });
   enlazarSonido();
+  if (!G.introVista && !Object.keys(G.progreso).length && !G.demo) { G.introVista = true; guardar('horizonte.intro', true); introRapida(); }
 }
 
 // ───────────────────────── Construcción ─────────────────────────
@@ -628,6 +776,7 @@ function construir() {
   $app.querySelectorAll('[data-blindaje]').forEach((b) => b.addEventListener('click', () => { c.blindaje = +b.dataset.blindaje; construir(); resaltar('habitat'); }));
   document.getElementById('lanzar').addEventListener('click', lanzar);
   decirNebula();
+  coach();
 }
 
 // ───────────────────────── Misión ─────────────────────────
@@ -647,6 +796,7 @@ function lanzar() {
     <div class="fila"><button class="fantasma" id="cambiarPlan">${I('volver')} ${t('Cambiar mi plan')}</button></div>`;
   c.querySelectorAll('[data-pred]').forEach((b) => b.addEventListener('click', () => { G.prediccion = b.dataset.pred; empezarMision(); }));
   c.querySelector('#cambiarPlan').addEventListener('click', construir);
+  coach();
 }
 
 function resultadoPrediccion(motivo) {
@@ -910,6 +1060,7 @@ function mision() {
   const hoy = $app.querySelector('.linea-tiempo .hoy');
   if (hoy) hoy.parentElement.scrollLeft = hoy.offsetLeft - hoy.parentElement.clientWidth / 2;
   decirNebula();
+  coach();
 }
 
 // ───────────────────────── Resultado ─────────────────────────
@@ -987,6 +1138,7 @@ function final() {
     document.getElementById('sig')?.addEventListener('click', () => { guardarNota(); G.mision = siguiente; G.config = S.configInicial(siguiente); G.rebobinados = 0; construir(); });
     document.getElementById('inicio').addEventListener('click', () => { guardarNota(); inicio(); });
     document.getElementById('irTripulacion')?.addEventListener('click', () => { guardarNota(); pantallaTripulacion(); });
+    coach();
     setTimeout(decirNebula, 1600); // después de la fanfarria
     return;
   }
@@ -1010,6 +1162,8 @@ function final() {
   document.getElementById('redisenar').addEventListener('click', () => { G.config = { ...G.estados[0].config }; G.rebobinados += 1; olvidarUltimo(); construir(); });
   document.getElementById('irTripulacion')?.addEventListener('click', () => pantallaTripulacion());
   setTimeout(decirNebula, 1400);
+  G.tutorialFallo = G.tutorialFallo || G.mision.id === 'cero';
+  coach();
 }
 
 // ───────────────────────── Evaluación del aprendizaje ─────────────────────────
@@ -1057,14 +1211,14 @@ function casoArtemis() {
   E.mostrarCaso(modal({ ancho: true }), G.evaluacion.caso, { niveles: G.evaluacion.niveles, alTerminar: (r) => { guardarEval('caso', r); resumenAprendizaje(); } });
 }
 
-const completaCampana = () => G.misiones.filter((m) => !m.avanzada).every((m) => G.progreso[m.id]);
+const completaCampana = () => G.misiones.filter((m) => !m.avanzada && !m.tutorial).every((m) => G.progreso[m.id]);
 
 /** Informe del comandante: misiones, predicciones, bitácora y aprendizaje en una hoja imprimible (certificado si completó la campaña). */
 function informeComandante() {
   document.body.dataset.pantalla = 'modal';
   const h = G.historial, ev = G.eval;
   const certificado = completaCampana();
-  const filas = G.misiones.filter((m) => h.some((x) => x.mision === m.id) || !m.avanzada).map((m) => {
+  const filas = G.misiones.filter((m) => h.some((x) => x.mision === m.id) || (!m.avanzada && !m.tutorial)).map((m) => {
     const intentos = h.filter((x) => x.mision === m.id);
     const conPred = intentos.filter((x) => x.prediccion);
     const aciertos = conPred.filter((x) => x.prediccion === (x.exito ? 'exito' : x.motivo)).length;

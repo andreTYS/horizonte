@@ -1,4 +1,6 @@
 {
+ "Welcome, commander! I'm Nebula. This is a training base: two astronauts, six days. In three days the Sun sets. First let's launch the base as it is, to see what happens. Making mistakes here is part of the training.": "9d3c23811473.mp3",
+ "Training complete! You know how to design, predict, advance and fix things with the Chronoscope. The expedition is waiting for you.": "664e1926109d.mp3",
  "Hi! I'm Nebula, the expedition's pilot cat. First stop: the Moon. Soon the Sun sets and the panels produce nothing. How will you keep the air running until dawn? Hint: count how much energy your base uses per day and multiply it by the nights.": "0ecaab4f34f2.mp3",
  "You made it to dawn! Whatever you saved carries over as a reserve to the next mission. This is how NASA thinks when it designs the Fission Surface Power reactor.": "f945fcd8e545.mp3",
  "Air needs energy: oxygen is made by splitting water. And recovering water costs energy too. Here the Sun doesn't set for the whole mission. Watch the mass bar: every kilo you put on the rocket counts. The recycler is heavy, but it recovers almost all the water.": "89e752a2b3d8.mp3",
@@ -20,9 +22,9 @@
  "You learned how the systems of a base are connected! That is what NASA engineers do.": "c59d9a4aebdf.mp3",
  "Every failure you understand brings you closer to being a commander. Play again!": "81d100a3d70b.mp3",
  "The lunar night lasts almost 15 days. You need many batteries… or a reactor that works day and night.": "c61fcac25f4f.mp3",
+ "Bring more water or install the recycler: every kilo of oxygen costs 1.125 kg of water.": "f9180f1e1648.mp3",
  "The ISS recovers 98 % of its water. With a recycler, a long mission needs very little reserve water.": "4358041b61cb.mp3",
  "Calculate: people × days × daily food. The greenhouse makes part of the food, but uses water and energy.": "d52c092b5f57.mp3",
- "Bring more water or install the recycler: every kilo of oxygen costs 1.125 kg of water.": "f9180f1e1648.mp3",
  "Use the shelter only when needed. The greenhouse adds extra science.": "0070b1c6ca95.mp3",
  "On Mars the Sun is weak and dust can block it for days. Bring batteries to ride out the storm… or a reactor, which does not depend on the Sun.": "dc57e8a56934.mp3",
  "Use reduced rations for only a few days.": "2a0a260468ea.mp3",
