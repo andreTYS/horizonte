@@ -9,15 +9,18 @@ const en = (o, x, y, z) => { o.position.set(x, y, z); return o; };
 
 /** Dónde va cada objeto (alrededor de la plataforma, sin tapar los módulos). */
 export const POS_OBJETOS = {
-  'obj-bandera': [5.5, -5.5],
-  'obj-contenedores': [-24, -5],
-  'obj-torre': [24, -2],
-  'obj-telescopio': [-25, 8],
-  'obj-huerto': [11, 21],
-  'obj-antena': [23, -17],
+  'obj-bandera': [8, -8],
+  'obj-contenedores': [-30, -6],
+  'obj-torre': [30, -2],
+  'obj-telescopio': [-31, 11],
+  'obj-huerto': [14, 27],
+  'obj-antena': [29, -22],
   'obj-dron': [0, 0],
-  'obj-llama': [-7, 19],
+  'obj-llama': [-9, 25],
 };
+
+/** Los objetos se ven a 1,8× su tamaño de construcción: más fáciles de ver y tocar en una pantalla pequeña. */
+export const ESCALA_OBJETOS = 1.8;
 
 function bandera() {
   const g = new THREE.Group();
@@ -61,7 +64,7 @@ function torre() {
     const brazoG = new THREE.Group(); brazoG.rotation.y = (i / 3) * Math.PI * 2;
     brazo.position.x = 0.35; copa.position.x = 0.7; brazoG.add(brazo, copa); molino.add(brazoG);
   }
-  const luz = malla(new THREE.SphereGeometry(0.09), brillo(0x5be3b0)); luz.position.y = 4.6; luz.name = 'baliza';
+  const luz = malla(new THREE.SphereGeometry(0.09), brillo(0x6fd39a)); luz.position.y = 4.6; luz.name = 'baliza';
   g.add(molino, luz);
   return g;
 }
@@ -76,7 +79,7 @@ function telescopio() {
     g.add(pata);
   }
   const tubo = malla(new THREE.CylinderGeometry(0.22, 0.3, 2.2, 20), mat(0xeef0f6)); tubo.rotation.z = -0.9; tubo.position.set(0.3, 1.9, 0);
-  const lente = malla(new THREE.CircleGeometry(0.21, 20), brillo(0x3ff0ff, 1.2)); lente.position.set(1.15, 2.5, 0); lente.rotation.y = Math.PI / 2;
+  const lente = malla(new THREE.CircleGeometry(0.21, 20), brillo(0x7fd8f2, 1.2)); lente.position.set(1.15, 2.5, 0); lente.rotation.y = Math.PI / 2;
   g.add(tubo, lente);
   g.name = 'apunta';
   return g;
@@ -98,7 +101,7 @@ function huerto() {
   tunel.rotation.z = Math.PI / 2; // el eje del medio cilindro queda a lo largo del huerto
   tunel.position.y = 0.3;
   g.add(tunel);
-  const lamp = malla(new THREE.BoxGeometry(4.6, 0.06, 0.12), brillo(0xff6bd6, 1.8)); lamp.position.y = 1.95; g.add(lamp);
+  const lamp = malla(new THREE.BoxGeometry(4.6, 0.06, 0.12), brillo(0xf29ad0, 1.8)); lamp.position.y = 1.95; g.add(lamp);
   return g;
 }
 
@@ -119,7 +122,7 @@ function antena() {
 function dron() {
   const g = new THREE.Group(); g.name = 'dron';
   const cuerpo = malla(new THREE.BoxGeometry(0.7, 0.18, 0.7), mat(0xeef0f6)); g.add(cuerpo);
-  const ojo = malla(new THREE.SphereGeometry(0.1), brillo(0x00d9f2, 3)); ojo.position.set(0, -0.08, 0.38); g.add(ojo);
+  const ojo = malla(new THREE.SphereGeometry(0.1), brillo(0x5cc8ee, 3)); ojo.position.set(0, -0.08, 0.38); g.add(ojo);
   for (const [x, z] of [[0.55, 0.55], [-0.55, 0.55], [0.55, -0.55], [-0.55, -0.55]]) {
     const brazo = malla(new THREE.BoxGeometry(0.06, 0.05, 0.8), mat(0x3a3f52)); brazo.position.set(x / 2, 0, z / 2); brazo.rotation.y = Math.atan2(x, z); g.add(brazo);
     const helice = malla(new THREE.CylinderGeometry(0.32, 0.32, 0.02, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 }), false);
@@ -140,7 +143,7 @@ function llama() {
   for (const z of [0.12, -0.12]) { const oreja = malla(new THREE.BoxGeometry(0.1, 0.3, 0.08), piedra); oreja.position.set(0.6, 3.2, z); g.add(oreja); }
   const casco = malla(new THREE.SphereGeometry(0.5, 20, 14), new THREE.MeshPhysicalMaterial({ color: 0xbfefff, transparent: true, opacity: 0.25, roughness: 0.05 }), false);
   casco.position.set(0.7, 2.95, 0); g.add(casco);
-  const manta = malla(new THREE.BoxGeometry(1, 0.1, 0.75), mat(0xc92dd7, { roughness: 0.9 })); manta.position.set(-0.1, 1.95, 0); g.add(manta);
+  const manta = malla(new THREE.BoxGeometry(1, 0.1, 0.75), mat(0xe77fb3, { roughness: 0.9 })); manta.position.set(-0.1, 1.95, 0); g.add(manta);
   return g;
 }
 
@@ -155,7 +158,7 @@ export function animarObjeto(o, t) {
   });
   if (o.userData.id === 'obj-dron') {
     const a = t * 0.35;
-    o.position.set(Math.cos(a) * 16, 7 + Math.sin(t * 1.3) * 0.6, Math.sin(a) * 16);
+    o.position.set(Math.cos(a) * 20, 9 + Math.sin(t * 1.3) * 0.6, Math.sin(a) * 20);
     o.rotation.y = -a;
   }
 }

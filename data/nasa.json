@@ -67,13 +67,12 @@
       "verificado": true
     },
     "dosis_luna_msv_dia": {
-      "valor": 1.37,
-      "unidad": "mSv por día en la superficie lunar",
-      "texto": "En la superficie de la Luna, sin protección, se reciben unos 1,37 mSv de radiación al día: unas 2,6 veces más que dentro de la Estación Espacial Internacional.",
-      "fuente": "Zhang et al. 2020, Science Advances 6(39) – First measurements of the radiation dose on the lunar surface (Chang'e 4, instrumento LND)",
-      "url": "https://doi.org/10.1126/sciadv.aaz1334",
-      "verificado": true,
-      "origen": "ciencia"
+      "valor": 0.9,
+      "unidad": "mSv por día en la superficie lunar (estimación)",
+      "texto": "En el espacio profundo, el instrumento RAD del rover Curiosity de la NASA midió unos 1,8 mSv de radiación cósmica al día. En la superficie de la Luna, la propia Luna tapa la mitad del cielo, así que se recibe aproximadamente la mitad: unos 0,9 mSv al día sin protección.",
+      "fuente": "NASA JPL – Data From NASA's Rover's Voyage to Mars Aids Planning (RAD: 1,8 mSv/día en crucero); la mitad por el bloqueo de la Luna es una estimación del juego",
+      "url": "https://www.jpl.nasa.gov/news/data-from-nasa-rovers-voyage-to-mars-aids-planning/",
+      "verificado": true
     },
     "dosis_marte_msv_dia": {
       "valor": 0.64,
@@ -164,6 +163,26 @@
       "verificado": true,
       "tipo": "historico",
       "fecha": "2024-05-20"
+    },
+      "viaje_apolo11": {
+      "valor": 4,
+      "unidad": "días de la Tierra a la superficie de la Luna",
+      "texto": "El Apolo 11 despegó de la Tierra el 16 de julio de 1969 y aterrizó en la Luna el 20 de julio: unos 4 días de viaje.",
+      "fuente": "NASA – Apollo 11 mission overview",
+      "url": "https://www.nasa.gov/mission/apollo-11/",
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "1969-07-20"
+    },
+      "viaje_perseverance": {
+      "valor": 7,
+      "unidad": "meses de la Tierra a Marte",
+      "texto": "El rover Perseverance despegó el 30 de julio de 2020 y aterrizó en el cráter Jezero de Marte el 18 de febrero de 2021: casi 7 meses de viaje.",
+      "fuente": "NASA Science – Mars 2020 Perseverance rover",
+      "url": "https://science.nasa.gov/mission/mars-2020-perseverance/",
+      "verificado": true,
+      "tipo": "historico",
+      "fecha": "2021-02-18"
     },
     "retraso_tierra_marte": {
       "valor": "4–24",

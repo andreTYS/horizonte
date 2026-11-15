@@ -200,6 +200,7 @@ async function demo() {
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') parar = true; });
   const espera = (ms) => new Promise((r, x) => setTimeout(() => (parar ? x(new Error('demo detenida')) : r()), ms * lento));
   const clic = async (sel, ms = 900) => { const el = document.querySelector(sel); if (!el) throw new Error(`demo: falta ${sel}`); el.focus?.(); await espera(250); el.click(); await espera(ms); };
+  const hastaMision = async () => { for (let i = 0; i < 80 && !document.getElementById('dia1'); i++) await espera(250); };
   const avanzarHasta = async (fin, paso = 650) => { for (let i = 0; i < 60 && !fin(); i++) { const b = document.getElementById('dia1'); if (!b) break; b.click(); await espera(paso); } };
   try {
     // 1. Landing con el recorrido de cámara
@@ -214,7 +215,8 @@ async function demo() {
     await clic(`[data-mision="${i1}"]`, 2200);
     await clic('#entendido', 1200);
     await clic('#lanzar', 1500);
-    await clic('[data-pred="agua"]', 1500);
+    await clic('[data-pred="agua"]', 600);
+    await hastaMision();
     await avanzarHasta(() => document.querySelector('.modal'));
     await espera(4500);
     // 3. Rediseñar: reactor de fisión, menos paneles, sin baterías
@@ -223,7 +225,8 @@ async function demo() {
     construir(); resaltar('reactor'); sfx.modulo();
     await espera(2500);
     await clic('#lanzar', 1500);
-    await clic('[data-pred="exito"]', 1500);
+    await clic('[data-pred="exito"]', 600);
+    await hastaMision();
     for (let i = 0; i < 12 && !document.querySelector('.modal'); i++) { (document.getElementById('dia5') || document.getElementById('dia1')).click(); await espera(900); }
     await espera(6000);
   } catch (err) {
@@ -859,7 +862,7 @@ function lanzar() {
       <p class="suave">${t('Elige antes de lanzar. Al final verás si acertaste.')}</p></div></div>
     <div class="opciones">${PREDICCIONES.map(([k, txt, ic]) => `<button class="opcion" data-pred="${k}"><span class="letra">${I(ic)}</span>${t(txt)}</button>`).join('')}</div>
     <div class="fila"><button class="fantasma" id="cambiarPlan">${I('volver')} ${t('Cambiar mi plan')}</button></div>`;
-  c.querySelectorAll('[data-pred]').forEach((b) => b.addEventListener('click', () => { G.prediccion = b.dataset.pred; empezarMision(); }));
+  c.querySelectorAll('[data-pred]').forEach((b) => b.addEventListener('click', () => { G.prediccion = b.dataset.pred; viaje(empezarMision); }));
   c.querySelector('#cambiarPlan').addEventListener('click', construir);
   coach();
 }
@@ -871,6 +874,101 @@ function resultadoPrediccion(motivo) {
   return `<div class="prediccion ${acierto ? 'bien' : 'mal'}">${I(acierto ? 'check' : 'predecir')}<span>${t('Tu predicción: {x}.', { x: `<b>${nombreMotivo(G.prediccion)}</b>` })} ${acierto ? t('¡Acertaste!') : t('Pasó: {x}.', { x: `<b>${nombreMotivo(real)}</b>` })}</span></div>`;
 }
 
+// ───────────────────────── El viaje: carga en la Tierra, despegue, viaje y aterrizaje ─────────────────────────
+// Como una misión real: primero se sube al cohete todo lo que diseñaste, se despega de la Tierra, se viaja
+// (4 días a la Luna como el Apolo 11, unos 7 meses a Marte como Perseverance) y se aterriza en el puesto de avanzada.
+const COHETE_SVG = `<svg class="cohete-svg" viewBox="0 0 80 200" aria-hidden="true">
+  <path d="M40 4 C58 26 62 52 62 78 L62 150 L18 150 L18 78 C18 52 22 26 40 4Z" fill="#f5f6ff" stroke="#29335e" stroke-width="3"/>
+  <path d="M40 4 C50 16 55 28 58 40 L22 40 C25 28 30 16 40 4Z" fill="#ff7a7a" stroke="#29335e" stroke-width="3"/>
+  <circle cx="40" cy="70" r="11" fill="#5cc8ee" stroke="#29335e" stroke-width="3"/><circle cx="36" cy="66" r="3" fill="#e6e9fb"/>
+  <rect x="18" y="100" width="44" height="10" fill="#ffc94a"/>
+  <path d="M18 120 L2 160 L18 150Z M62 120 L78 160 L62 150Z" fill="#9a8ef0" stroke="#29335e" stroke-width="3"/>
+  <path d="M28 150 L52 150 L48 162 L32 162Z" fill="#8a91b8" stroke="#29335e" stroke-width="3"/>
+  <g class="llama-motor"><path d="M32 162 Q40 200 48 162Z" fill="#ffc94a"/><path d="M35 162 Q40 186 45 162Z" fill="#ff9a52"/></g>
+</svg>`;
+
+function viaje(despues) {
+  const m = G.mision, c = G.config, marte = m.planeta === 'marte';
+  const reducido = document.documentElement.classList.contains('menos-movimiento') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  G.viajesVistos ||= {};
+  const corto = Boolean(G.viajesVistos[m.id]); // la segunda vez solo despegue y aterrizaje
+  G.viajesVistos[m.id] = true;
+  document.body.dataset.pantalla = 'viaje';
+  callar();
+  const masa = S.masa(c, G.juego, G.nasa);
+  const nivel = ['', t('medio'), t('alto')][c.blindaje] || '';
+  const carga = [
+    [I('tripulacion'), t('{n} astronautas', { n: m.tripulacion })],
+    c.panel && [I('panel'), `${c.panel} × ${t('Paneles')}`],
+    c.bateria && [I('bateria'), `${c.bateria} × ${t('Baterías')}`],
+    c.reactor && [I('reactor'), t('Reactor')],
+    c.reciclador && [I('reciclador'), t('Reciclador')],
+    c.invernadero && [I('invernadero'), t('Invernadero')],
+    c.extractor && [I('extractor'), t('Extractor de hielo')],
+    c.moxie && [I('moxie'), 'MOXIE'],
+    c.blindaje && [I('blindaje'), `${t('Blindaje')} ${nivel}`],
+    [I('o2'), `${c.o2} kg ${t('Oxígeno').toLowerCase()}`],
+    [I('agua'), `${c.agua} kg ${t('agua')}`],
+    [I('comida'), `${c.comida} kg ${t('comida')}`],
+  ].filter(Boolean);
+  const dato = G.nasa.cifras[marte ? 'viaje_perseverance' : 'viaje_apolo11'];
+  const destino = marte ? t('Marte') : t('la Luna');
+  let saltar = false, terminado = false;
+  const espera = (ms) => new Promise((r) => { const fin = Date.now() + (reducido ? Math.min(ms, 1400) : ms); const tick = () => (saltar || Date.now() >= fin ? r() : setTimeout(tick, 60)); tick(); });
+  $app.innerHTML = `
+    <section class="viaje ${marte ? 'a-marte' : 'a-luna'}" aria-labelledby="viajeTitulo">
+      <div class="viaje-escena" id="viajeEscena"></div>
+      <div class="viaje-texto"><p class="lema" id="viajeFase"></p><h2 id="viajeTitulo"></h2><p class="suave" id="viajeDetalle"></p></div>
+      <button class="fantasma viaje-saltar" id="viajeSaltar">${I('rapido')} ${t('Saltar viaje')}</button>
+    </section>`;
+  const $e = $app.querySelector('#viajeEscena');
+  const fase = (lema, titulo, detalle, escena, clase) => {
+    $app.querySelector('#viajeFase').innerHTML = lema;
+    $app.querySelector('#viajeTitulo').textContent = titulo;
+    $app.querySelector('#viajeDetalle').innerHTML = detalle || '';
+    $e.className = `viaje-escena ${clase}`;
+    $e.innerHTML = escena;
+    A.anunciar(titulo);
+  };
+  const terminar = () => { if (terminado) return; terminado = true; document.removeEventListener('keydown', tecla); despues(); };
+  const tecla = (ev) => { if (ev.key === 'Escape') saltar = true; };
+  document.addEventListener('keydown', tecla);
+  $app.querySelector('#viajeSaltar').addEventListener('click', () => { saltar = true; });
+
+  (async () => {
+    if (!corto) {
+      // 1. Carga en la Tierra
+      fase(`${I('caja')} ${t('Paso 1 de 4 · En la Tierra')}`, t('Cargando el cohete'), t('Todo lo que diseñaste sube al cohete: {t} t de {max} t.', { t: fmt(masa, 2), max: m.presupuesto_t }),
+        `<div class="plataforma-tierra"><div class="torre"></div>${COHETE_SVG}</div>
+         <ul class="manifiesto">${carga.map(([ic, txt], i) => `<li style="--i:${i}"><span class="ico">${ic}</span>${esc(txt)}<span class="ok">${I('check')}</span></li>`).join('')}</ul>`, 'fase-carga');
+      sfx.modulo();
+      await espera(1200 + carga.length * 260);
+    }
+    if (saltar) return terminar();
+    // 2. Cuenta regresiva y despegue
+    fase(`${I('cohete')} ${t(corto ? 'Despegue' : 'Paso 2 de 4 · Despegue')}`, t('3… 2… 1… ¡Despegue!'), t('Rumbo a {x}.', { x: esc(destino) }),
+      `<div class="plataforma-tierra"><div class="torre"></div><div class="cohete-sube">${COHETE_SVG}<div class="humo"></div></div></div><div class="cuenta" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div>`, 'fase-despegue');
+    await espera(900);
+    if (!saltar) sfx.despegue();
+    await espera(corto ? 1600 : 2600);
+    if (saltar) return terminar();
+    if (!corto) {
+      // 3. El viaje (tiempo real de una misión de la NASA)
+      fase(`${I('lugar')} ${t('Paso 3 de 4 · El viaje')}`, marte ? t('Unos 7 meses hasta Marte') : t('Unos 4 días hasta la Luna'), `${esc(dato?.texto || '')} <span class="etq">${I('datos')} ${t('Dato NASA')}</span>`,
+        `<div class="ruta"><div class="planeta tierra"></div><svg class="arco" viewBox="0 0 600 200" aria-hidden="true"><path d="M60 150 Q300 -40 540 150" fill="none" stroke="#c9cfee" stroke-width="3" stroke-dasharray="8 10"/></svg>
+         <div class="nave-ruta">${COHETE_SVG}</div><div class="planeta ${marte ? 'marte' : 'luna'}"></div></div>
+         <div class="contador-viaje">${Array.from({ length: marte ? 7 : 4 }, (_, i) => `<span style="--i:${i}">${marte ? t('Mes {n}', { n: i + 1 }) : t('Día {n}', { n: i + 1 })}</span>`).join('')}</div>`, 'fase-viaje');
+      await espera(3600);
+      if (saltar) return terminar();
+    }
+    // 4. Aterrizaje en el puesto de avanzada
+    fase(`${I('ok')} ${t(corto ? 'Aterrizaje' : 'Paso 4 de 4 · Aterrizaje')}`, t('¡Aterrizamos en {x}!', { x: m.lugar }), t('El puesto de avanzada te espera. Ahora mantén viva la base.'),
+      `<div class="suelo-destino"><div class="puesto"><span class="cupula"></span><span class="modulo-a"></span><span class="modulo-b"></span></div><div class="cohete-baja">${COHETE_SVG}</div><div class="polvo-aterrizaje"></div></div>`, 'fase-aterrizaje');
+    await espera(corto ? 2000 : 2800);
+    terminar();
+  })();
+}
+
 function empezarMision() {
   for (const k of Object.keys(valoresHUD)) delete valoresHUD[k];
   G.estados = [S.crearEstado(G.mision, G.config, G.juego, G.reservas[G.mision.id] || {})];
@@ -879,7 +977,6 @@ function empezarMision() {
   G.hoy = S.decisionesPorDefecto();
   G.avisoRebobinado = null;
   G.bitacoraAbierta = false;
-  sfx.despegue();
   mision();
 }
 
@@ -1011,7 +1108,7 @@ function efectoFinal(exito) {
   const capa = document.createElement('div');
   capa.className = 'confeti';
   capa.setAttribute('aria-hidden', 'true');
-  const colores = ['#ffd600', '#00d9f2', '#c92dd7', '#ff7900', '#5be3b0', '#ffffff'];
+  const colores = ['#ffc94a', '#5cc8ee', '#e77fb3', '#ff9a52', '#6fd39a', '#ffffff'];
   capa.innerHTML = Array.from({ length: 60 }, (_, i) => `<i style="left:${Math.random() * 100}%;background:${colores[i % colores.length]};animation-delay:${Math.random() * 0.6}s;animation-duration:${2.2 + Math.random() * 1.6}s;--giro:${Math.random() * 720 - 360}deg;--deriva:${Math.random() * 160 - 80}px"></i>`).join('');
   document.body.appendChild(capa);
   setTimeout(() => capa.remove(), 4500);

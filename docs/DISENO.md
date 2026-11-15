@@ -83,7 +83,7 @@ No se puede lanzar si la masa total supera el presupuesto.
 4. **Agua:** uso = `tripulación × 3,5 kg`. Con reciclador se pierde solo el 2 %; sin él, el 100 %. El invernadero gasta 4 kg más.
 5. **Comida:** consumo = `tripulación × 1,5 kg × ración` (ración reducida = 0,8). El invernadero aporta el 40 % del consumo normal.
 6. **Salud:** −8/día con ración reducida, +4/día con ración normal (máx. 100).
-7. **Radiación:** `1,37 mSv × (1 − blindaje)` por día (dato lunar), más la dosis de tormenta `× (1 − blindaje) × (refugio ? 0,1 : 1)`.
+7. **Radiación:** `0,9 mSv × (1 − blindaje)` por día (estimación lunar a partir del RAD de la NASA), más la dosis de tormenta `× (1 − blindaje) × (refugio ? 0,1 : 1)`.
 8. **Ciencia:** +1 por día fuera del refugio (+1 extra si el invernadero funcionó).
 9. **Comprobación de falla**, en este orden: energía → O₂ < 0 → agua < 0 → comida < 0 → dosis > límite → salud ≤ 0.
 

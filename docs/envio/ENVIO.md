@@ -40,7 +40,7 @@ De las 10 categorías, las nuestras: **Local Impact**, **Most Inspirational**, *
 - Electrolysis stoichiometry; the ISS Oxygen Generation Assembly uses this process: https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/
 - NASA Glenn – Fission Surface Power Project: https://www.nasa.gov/centers-and-facilities/glenn/nasas-fission-surface-power-project-energizes-lunar-exploration/
 - NASA Science – Moon Facts: https://science.nasa.gov/moon/facts/
-- Zhang et al. 2020, Science Advances 6(39) – First measurements of the radiation dose on the lunar surface (Chang'e 4, LND instrument): https://doi.org/10.1126/sciadv.aaz1334
+- NASA JPL – Data From NASA's Rover's Voyage to Mars Aids Planning (Curiosity RAD, 1.8 mSv/day in deep space): https://www.jpl.nasa.gov/news/data-from-nasa-rovers-voyage-to-mars-aids-planning/
 - Hassler et al. 2014, Science – Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover: https://www.science.org/doi/10.1126/science.1244797
 - NASA Human Research Program – Space Radiation (NASA-STD-3001): https://www.nasa.gov/hrp/radiation/
 - NASA DONKI – SEP and GST events of May 2024 (downloaded with the api.nasa.gov API): https://kauai.ccmc.gsfc.nasa.gov/DONKI/
@@ -51,6 +51,8 @@ De las 10 categorías, las nuestras: **Local Impact**, **Most Inspirational**, *
 - NASA – Opportunity rover mission summary: https://science.nasa.gov/mission/mer-opportunity/
 - NASA NSSDC – Mars Fact Sheet: https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html
 - NASA JPL – NASA Watches Mars Light Up During Epic Solar Storm (2024): https://www.jpl.nasa.gov/news/nasa-watches-mars-light-up-during-epic-solar-storm/
+- NASA – Apollo 11 mission overview: https://www.nasa.gov/mission/apollo-11/
+- NASA Science – Mars 2020 Perseverance rover: https://science.nasa.gov/mission/mars-2020-perseverance/
 - NASA – Space Communications: 7 Things You Need to Know: https://www.nasa.gov/missions/tech-demonstration/space-communications-7-things-you-need-to-know/
 
 **Software and libraries**

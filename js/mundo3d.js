@@ -11,7 +11,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import { FABRICAS, blindaje as crearBlindaje } from './modelos3d.js';
-import { FABRICAS_OBJETOS, POS_OBJETOS, animarObjeto } from './objetos3d.js';
+import { FABRICAS_OBJETOS, POS_OBJETOS, ESCALA_OBJETOS, animarObjeto } from './objetos3d.js';
 import { crearPlataforma, crearRocas } from './plataforma3d.js';
 import { altura, crearTerreno, crearViaLactea, crearExploracion, PUNTOS, alturaPunto, RADIO_EXPLORAR, rover as crearRover } from './terreno3d.js';
 
@@ -181,7 +181,7 @@ export class Mundo {
       const destino = new THREE.WebGLRenderTarget(256, 256, { type: THREE.HalfFloatType, samples: window.devicePixelRatio > 1 ? 2 : 4 });
       this.composer = new EffectComposer(this.renderer, destino);
       this.composer.addPass(new RenderPass(this.escena, this.camara));
-      this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.5, 0.82);
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.35, 0.45, 0.86);
       this.composer.addPass(this.bloom);
       this.composer.addPass(new OutputPass());
       // Viñeta y grano de película: acabado de cine
@@ -532,6 +532,7 @@ export class Mundo {
       const [x, z] = POS_OBJETOS[id];
       o.position.set(x, Math.max(altura(x, z), SUELO_Y - 0.05), z);
       o.rotation.y = Math.atan2(-x, -z) || 0; // mirando a la base
+      o.scale.setScalar(ESCALA_OBJETOS);
       o.userData.tipo = id;
       o.userData.id = id;
       o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });

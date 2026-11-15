@@ -9,7 +9,7 @@
     "dias": 6,
     "fase_inicial": 12,
     "presupuesto_t": 8,
-    "limite_dosis_msv": 40,
+    "limite_dosis_msv": 37,
     "objetivo_ciencia": 3,
     "eventos": [],
     "modulos": [
@@ -46,7 +46,7 @@
     "dias": 30,
     "fase_inicial": 10,
     "presupuesto_t": 13,
-    "limite_dosis_msv": 60,
+    "limite_dosis_msv": 51,
     "objetivo_ciencia": 22,
     "eventos": [
       {
@@ -99,7 +99,7 @@
     "dias": 7,
     "fase_inicial": 2,
     "presupuesto_t": 8,
-    "limite_dosis_msv": 50,
+    "limite_dosis_msv": 47,
     "objetivo_ciencia": 5,
     "eventos": [],
     "sugerido": {
@@ -271,7 +271,7 @@
     "dias": 20,
     "fase_inicial": 1,
     "presupuesto_t": 11,
-    "limite_dosis_msv": 60,
+    "limite_dosis_msv": 54,
     "objetivo_ciencia": 15,
     "eventos": [
       {
@@ -351,7 +351,7 @@
     "fase_inicial": 0,
     "luz_permanente": true,
     "presupuesto_t": 12,
-    "limite_dosis_msv": 70,
+    "limite_dosis_msv": 58,
     "objetivo_ciencia": 30,
     "modulos": [
       "panel",
@@ -406,7 +406,7 @@
     "dias": 30,
     "fase_inicial": 0,
     "presupuesto_t": 14,
-    "limite_dosis_msv": 55,
+    "limite_dosis_msv": 46,
     "objetivo_ciencia": 22,
     "modulos": [
       "panel",
