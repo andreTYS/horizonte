@@ -69,7 +69,7 @@ sin conexión, incluso abriendo el enlace del aula. Tras cambiar voces o imágen
 
 ## Para docentes: panel y modo aula
 
-En el VPS, `docente.html` (con la clave `DOCENTE_TOKEN`) muestra por código de aula:
+En `docente.html` cada docente **crea su clase y elige su propia clave** (como en Kahoot; si no da código se genera uno como `LUNA-4821`) o prueba una **clase de demostración** sin clave. La clave `DOCENTE_TOKEN` del servidor queda solo como acceso de administración. El panel muestra por clase:
 
 - **Enlace y código QR** para estudiantes (`?aula=CODIGO&modo=aula`): el juego se abre con el aula puesta y **sin sonido ni voz** al inicio. Con *ritmo tranquilo* (`&ritmo=tranquilo`) se quita el botón ×5.
 - **Pausar el aula**: los estudiantes en modo aula ven en unos 8 s una pantalla de pausa con tu mensaje; su partida no se pierde.

@@ -2,7 +2,8 @@
 // - Sirve el juego (archivos estáticos).
 // - /api/salud           comprobación de vida
 // - /api/partidas  POST  guarda el resultado de una misión
-// - /api/resultados GET  resultados por aula (requiere DOCENTE_TOKEN)
+// - /api/clase POST       el docente crea su clase con su propia clave (como en Kahoot)
+// - /api/resultados GET  resultados por aula (clave de la clase o DOCENTE_TOKEN de administración)
 // - /api/donki     GET   proxy de NASA DONKI con caché; la API key solo vive en el servidor
 // Sin dependencias: usa node:http y node:sqlite (Node ≥ 22.5).
 
@@ -57,6 +58,44 @@ db.exec(`
 `);
 // Columna nueva en bases creadas antes (predicción del paso «Predice»)
 if (!db.prepare('PRAGMA table_info(partidas)').all().some((c) => c.name === 'prediccion')) db.exec('ALTER TABLE partidas ADD COLUMN prediccion TEXT');
+// Clase propia del docente (como en Kahoot): cada aula guarda la clave que eligió su docente (cifrada con scrypt)
+if (!db.prepare('PRAGMA table_info(aulas)').all().some((c) => c.name === 'clave')) db.exec('ALTER TABLE aulas ADD COLUMN clave TEXT');
+
+function cifrarClave(clave) {
+  const sal = crypto.randomBytes(16).toString('hex');
+  return `${sal}:${crypto.scryptSync(clave, sal, 32).toString('hex')}`;
+}
+function claveCorrecta(clave, guardada) {
+  if (!clave || !guardada) return false;
+  const [sal, hash] = guardada.split(':');
+  const prueba = crypto.scryptSync(clave, sal, 32);
+  return crypto.timingSafeEqual(prueba, Buffer.from(hash, 'hex'));
+}
+// Freno contra quien intente adivinar claves: 10 fallos en 10 minutos bloquean esa aula 10 minutos
+const fallos = new Map();
+function bloqueada(aula) { const f = fallos.get(aula); return f && f.n >= 10 && Date.now() - f.desde < 600_000; }
+function anotarFallo(aula) {
+  const f = fallos.get(aula);
+  if (!f || Date.now() - f.desde > 600_000) fallos.set(aula, { n: 1, desde: Date.now() }); else f.n += 1;
+}
+/** ¿Puede ver o pausar esta aula? Con la clave de su docente o con la clave general de administración. */
+function autorizado(req, aula) {
+  const dada = (req.headers.authorization || '').replace(/^Bearer /, '');
+  if (DOCENTE_TOKEN && dada === DOCENTE_TOKEN) return true;
+  if (!aula || bloqueada(aula)) return false;
+  const fila = db.prepare('SELECT clave FROM aulas WHERE codigo = ?').get(aula);
+  if (claveCorrecta(dada, fila?.clave)) { fallos.delete(aula); return true; }
+  anotarFallo(aula);
+  return false;
+}
+const PALABRAS = ['LUNA', 'MARTE', 'COHETE', 'ORION', 'NEBULA', 'COMETA', 'ASTRO', 'KILLA', 'INTI'];
+function codigoNuevo() {
+  for (let i = 0; i < 50; i++) {
+    const c = `${PALABRAS[crypto.randomInt(PALABRAS.length)]}-${crypto.randomInt(1000, 10000)}`;
+    if (!db.prepare('SELECT 1 FROM aulas WHERE codigo = ?').get(c)) return c;
+  }
+  return `AULA-${crypto.randomInt(100000, 1000000)}`;
+}
 const insertar = db.prepare(`INSERT INTO partidas (fecha, aula, nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, config, prediccion)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const insertarNota = db.prepare('INSERT INTO notas (fecha, aula, nombre, mision, nota) VALUES (?, ?, ?, ?, ?)');
@@ -188,11 +227,27 @@ async function api(req, res, url) {
     return json(res, 200, { aula, pausa: Boolean(a?.pausa), mensaje: a?.mensaje || null });
   }
 
+  // El docente crea su clase y elige su propia clave (si no da código, se genera uno fácil de dictar)
+  if (url.pathname === '/api/clase' && req.method === 'POST') {
+    let a;
+    try { a = JSON.parse(await leerCuerpo(req)); } catch { return json(res, 400, { error: 'JSON inválido' }); }
+    const clave = typeof a.clave === 'string' ? a.clave : '';
+    if (clave.length < 4 || clave.length > 40) return json(res, 400, { error: 'La clave debe tener entre 4 y 40 caracteres.' });
+    const pedido = texto(a.aula, 20)?.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    const aula = pedido || codigoNuevo();
+    if (aula.length < 3) return json(res, 400, { error: 'El código debe tener al menos 3 letras o números.' });
+    const existe = db.prepare('SELECT clave FROM aulas WHERE codigo = ?').get(aula);
+    if (existe?.clave) return json(res, 409, { error: 'Ese código ya lo usa otra clase. Elige otro o deja el campo vacío.' });
+    db.prepare(`INSERT INTO aulas (codigo, pausa, clave, actualizado) VALUES (?, 0, ?, datetime('now'))
+      ON CONFLICT(codigo) DO UPDATE SET clave = excluded.clave, actualizado = excluded.actualizado`).run(aula, cifrarClave(clave));
+    return json(res, 201, { aula });
+  }
+
   if (url.pathname === '/api/aula' && req.method === 'POST') {
-    if (!DOCENTE_TOKEN || req.headers.authorization !== `Bearer ${DOCENTE_TOKEN}`) return json(res, 401, { error: 'no autorizado' });
     let a;
     try { a = JSON.parse(await leerCuerpo(req)); } catch { return json(res, 400, { error: 'JSON inválido' }); }
     const aula = texto(a.aula, 20)?.toUpperCase();
+    if (!autorizado(req, aula)) return json(res, 401, { error: 'no autorizado' });
     if (!aula || typeof a.pausa !== 'boolean') return json(res, 400, { error: 'faltan datos' });
     db.prepare(`INSERT INTO aulas (codigo, pausa, mensaje, actualizado) VALUES (?, ?, ?, datetime('now'))
       ON CONFLICT(codigo) DO UPDATE SET pausa = excluded.pausa, mensaje = excluded.mensaje, actualizado = excluded.actualizado`)
@@ -201,8 +256,8 @@ async function api(req, res, url) {
   }
 
   if (url.pathname === '/api/resultados' && req.method === 'GET') {
-    if (!DOCENTE_TOKEN || req.headers.authorization !== `Bearer ${DOCENTE_TOKEN}`) return json(res, 401, { error: 'no autorizado' });
     const aula = texto(url.searchParams.get('aula'), 20)?.toUpperCase();
+    if (!autorizado(req, aula)) return json(res, 401, { error: 'no autorizado' });
     if (!aula) return json(res, 400, { error: 'falta el aula' });
     const filas = db.prepare(`SELECT nombre, mision, exito, motivo, dias, ciencia, rebobinados, estrellas, prediccion, fecha
       FROM partidas WHERE aula = ? ORDER BY id DESC LIMIT 2000`).all(aula);

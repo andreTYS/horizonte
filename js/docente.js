@@ -22,6 +22,26 @@ try {
   $('aula').value = sessionStorage.getItem('horizonte.aulaDocente') || '';
 } catch { /* sin almacenamiento */ }
 
+// Crear la clase propia: el docente elige su clave (el servidor la guarda cifrada)
+$('formCrear').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const clave = $('claveNueva').value;
+  $('salida').innerHTML = '<p class="suave">Creando tu clase…</p>';
+  try {
+    const r = await fetch('api/clase', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aula: $('aulaNueva').value.trim(), clave }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || `El servidor respondió ${r.status}.`);
+    sesion = { aula: d.aula, token: clave };
+    try { sessionStorage.setItem('horizonte.token', clave); sessionStorage.setItem('horizonte.aulaDocente', d.aula); } catch { /* sin almacenamiento */ }
+    $('aula').value = d.aula;
+    G_nueva = d.aula;
+    cargar();
+  } catch (err) {
+    $('salida').innerHTML = `<div class="aviso peligro">${esc(err.message)}</div>`;
+  }
+});
+let G_nueva = null;
+
 $('form').addEventListener('submit', (ev) => {
   ev.preventDefault();
   sesion = { aula: $('aula').value.trim().toUpperCase(), token: $('token').value };
@@ -89,7 +109,7 @@ async function cargar() {
   $('salida').innerHTML = '<p class="suave">Cargando…</p>';
   try {
     const r = await fetch(`api/resultados?aula=${encodeURIComponent(sesion.aula)}`, { headers: { Authorization: `Bearer ${sesion.token}` } });
-    if (r.status === 401) throw new Error('Clave docente incorrecta.');
+    if (r.status === 401) throw new Error('El código o la clave no coinciden. Si fallas muchas veces, espera 10 minutos.');
     if (!r.ok) throw new Error(`El servidor respondió ${r.status}.`);
     datos = await r.json();
     pintar();
@@ -160,7 +180,8 @@ function pintar() {
     <p class="chico suave">Créditos estelares e insignias ganadas en el juego (se guardan cuando el estudiante escribe su nombre y el código de aula).</p>
     ${d.logros?.length ? tabla(d.logros, [['nombre', 'Estudiante'], ['misiones', 'Misiones cumplidas'], ['insignias', 'Insignias', (x) => String(x.length)], ['creditos', 'Créditos'], ['actualizado', 'Última vez', (x) => new Date(x).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })]]) : '<p class="suave">Aún no hay progreso guardado.</p>'}
   </section>`;
-  $('salida').innerHTML = `${d.demo ? '<div class="aviso-demo" role="status"><b>Aula de demostración.</b> Los estudiantes y resultados son <b>inventados</b> para que veas cómo funciona el panel. Nada se guarda. Para tu aula real, escribe tu código y la clave docente.</div>' : ''}${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
+  const avisoNueva = G_nueva === d.aula ? `<div class="aviso-demo" role="status"><b>¡Tu clase está lista!</b> Código: <b class="codigo-grande">${esc(d.aula)}</b>. Díctalo a tus estudiantes o muéstrales el QR. Anota tu clave: la necesitarás para volver a entrar.</div>` : '';
+  $('salida').innerHTML = `${avisoNueva}${d.demo ? '<div class="aviso-demo" role="status"><b>Aula de demostración.</b> Los estudiantes y resultados son <b>inventados</b> para que veas cómo funciona el panel. Nada se guarda. Para tu aula real, escribe tu código y la clave docente.</div>' : ''}${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
     <section class="tarjeta"><h3>Resumen por misión</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión', nombreMision], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
     <section class="tarjeta"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión', nombreMision], ['motivo', 'Causa', (m) => MOTIVOS[m] || esc(m)], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
     <section class="tarjeta"><div class="entre"><h3>Partidas</h3><div class="fila-botones"><button class="secundario" id="csvPartidas">${I('descargar')} Partidas (CSV)</button><button class="secundario" id="csvNotas">${I('descargar')} Bitácoras (CSV)</button></div></div>

@@ -94,3 +94,21 @@ test('progreso: se guarda por aula + nombre, no se pisa con uno más viejo, y el
 test('sin NASA_API_KEY el proxy de DONKI lo dice claramente', async () => {
   assert.equal((await fetch(`${BASE}/api/donki?tipo=GST&inicio=2024-05-01&fin=2024-05-31`)).status, 503);
 });
+
+test('clase propia: el docente crea su clase con su clave, entra con ella y nadie más', async () => {
+  const crear = (x) => fetch(`${BASE}/api/clase`, { method: 'POST', body: JSON.stringify(x) });
+  const r = await crear({ clave: 'kahoot123' });
+  assert.equal(r.status, 201);
+  const { aula } = await r.json();
+  assert.match(aula, /^[A-Z]+-\d{4,6}$/);
+  assert.equal((await crear({ aula: 'mi-clase', clave: 'abcd' })).status, 201);
+  assert.equal((await crear({ aula: 'MI-CLASE', clave: 'otra' })).status, 409); // ya tiene dueño
+  assert.equal((await crear({ clave: '12' })).status, 400); // clave muy corta
+  const ver = (a, clave) => fetch(`${BASE}/api/resultados?aula=${a}`, { headers: { Authorization: `Bearer ${clave}` } });
+  assert.equal((await ver(aula, 'kahoot123')).status, 200);
+  assert.equal((await ver(aula, 'mala')).status, 401);
+  assert.equal((await ver('mi-clase', 'kahoot123')).status, 401); // la clave de una clase no abre otra
+  assert.equal((await ver('mi-clase', 'secreto')).status, 200); // administración
+  const pausar = await fetch(`${BASE}/api/aula`, { method: 'POST', headers: { Authorization: 'Bearer abcd' }, body: JSON.stringify({ aula: 'mi-clase', pausa: true }) });
+  assert.equal(pausar.status, 200);
+});

@@ -869,26 +869,20 @@ function inicio() {
       <div class="lista-misiones">${campana}</div>
       ${avanzadas ? `<h2 class="titulo-seccion">${t('Misiones extra')} <span class="pastilla">${t('sin pistas')}</span></h2><div class="lista-misiones">${avanzadas}</div>` : ''}
       ${tarjetaAprendizaje()}
-      <details class="jugador"><summary>${I('persona')} ${G.jugador.nombre ? esc(G.jugador.nombre) : t('Tu nombre y aula (opcional)')}</summary>
-        <label>${t('Nombre')} <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
-        <label>${t('Código de aula')} <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="${t('p. ej. 3B-2026')}"></label>
-        <p class="chico suave">${t('Si tu docente te dio un código, escríbelo para que vea tu avance.')}</p>
-        <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
-        <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
-      </details>
-      <div class="fila"><button id="guiaBtn" class="secundario">${I('info')} ${t('Guía del juego')}</button><button id="personajesBtn" class="secundario">${I('persona')} ${t('Personajes')}</button><button id="tripulacionBtn" class="secundario">${I('tripulacion')} ${t('Tripulación')}</button><button id="globoBtn" class="secundario">${I('orbita')} ${t('La Luna y Marte en globo')}</button><button id="historia" class="secundario">${I('historia')} ${t('Ver la historia')}</button><button id="fuentes" class="secundario">${I('datos')} ${t('Datos de NASA')}</button></div>
       <p class="chico suave pie">Stellar Experience · Moquegua, Perú · ${t('Proyecto para NASA Space Apps Challenge 2026')}</p>
     </aside>
+    <nav class="dock-portada" aria-label="${t('Más opciones')}">
+      ${[['miAula', 'aula', G.jugador.nombre ? esc(G.jugador.nombre) : t('Mi aula')], ['tripulacionBtn', 'tripulacion', t('Tripulación')], ['globoBtn', 'orbita', t('Globo')],
+        ['guiaBtn', 'info', t('Guía')], ['personajesBtn', 'persona', t('Personajes')], ['historia', 'historia', t('Historia')], ['fuentes', 'datos', t('Datos NASA')], ['recorridoBtn', 'nebula', t('Recorrido')]]
+        .map(([id, ic, txt]) => `<button id="${id}" class="dock-btn"><span class="dock-ico">${I(ic)}</span><span class="dock-txt">${txt}</span></button>`).join('')}
+    </nav>
     <p class="pista-gesto">${I('mano')} ${t('Arrastra para girar la base · pellizca para acercar')}</p>`;
   $app.querySelectorAll('[data-mision]').forEach((b) => b.addEventListener('click', () => {
     abrirMision(G.misiones[+b.dataset.mision]);
   }));
   $app.querySelectorAll('[data-eval]').forEach((b) => b.addEventListener('click', () => ({ inicial: () => pruebaInicial(inicio), final: pruebaFinal, caso: casoArtemis, resumen: resumenAprendizaje, informe: informeComandante })[b.dataset.eval]()));
-  for (const id of ['nombre', 'aula']) {
-    document.getElementById(id).addEventListener('change', (ev) => { G.jugador[id] = ev.target.value.trim(); guardar('horizonte.jugador', G.jugador); restaurarProgreso(); });
-  }
-  document.getElementById('modoAula').addEventListener('change', (ev) => { G.aula.activo = ev.target.checked; guardar('horizonte.modoAula', G.aula); if (!G.aula.activo) mostrarPausa(false); inicio(); });
-  document.getElementById('ritmoTranquilo').addEventListener('change', (ev) => { G.aula.tranquilo = ev.target.checked; guardar('horizonte.modoAula', G.aula); });
+  document.getElementById('miAula').addEventListener('click', miAula);
+  document.getElementById('recorridoBtn').addEventListener('click', () => recorridoPortada(true));
   document.getElementById('fuentes').addEventListener('click', fuentes);
   document.getElementById('historia').addEventListener('click', () => historia());
   document.getElementById('aLanding').addEventListener('click', landing);
@@ -905,6 +899,86 @@ function inicio() {
   });
   enlazarSonido();
   if (!G.introVista && !Object.keys(G.progreso).length && !G.demo) { G.introVista = true; guardar('horizonte.intro', true); introRapida(); }
+  else if (!G.demo && !leer('horizonte.recorrido', false)) setTimeout(() => recorridoPortada(), 900);
+}
+
+/** Ventana «Mi aula»: nombre, código que dio el docente y modo aula. */
+function miAula() {
+  const c = modal({ cerrable: true });
+  c.innerHTML = `
+    <p class="lema">${I('aula')} ${t('Mi aula')}</p><h2>${t('¿Tu docente te dio un código?')}</h2>
+    <p class="suave chico">${t('Escribe tu nombre y el código de tu clase: tu docente verá tu avance y tus logros se guardan aunque cambies de celular. Es opcional.')}</p>
+    <div class="form-aula">
+      <label>${t('Tu nombre')} <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
+      <label>${t('Código de la clase')} <input id="aula" maxlength="20" value="${esc(G.jugador.aula)}" autocomplete="off" placeholder="${t('p. ej. LUNA-4821')}"></label>
+      <label class="casilla"><input type="checkbox" id="modoAula" ${G.aula.activo ? 'checked' : ''}> ${t('Modo aula (mi docente puede pausar el juego)')}</label>
+      <label class="casilla"><input type="checkbox" id="ritmoTranquilo" ${G.aula.tranquilo ? 'checked' : ''}> ${t('Ritmo tranquilo: avanzar de un día en un día')}</label>
+    </div>
+    <div class="fila"><button class="primario" id="guardarAula">${I('check')} ${t('Listo')}</button></div>
+    <p class="chico suave">${t('¿Eres docente?')} <a href="docente.html">${t('Crea tu clase aquí')}</a></p>`;
+  c.querySelector('#guardarAula').addEventListener('click', () => {
+    G.jugador.nombre = c.querySelector('#nombre').value.trim();
+    G.jugador.aula = c.querySelector('#aula').value.trim().toUpperCase();
+    guardar('horizonte.jugador', G.jugador);
+    G.aula.activo = c.querySelector('#modoAula').checked;
+    G.aula.tranquilo = c.querySelector('#ritmoTranquilo').checked;
+    guardar('horizonte.modoAula', G.aula);
+    if (!G.aula.activo) mostrarPausa(false);
+    restaurarProgreso();
+    inicio();
+  });
+}
+
+// ───────────────────────── Recorrido de la portada ─────────────────────────
+// La llama astronauta presenta cada parte de la pantalla, una por una. Se ve sola la primera vez
+// y se puede repetir con el botón «Recorrido».
+function recorridoPortada(forzar = false) {
+  if (document.body.dataset.pantalla !== 'portada' || (!forzar && leer('horizonte.recorrido', false))) return;
+  guardar('horizonte.recorrido', true);
+  const pasos = [
+    ['.lista-misiones .mision-btn', t('¡Hola! Soy la llama de la expedición. Aquí están las misiones. Empieza por el Episodio 0: es un entrenamiento corto donde aprendes a jugar.')],
+    ['.lista-misiones', t('Luego vienen 4 misiones, de la Luna a Marte. Cada una que cumples te da estrellas ★ y abre la siguiente.')],
+    ['#chipCreditos', t('Estos son tus créditos estelares. Los ganas al cumplir misiones, al predecir bien y al aprender de un error.')],
+    ['#tripulacionBtn', t('En Tripulación gastas tus créditos: trajes, visores, parches y accesorios para tus astronautas, y objetos para la base.')],
+    ['#globoBtn', t('En el Globo ves la Luna y Marte enteros y dónde queda cada misión, en su lugar real.')],
+    ['#miAula', t('Si tu docente te dio un código de clase, escríbelo en Mi aula para que vea tu avance.')],
+    ['#guiaBtn', t('En la Guía está cómo se juega y qué significa cada barra. Personajes te presenta a la tripulación y a Nebula.')],
+    ['#fuentes', t('Todos los números del juego son de la NASA. Aquí puedes ver de dónde sale cada uno.')],
+    ['.barra-rapida', t('Arriba cambias el idioma, el sonido, la voz y la accesibilidad (texto grande, alto contraste, menos movimiento).')],
+    ['#recorridoBtn', t('Si quieres volver a ver este recorrido, toca aquí. ¡Buena expedición, comandante!')],
+  ].filter(([sel]) => document.querySelector(sel));
+  let i = 0;
+  const capa = document.createElement('div');
+  capa.id = 'recorrido';
+  capa.innerHTML = `<div class="recorrido-foco"></div><div class="recorrido-globo" role="dialog" aria-live="polite" aria-label="${t('Recorrido')}">
+    <img src="assets/marca/llama-astronauta.webp" alt="" width="72" height="72"><div><p id="recorridoTexto"></p>
+    <div class="fila"><button class="fantasma chico" id="recorridoSalir">${t('Saltar')}</button><span class="recorrido-n" id="recorridoN"></span><button class="primario chico" id="recorridoSig">${t('Siguiente')} ▶</button></div></div></div>`;
+  document.body.appendChild(capa);
+  const foco = capa.querySelector('.recorrido-foco'), globo = capa.querySelector('.recorrido-globo');
+  const cerrar = () => { capa.remove(); window.removeEventListener('resize', mostrar); document.removeEventListener('keydown', tecla); };
+  function mostrar() {
+    const [sel, txt] = pasos[i];
+    const el = document.querySelector(sel);
+    if (!el) return cerrar();
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const r = el.getBoundingClientRect();
+    Object.assign(foco.style, { left: `${r.left - 8}px`, top: `${r.top - 8}px`, width: `${r.width + 16}px`, height: `${Math.min(r.height, innerHeight * 0.6) + 16}px` });
+    capa.querySelector('#recorridoTexto').textContent = txt;
+    capa.querySelector('#recorridoN').textContent = `${i + 1} / ${pasos.length}`;
+    capa.querySelector('#recorridoSig').textContent = i === pasos.length - 1 ? t('¡Listo!') : `${t('Siguiente')} ▶`;
+    // el globo va donde haya espacio: debajo o encima del elemento, sin salirse de la pantalla
+    const abajo = r.bottom + 190 < innerHeight;
+    globo.style.top = `${abajo ? Math.min(r.bottom + 14, innerHeight - 190) : Math.max(10, r.top - 180)}px`;
+    globo.style.left = `${Math.max(10, Math.min(innerWidth - Math.min(420, innerWidth - 20) - 10, r.left))}px`;
+    leerEnVoz(txt);
+    capa.querySelector('#recorridoSig').focus();
+  }
+  const tecla = (e) => { if (e.key === 'Escape') cerrar(); };
+  capa.querySelector('#recorridoSig').addEventListener('click', () => { i += 1; if (i >= pasos.length) cerrar(); else mostrar(); });
+  capa.querySelector('#recorridoSalir').addEventListener('click', cerrar);
+  window.addEventListener('resize', mostrar);
+  document.addEventListener('keydown', tecla);
+  mostrar();
 }
 
 // ───────────────────────── Construcción ─────────────────────────

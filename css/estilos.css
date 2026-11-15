@@ -1145,3 +1145,46 @@ body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d 
   #aviso-lento b { flex: 1 1 auto; }
   #aviso-lento button { min-height: 34px; padding: 4px 10px; font-size: .8rem; }
 }
+
+.entrada-docente { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 16px 0; }
+.entrada-docente .tarjeta { display: grid; gap: 10px; align-content: start; }
+.entrada-docente h2 { margin: 0; font-family: var(--titulo); font-size: 1.15rem; }
+.entrada-docente label { display: grid; gap: 4px; }
+.codigo-grande { font-family: var(--numeros); font-size: 1.4rem; letter-spacing: .08em; color: var(--acento); }
+
+/* ───────── Portada: barra de opciones fuera del panel de misiones ───────── */
+.dock-portada { position: absolute; z-index: 3; left: 8px; right: 8px; bottom: calc(6px + var(--seguro-abajo)); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px; }
+.dock-portada::-webkit-scrollbar { display: none; }
+.dock-btn { flex: 0 0 auto; display: grid; justify-items: center; gap: 4px; min-width: 76px; padding: 8px 10px; border-radius: 18px;
+  background: var(--vidrio-fuerte); border: 1px solid var(--borde); color: var(--texto); box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
+.dock-btn:hover, .dock-btn:focus-visible { border-color: var(--acento); transform: translateY(-2px); }
+.dock-ico { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: rgba(92, 200, 238, .14); color: var(--acento-2); }
+.dock-ico .i { width: 22px; height: 22px; }
+#miAula .dock-ico { background: rgba(255, 201, 74, .16); color: var(--acento); }
+#recorridoBtn .dock-ico { background: rgba(231, 127, 179, .16); color: var(--magenta); }
+.dock-txt { font: 700 .78rem var(--boton); white-space: nowrap; max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+.pista-gesto { bottom: calc(50dvh + 104px); }
+@media (max-width: 759px) {
+  .menu-principal { bottom: calc(92px + var(--seguro-abajo)); max-height: 50dvh; }
+  .dock-btn { min-width: 68px; padding: 6px 8px; }
+  .dock-ico { width: 34px; height: 34px; }
+}
+.form-aula { display: grid; gap: 10px; margin: 12px 0; }
+.form-aula label:not(.casilla) { display: grid; gap: 4px; }
+@media (min-width: 760px) {
+  .dock-portada { left: 24px; right: 448px; bottom: 20px; flex-wrap: wrap; overflow: visible; }
+  .marca { bottom: 150px; }
+  .pista-gesto { left: auto; right: 448px; bottom: auto; top: 24px; }
+}
+
+/* ───────── Recorrido guiado por la llama ───────── */
+#recorrido { position: fixed; inset: 0; z-index: 60; }
+.recorrido-foco { position: fixed; border-radius: 18px; box-shadow: 0 0 0 4px var(--acento), 0 0 0 9999px rgba(10, 14, 30, .72); transition: all .35s ease; pointer-events: none; }
+.recorrido-globo { position: fixed; width: min(420px, calc(100vw - 20px)); display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: start; padding: 14px; border-radius: 20px;
+  background: #f5f6ff; color: #18203f; box-shadow: var(--sombra); transition: top .35s ease, left .35s ease; }
+.recorrido-globo img { width: 72px; height: 72px; object-fit: contain; }
+.recorrido-globo p { margin: 0 0 10px; font-size: 1rem; line-height: 1.4; }
+.recorrido-globo .fila { display: flex; align-items: center; gap: 8px; justify-content: space-between; margin: 0; }
+.recorrido-globo .fantasma { color: #5b54c4; }
+.recorrido-n { font: 700 .8rem var(--numeros); color: #6b7090; }
+.menos-movimiento .recorrido-foco, .menos-movimiento .recorrido-globo { transition: none; }
