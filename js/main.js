@@ -143,7 +143,7 @@ function avisoModo2D() {
 }
 // Si el 3D va muy lento aun con la calidad al mínimo, se ofrece (una vez) la vista 2D ligera.
 window.addEventListener('mundo-calidad', (ev) => {
-  if (ev.detail.escalon < 3 || ev.detail.fps >= 12 || G.ofrecio2D || document.getElementById('aviso-lento')) return;
+  if (G.demo || ev.detail.escalon < 3 || ev.detail.fps >= 12 || G.ofrecio2D || document.getElementById('aviso-lento')) return;
   G.ofrecio2D = true;
   const a = document.createElement('div');
   a.id = 'aviso-lento';
