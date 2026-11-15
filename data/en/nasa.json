@@ -1,7 +1,7 @@
 {
   "o2_persona_dia": "An astronaut breathes about 0.82 kg of oxygen per day.",
-  "agua_persona_dia": "Each astronaut uses several liters of water per day for drinking, food preparation and hygiene.",
-  "comida_persona_dia": "Each astronaut needs about 1.5 kg of food per day.",
+  "agua_persona_dia": "At a planetary base, NASA estimates about 3.4 kg of water per astronaut per day: 2 for drinking, 0.5 to prepare food, 0.4 for hygiene and 0.5 for the toilet.",
+  "comida_persona_dia": "Each astronaut eats about 1.5 kg of food per day (1.51 kg without packaging, according to NASA).",
   "recuperacion_agua": "The International Space Station recovers 98 % of the water the crew uses.",
   "agua_por_kg_o2": "To make 1 kg of oxygen by splitting water (2H₂O → 2H₂ + O₂), 1.125 kg of water is used.",
   "fsp_kw": "NASA's Fission Surface Power reactor is designed to deliver 40 kW continuously, day and night.",

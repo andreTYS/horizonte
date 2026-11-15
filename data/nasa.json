@@ -11,20 +11,20 @@
       "verificado": true
     },
     "agua_persona_dia": {
-      "valor": 3.5,
+      "valor": 3.4,
       "unidad": "kg de agua por persona y día (beber, comida e higiene)",
-      "texto": "Cada astronauta usa varios litros de agua al día entre bebida, preparación de comida e higiene.",
-      "fuente": "NASA BVAD, NASA/TP-2015-218570/REV2",
-      "url": "https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document",
-      "verificado": false
+      "texto": "En una base planetaria, la NASA calcula unos 3,4 kg de agua por astronauta al día: 2 para beber, 0,5 para preparar la comida, 0,4 para higiene y 0,5 para el baño.",
+      "fuente": "NASA BVAD, NASA/TP-2015-218570/REV1, tabla 4-20 (base planetaria)",
+      "url": "https://ntrs.nasa.gov/citations/20180001338",
+      "verificado": true
     },
     "comida_persona_dia": {
       "valor": 1.5,
       "unidad": "kg de comida por persona y día",
-      "texto": "Cada astronauta necesita alrededor de 1,5 kg de comida al día.",
-      "fuente": "NASA BVAD, NASA/TP-2015-218570/REV2",
-      "url": "https://ntrs.nasa.gov/search?q=Life%20Support%20Baseline%20Values%20and%20Assumptions%20Document",
-      "verificado": false
+      "texto": "Cada astronauta come unos 1,5 kg de comida al día (1,51 kg sin envases, según la NASA).",
+      "fuente": "NASA Life Support Baseline Values and Assumptions Document (BVAD), NASA/TP-2015-218570/REV1, tabla 3-33",
+      "url": "https://ntrs.nasa.gov/citations/20180001338",
+      "verificado": true
     },
     "recuperacion_agua": {
       "valor": 0.98,
