@@ -212,6 +212,11 @@ async function demo() {
     await espera(1500);
     l.scrollTop = 0; await espera(600);
     await clic('#lJugar', 1800);
+    // 1b. El globo con los lugares reales y el vestidor de la tripulación
+    await clic('#globoBtn', 4200);
+    await clic('#globoVolver', 900);
+    await clic('#tripulacionBtn', 4200);
+    await clic('#vestidorVolver', 900);
     // 2. Misión 1 con el diseño sugerido (falla en la noche lunar)
     const i1 = G.misiones.findIndex((m) => m.id === 'noche');
     await clic(`[data-mision="${i1}"]`, 2200);
