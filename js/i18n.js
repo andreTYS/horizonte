@@ -55,6 +55,8 @@ const EN = {
   '{n} de 3 estrellas': '{n} of 3 stars',
   'Sonido': 'Sound',
   'Recuperamos tu progreso': 'We restored your progress',
+  '¡Bienvenido a la clase {x}!': 'Welcome to class {x}!',
+  'Escribe tu nombre para que tu docente vea tu avance.': 'Type your name so your teacher can see your progress.',
   'Usar vista ligera (2D)': 'Use light view (2D)',
   'Para equipos lentos. Tu misión sigue igual.': 'For slow devices. Your mission continues as is.',
   'Volver a su lugar': 'Back to her place',

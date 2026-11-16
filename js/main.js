@@ -704,6 +704,7 @@ function leerEnlaceDocente() {
   if (!aula) return;
   G.jugador.aula = aula.toUpperCase();
   guardar('horizonte.jugador', G.jugador);
+  if (!G.jugador.nombre) G.pedirNombre = true; // entró con el QR del docente: le pedimos su nombre al empezar
   if (q.get('modo') === 'aula') {
     G.aula = { activo: true, tranquilo: q.get('ritmo') === 'tranquilo' };
     guardar('horizonte.modoAula', G.aula);
@@ -921,15 +922,17 @@ function inicio() {
     inicio();
   });
   enlazarSonido();
-  if (!G.introVista && !Object.keys(G.progreso).length && !G.demo) { G.introVista = true; guardar('horizonte.intro', true); introRapida(); }
+  if (G.pedirNombre && !G.jugador.nombre && !G.demo) { G.pedirNombre = false; miAula(true); }
+  else if (!G.introVista && !Object.keys(G.progreso).length && !G.demo) { G.introVista = true; guardar('horizonte.intro', true); introRapida(); }
   else if (!G.demo && !leer('horizonte.recorrido', false)) setTimeout(() => recorridoPortada(), 900);
 }
 
 /** Ventana «Mi aula»: nombre, código que dio el docente y modo aula. */
-function miAula() {
+function miAula(desdeQR = false) {
   const c = modal({ cerrable: true });
   c.innerHTML = `
-    <p class="lema">${I('aula')} ${t('Mi aula')}</p><h2>${t('¿Tu docente te dio un código?')}</h2>
+    <p class="lema">${I('aula')} ${t('Mi aula')}</p><h2>${desdeQR ? t('¡Bienvenido a la clase {x}!', { x: esc(G.jugador.aula) }) : t('¿Tu docente te dio un código?')}</h2>
+    ${desdeQR ? `<p class="aviso-demo">${t('Escribe tu nombre para que tu docente vea tu avance.')}</p>` : ''}
     <p class="suave chico">${t('Escribe tu nombre y el código de tu clase: tu docente verá tu avance y tus logros se guardan aunque cambies de celular. Es opcional.')}</p>
     <div class="form-aula">
       <label>${t('Tu nombre')} <input id="nombre" maxlength="40" value="${esc(G.jugador.nombre)}" autocomplete="off"></label>
@@ -939,6 +942,7 @@ function miAula() {
     </div>
     <div class="fila"><button class="primario" id="guardarAula">${I('check')} ${t('Listo')}</button></div>
     <p class="chico suave">${t('¿Eres docente?')} <a href="docente.html">${t('Crea tu clase aquí')}</a></p>`;
+  if (desdeQR) setTimeout(() => c.querySelector('#nombre')?.focus(), 100);
   c.querySelector('#guardarAula').addEventListener('click', () => {
     G.jugador.nombre = c.querySelector('#nombre').value.trim();
     G.jugador.aula = c.querySelector('#aula').value.trim().toUpperCase();
