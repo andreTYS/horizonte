@@ -293,7 +293,7 @@ export function callarVoz() {
 }
 
 /** Reproduce un archivo de voz. Devuelve false si no se pudo (para usar la voz del navegador). */
-export async function reproducirVoz(url) {
+export async function reproducirVoz(url, vigente = () => true) {
   if (!activo) return true;
   iniciar();
   if (!ctx) return false;
@@ -305,7 +305,9 @@ export async function reproducirVoz(url) {
       buf = await ctx.decodeAudioData(await r.arrayBuffer());
       cacheVoz.set(url, buf);
     }
+    if (!vigente()) return true; // mientras cargaba, otra voz tomó la palabra: no se encima
     callarVoz();
+    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const g = ctx.createGain();

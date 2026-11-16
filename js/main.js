@@ -7,7 +7,7 @@ import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
 import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido, musicaTema } from './sonido.js';
 import { guiaPantalla } from './ayuda.js';
-import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz } from './voz.js';
+import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz, leerGuia } from './voz.js';
 import { mostrarLanding } from './landing.js';
 import * as A from './accesibilidad.js';
 import * as R from './recompensas.js';
@@ -330,7 +330,7 @@ function coach() {
     </div>`;
   document.body.appendChild(capa);
   A.anunciar(paso.txt);
-  leerEnVoz(paso.txt);
+  leerGuia(paso.txt);
   const marcar = () => { G.coachVisto[paso.id] = true; };
   capa.querySelector('#coachSig')?.addEventListener('click', () => { marcar(); coach(); });
   // Pausar no borra la guía: tocando a Nebula (botón flotante) sigue donde quedó
@@ -1092,8 +1092,8 @@ function ayudaPantalla() {
   document.getElementById('coach')?.remove();
   guiaPantalla(pasos, {
     textos: { saltar: t('Cerrar'), siguiente: t('Siguiente'), anterior: t('Anterior'), listo: t('¡Listo!'), titulo: t('¿Qué es cada cosa?'), pregunta: t('¿Qué es esto?') },
-    hablar: leerEnVoz,
-    alCerrar: () => { if (G.mision?.id === 'cero' && ['diseno', 'mision', 'resultado'].includes(document.body.dataset.pantalla)) setTimeout(coach, 200); },
+    hablar: leerGuia,
+    alCerrar: () => { callar(); if (G.mision?.id === 'cero' && ['diseno', 'mision', 'resultado'].includes(document.body.dataset.pantalla)) setTimeout(coach, 200); },
   });
 }
 document.addEventListener('click', (e) => { if (e.target.closest?.('[data-ayuda]')) ayudaPantalla(); });

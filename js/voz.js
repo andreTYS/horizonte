@@ -5,6 +5,8 @@ import { getIdioma } from './i18n.js';
 
 const indices = {};
 let ultimo = '';
+let turno = 0; // cada frase nueva invalida a las que todavía estaban cargando: nunca hablan dos voces a la vez
+const hablaLaGuia = () => Boolean(document.getElementById('coach') || document.getElementById('recorrido'));
 let activa = (() => { try { return localStorage.getItem('horizonte.voz') !== 'no'; } catch { return true; } })();
 
 export const vozActiva = () => activa;
@@ -39,6 +41,7 @@ function vozNavegador(texto, idioma) {
 }
 
 export function callar() {
+  turno += 1;
   callarVoz();
   if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   document.body.classList.remove('nebula-habla');
@@ -49,10 +52,13 @@ export async function decir(html) {
   const texto = normalizar(html);
   if (!activa || !sonidoActivo() || !texto || texto === ultimo) return;
   ultimo = texto;
+  const mio = ++turno;
+  const vigente = () => mio === turno && !hablaLaGuia(); // si la guía está explicando algo, Nebula espera
   const idioma = getIdioma();
   const archivo = (await indice(idioma))[texto];
-  if (archivo && (await reproducirVoz(`assets/voz/${idioma}/${archivo}`))) return;
-  vozNavegador(texto, idioma);
+  if (!vigente()) return;
+  if (archivo && (await reproducirVoz(`assets/voz/${idioma}/${archivo}`, vigente))) return;
+  if (vigente()) vozNavegador(texto, idioma);
 }
 
 /** Permite que Nebula repita la misma frase (al volver a una pantalla). */
@@ -71,7 +77,13 @@ export function alternarVoz() {
 
 /** Lee un texto que cambia en cada partida (p. ej. el estado de la base), aunque la voz automática esté apagada. */
 export function leer(texto) {
-  callar();
+  callar(); // corta cualquier otra voz (también la que todavía estaba cargando)
   ultimo = '';
   vozNavegador(texto, getIdioma());
+}
+
+/** Voz de las guías (Nebula del Episodio 0 y la llama): respeta el botón de voz y corta a cualquier otra. */
+export function leerGuia(texto) {
+  if (!activa || !sonidoActivo()) { callar(); return; }
+  leer(texto);
 }
