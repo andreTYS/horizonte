@@ -1209,3 +1209,22 @@ body[data-pantalla="viaje"] #aviso-lento, body[data-pantalla="viaje"] #aviso-2d 
 
 #aviso-lento.en-espera, #nebula-flotante.en-espera { display: none !important; }
 #nebula-globo .volver-lugar { position: static; width: auto; margin-top: 6px; font-size: .8rem; color: #5b54c4; }
+
+/* ── Botón «?» y pines de ayuda (la llama explica cada cosa) ── */
+.boton-ayuda { background: var(--acento) !important; color: #1b1f3b !important; border-color: transparent !important; animation: ayuda-late 2.4s ease-in-out infinite; }
+.boton-ayuda b { font: 800 1.25rem/1 var(--titulos, inherit); }
+@keyframes ayuda-late { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 201, 74, .55); } 50% { box-shadow: 0 0 0 7px rgba(255, 201, 74, 0); } }
+.menos-movimiento .boton-ayuda { animation: none; }
+.recorrido-pines { position: fixed; inset: 0; pointer-events: none; }
+.pin-ayuda { position: fixed; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: #5b54c4; color: #fff; font: 800 .85rem/1 sans-serif; display: grid; place-items: center; padding: 0; pointer-events: auto; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .4); z-index: 2; }
+.pin-ayuda.activo { background: var(--acento); color: #1b1f3b; transform: scale(1.2); }
+.recorrido-globo { z-index: 3; }
+.recorrido-globo .fila-der { display: flex; gap: 6px; }
+.recorrido-globo #recorridoAnt:disabled { opacity: .35; }
+.coach-n { font: 700 .72rem var(--numeros, monospace); color: var(--acento); margin-right: auto; }
+.coach-globo .fila { flex-wrap: wrap; }
+.hud-acciones .boton-ayuda { flex: 0 0 auto; }
+/* Asistente del panel docente */
+.ayuda-docente { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 10px; border-radius: 999px; border: 0; background: var(--acento); color: #1b1f3b; font-weight: 800; box-shadow: var(--sombra); cursor: pointer; }
+.ayuda-docente img { width: 40px; height: 40px; object-fit: contain; }
+.ayuda-docente b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1b1f3b; color: var(--acento); }

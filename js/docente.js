@@ -1,6 +1,7 @@
 // Panel docente de ASU STELLAR · Horizonte: consulta /api/resultados del servidor del VPS,
 // genera el enlace (y QR) del modo aula, pausa a toda el aula y exporta los datos a CSV.
 import qrcode from '../vendor/qrcode/qrcode.mjs';
+import { guiaPantalla } from './ayuda.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -156,7 +157,7 @@ function pintar() {
   const nota = (x) => (x ? `${x.puntaje}/${x.maximo}${x.nivel ? ' · ' + x.nivel : ''}` : '—');
   const pct = (a, b) => (b ? `${Math.round((a / b) * 100)} %` : '—');
   const aprendizaje = ap && ap.estudiantes.length ? `
-    <section class="tarjeta"><h3>${I('medidor')} Aprendizaje</h3>
+    <section class="tarjeta" id="secAprendizaje"><h3>${I('medidor')} Aprendizaje</h3>
       <div class="resumen-diseno">
         <div class="dato"><small>Prueba inicial (prom.)</small><b>${ap.inicial ?? '—'} / 5</b></div>
         <div class="dato bien"><small>Prueba final (prom.)</small><b>${ap.final ?? '—'} / 5</b></div>
@@ -167,23 +168,23 @@ function pintar() {
       ${tabla(ap.estudiantes, [['nombre', 'Estudiante'], ['inicial', 'Inicial', nota], ['final', 'Final', nota], ['caso', 'Rúbrica', nota]])}
     </section>` : '';
   const predTotal = d.predicciones.reduce((a, x) => a + x.total, 0), predOk = d.predicciones.reduce((a, x) => a + x.aciertos, 0);
-  const predicciones = `<section class="tarjeta"><h3>${I('predecir')} Predicciones</h3>
+  const predicciones = `<section class="tarjeta" id="secPredicciones"><h3>${I('predecir')} Predicciones</h3>
     <p class="chico suave">Antes de lanzar, cada estudiante predice qué fallará primero (o si llegarán al final). Acertar más con el tiempo indica que entienden cómo se conectan los sistemas.</p>
     ${d.predicciones.length ? `<div class="resumen-diseno"><div class="dato"><small>Predicciones</small><b>${predTotal}</b></div><div class="dato bien"><small>Aciertos</small><b>${pct(predOk, predTotal)}</b></div></div>
       ${tabla(d.predicciones, [['mision', 'Misión', nombreMision], ['total', 'Predicciones'], ['aciertos', 'Aciertos'], ['aciertos', '%', (a, f) => pct(a, f.total)]])}` : '<p class="suave">Aún no hay predicciones.</p>'}
   </section>`;
-  const bitacora = `<section class="tarjeta"><h3>${I('lapiz')} Bitácora de tus estudiantes</h3>
+  const bitacora = `<section class="tarjeta" id="secBitacora"><h3>${I('lapiz')} Bitácora de tus estudiantes</h3>
     <p class="chico suave">Al terminar una misión escriben qué cambiaron o qué protegieron. Es la evidencia de su explicación.</p>
     ${d.notas.length ? `<ul class="lista-notas">${d.notas.slice(0, 100).map((n) => `<li><p>«${esc(n.nota)}»</p><small>${esc(n.nombre || 'Sin nombre')} · ${esc(nombreMision(n.mision))} · ${esc(fecha(n.fecha))}</small></li>`).join('')}</ul>` : '<p class="suave">Aún no hay frases en la bitácora.</p>'}
   </section>`;
-  const logros = `<section class="tarjeta"><h3>${I('estrella')} Logros de tus estudiantes</h3>
+  const logros = `<section class="tarjeta" id="secLogros"><h3>${I('estrella')} Logros de tus estudiantes</h3>
     <p class="chico suave">Créditos estelares e insignias ganadas en el juego (se guardan cuando el estudiante escribe su nombre y el código de aula).</p>
     ${d.logros?.length ? tabla(d.logros, [['nombre', 'Estudiante'], ['misiones', 'Misiones cumplidas'], ['insignias', 'Insignias', (x) => String(x.length)], ['creditos', 'Créditos'], ['actualizado', 'Última vez', (x) => new Date(x).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })]]) : '<p class="suave">Aún no hay progreso guardado.</p>'}
   </section>`;
   const avisoNueva = G_nueva === d.aula ? `<div class="aviso-demo" role="status"><b>¡Tu clase está lista!</b> Código: <b class="codigo-grande">${esc(d.aula)}</b>. Díctalo a tus estudiantes o muéstrales el QR. Anota tu clave: la necesitarás para volver a entrar.</div>` : '';
   $('salida').innerHTML = `${avisoNueva}${d.demo ? '<div class="aviso-demo" role="status"><b>Aula de demostración.</b> Los estudiantes y resultados son <b>inventados</b> para que veas cómo funciona el panel. Nada se guarda. Para tu aula real, escribe tu código y la clave docente.</div>' : ''}${tarjetaAula()}${aprendizaje}${predicciones}${logros}${bitacora}
-    <section class="tarjeta"><h3>Resumen por misión</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión', nombreMision], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
-    <section class="tarjeta"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión', nombreMision], ['motivo', 'Causa', (m) => MOTIVOS[m] || esc(m)], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
+    <section class="tarjeta" id="secResumen"><h3>Resumen por misión</h3>${d.resumen.length ? tabla(d.resumen, [['mision', 'Misión', nombreMision], ['intentos', 'Intentos'], ['exitos', 'Éxitos'], ['rebobinados_prom', 'Rebobinados (prom.)']]) : '<p class="suave">Aún no hay partidas.</p>'}</section>
+    <section class="tarjeta" id="secFallas"><h3>¿Dónde fallan más?</h3>${d.fallas.length ? tabla(d.fallas, [['mision', 'Misión', nombreMision], ['motivo', 'Causa', (m) => MOTIVOS[m] || esc(m)], ['veces', 'Veces']]) : '<p class="suave">Sin fallas registradas.</p>'}</section>
     <section class="tarjeta"><div class="entre"><h3>Partidas</h3><div class="fila-botones"><button class="secundario" id="csvPartidas">${I('descargar')} Partidas (CSV)</button><button class="secundario" id="csvNotas">${I('descargar')} Bitácoras (CSV)</button></div></div>
       ${tabla(d.partidas.slice(0, 200), [['nombre', 'Estudiante', (x) => esc(x || '—')], ['mision', 'Misión', nombreMision], ['exito', 'Resultado', (x) => (x ? '<span class="ok">Lo logró</span>' : '<span class="mal">Falló</span>')],
         ['motivo', 'Causa', (m) => MOTIVOS[m] || ''], ['prediccion', 'Predijo', (p, f) => (p ? `${MOTIVOS[p] || esc(p)} ${(f.exito ? p === 'exito' : p === f.motivo) ? '✓' : ''}` : '—')],
@@ -214,7 +215,48 @@ function pintar() {
   $('csvPartidas').addEventListener('click', () => descargarCsv(`partidas-${d.aula}.csv`, d.partidas,
     [['fecha', 'Fecha'], ['nombre', 'Estudiante'], ['mision', 'Misión'], ['exito', 'Logró'], ['motivo', 'Causa'], ['prediccion', 'Predicción'], ['dias', 'Días'], ['ciencia', 'Ciencia'], ['rebobinados', 'Rebobinados'], ['estrellas', 'Estrellas']]));
   $('csvNotas').addEventListener('click', () => descargarCsv(`bitacoras-${d.aula}.csv`, d.notas, [['fecha', 'Fecha'], ['nombre', 'Estudiante'], ['mision', 'Misión'], ['nota', 'Frase']]));
+  if (!vistoAntes('horizonte.ayudaPanel')) setTimeout(asistente, 500);
 }
+
+// ── Asistente docente: la llama explica cada parte del panel (botón «?» siempre visible) ──
+const PASOS_ENTRADA = [
+  ['#formCrear', '¡Hola, profe! Soy la llama de la expedición y te ayudo con el panel. Aquí creas tu clase: eliges una clave (como en Kahoot) y te damos un código para tus estudiantes.'],
+  ['#aulaNueva', 'Si quieres, escribe tu propio código (por ejemplo 5A-CIENCIA). Si lo dejas vacío, te damos uno fácil de dictar.'],
+  ['#claveNueva', 'Tu clave: mínimo 4 caracteres. Anótala, la necesitas para volver a entrar. Se guarda cifrada.'],
+  ['#form', 'Si ya creaste tu clase, entra aquí con tu código y tu clave.'],
+  ['#demoBtn', '¿Primera vez? Prueba la clase de demostración: verás estudiantes de ejemplo sin crear nada.'],
+  ['.ayuda-docente', 'Cuando tengas una duda, toca este botón y te explico cada parte de la pantalla.'],
+];
+const PASOS_PANEL = [
+  ['.tarjeta-aula h3', 'Este es tu aula. El código de arriba es el que dictas a tus estudiantes.'],
+  ['#qr', 'Muestra este código QR en el proyector: tus estudiantes lo escanean, escriben su nombre y entran directo a tu clase.'],
+  ['.enlace-aula', 'O copia este enlace y compártelo por WhatsApp o en el aula virtual.'],
+  ['#tranquilo', 'Ritmo tranquilo: quita el botón ×5 para que avancen día por día y lean con calma.'],
+  ['.pausa-panel', 'Pausa del aula: congela el juego de todos para explicar algo. Puedes poner un mensaje, como «Miren la pizarra». Nadie pierde su partida.'],
+  ['#actualizar', 'Toca Actualizar para ver los datos más recientes de tus estudiantes.'],
+  ['#secAprendizaje', 'Aprendizaje: prueba inicial y final, la ganancia de aprendizaje y la rúbrica del caso Artemis-7 con los niveles AD, A, B y C.'],
+  ['#secPredicciones', 'Predicciones: antes de lanzar, cada estudiante predice qué fallará. Si aciertan más con el tiempo, están entendiendo cómo se conectan los sistemas.'],
+  ['#secLogros', 'Logros: créditos e insignias de cada estudiante.'],
+  ['#secBitacora', 'Bitácora: la frase que escribe cada estudiante al terminar una misión. Es la evidencia de su explicación científica.'],
+  ['#secResumen', 'Resumen por misión: intentos, éxitos y cuántas veces rebobinaron.'],
+  ['#secFallas', '¿Dónde fallan más? Te dice qué tema reforzar en clase (por ejemplo, la energía de noche).'],
+  ['#csvPartidas', 'Descarga todo en CSV para abrirlo en Excel y registrar notas.'],
+  ['.ayuda-docente', 'Listo. Si te olvidas de algo, toca este botón cuando quieras.'],
+];
+function vistoAntes(clave) {
+  try { if (localStorage.getItem(clave)) return true; localStorage.setItem(clave, '1'); } catch { /* sin almacenamiento */ }
+  return false;
+}
+function asistente() {
+  guiaPantalla(datos ? PASOS_PANEL : PASOS_ENTRADA, { textos: { titulo: 'Asistente docente', pregunta: '¿Qué es esto?' } });
+}
+const botonAsistente = document.createElement('button');
+botonAsistente.className = 'ayuda-docente';
+botonAsistente.setAttribute('aria-label', 'Asistente: ¿qué es cada cosa del panel?');
+botonAsistente.innerHTML = '<img src="assets/marca/llama-astronauta.webp" alt="" width="40" height="40"><b aria-hidden="true">?</b> Asistente';
+botonAsistente.addEventListener('click', asistente);
+document.body.appendChild(botonAsistente);
+if (!vistoAntes('horizonte.ayudaDocente')) setTimeout(asistente, 700);
 
 /** CSV con punto y coma y BOM: Excel en español lo abre bien. */
 function descargarCsv(nombre, filas, cols) {

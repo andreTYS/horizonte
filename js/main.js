@@ -6,6 +6,7 @@ import * as api from './api.js';
 import * as E from './evaluacion.js';
 import { t, trLista, trAnalisis, getIdioma, setIdioma } from './i18n.js';
 import { sfx, alternarSonido, sonidoActivo, ambienteEstado, fijarSonido, musicaTema } from './sonido.js';
+import { guiaPantalla } from './ayuda.js';
 import { decir, callar, olvidarUltimo, alternarVoz, vozActiva, fijarVoz, leer as leerEnVoz } from './voz.js';
 import { mostrarLanding } from './landing.js';
 import * as A from './accesibilidad.js';
@@ -267,46 +268,76 @@ async function demo() {
 // ───────────────────────── Episodio 0: guía paso a paso ─────────────────────────
 // Resalta un elemento y explica qué hacer. Los pasos avanzan con «Siguiente» o al tocar lo resaltado.
 const PASOS_COACH = () => [
+  // Diseño: primero conocer la pantalla y los controles
+  { id: 'briefing', en: 'diseno', sel: '#entendido', txt: t('¡Hola, cadete! Soy Nebula y te voy a enseñar a jugar paso a paso. Primero lee la misión y toca «¡Entendido!».'), accion: true },
+  { id: 'mapa', en: 'diseno', sel: '#mundo', txt: t('Este es el mapa 3D de tu base. Arrastra con el dedo (o el mouse) para girarlo y pellizca (o usa la rueda) para acercarte. Si tocas un módulo, te digo qué hace.') },
+  { id: 'masa', en: 'diseno', sel: '.masa', txt: t('Esta barra es el peso del cohete. Todo lo que pongas pesa. Si se pone roja, el cohete no puede despegar.') },
+  { id: 'cartas', en: 'diseno', sel: '.cartas', txt: t('Abajo están los módulos de tu base. Desliza la fila hacia los lados para verlos todos.') },
+  { id: 'stepper', en: 'diseno', sel: '[data-carta="panel"] .stepper', txt: t('Con + agregas uno más y con − quitas uno. Por ejemplo, más paneles solares = más energía cuando hay Sol.') },
+  { id: 'interruptor', en: 'diseno', sel: '.interruptor', txt: t('Estos interruptores prenden o apagan un módulo entero, como el reciclador de agua.') },
   { id: 'widgets', en: 'diseno', sel: '.widgets-diseno', txt: t('Aquí ves si tu base alcanza: energía de día y de noche, agua, comida y radiación. Verde = alcanza, rojo = no alcanza.'), si: () => !G.tutorialFallo },
+  { id: 'datos', en: 'diseno', sel: '#deDonde', txt: t('Este botón te muestra de dónde sale cada número: todos son datos reales de la NASA.') },
+  { id: 'ayuda', en: 'diseno', sel: '[data-ayuda]', txt: t('Si no sabes qué es algo, toca el signo «?»: la llama te explica cada cosa de la pantalla. Funciona en todas las pantallas.') },
   { id: 'lanzar1', en: 'diseno', sel: '#lanzar', txt: t('Lanza la misión tal como está. ¿Aguantará la noche?'), accion: true, si: () => !G.tutorialFallo },
   { id: 'predice', en: 'predice', sel: '.opciones', txt: t('Antes de lanzar, predice qué fallará primero. Si aciertas, ganas créditos estelares.'), accion: true },
+  // Misión: cada barra y cada botón
   { id: 'recursos', en: 'mision', sel: '.recursos', txt: t('Estos son tus recursos. Si uno llega a cero, la base falla.') },
+  { id: 'energia', en: 'mision', sel: '.recursos .recurso:nth-child(1)', txt: t('El rayo es la energía guardada en las baterías, en kWh.') },
+  { id: 'vida', en: 'mision', sel: '.recursos .recurso:nth-child(2)', txt: t('Luego oxígeno, agua y comida: lo que necesitan los astronautas para vivir.') },
+  { id: 'radiacion', en: 'mision', sel: '.recursos .recurso:nth-child(5)', txt: t('Esta es la radiación. Al revés que las demás, debe quedarse BAJA.') },
+  { id: 'ciencia', en: 'mision', sel: '.recursos .recurso:nth-child(7)', txt: t('Y la ciencia: tienes que llegar a la meta de experimentos para cumplir la misión.') },
+  { id: 'reloj', en: 'mision', sel: '.reloj-dia', txt: t('El reloj te dice qué día es y si hay Sol o es de noche.') },
   { id: 'avanzar', en: 'mision', sel: '#dia1', txt: t('Toca AVANZAR para pasar un día. Mira cómo cambian las barras.'), accion: true },
   { id: 'crono', en: 'mision', sel: '.cronoscopio', txt: t('Este es el Cronoscopio: cada día queda guardado. Si algo sale mal, puedes volver a un día pasado.'), si: () => actual().dia >= 1 },
+  { id: 'habilidades', en: 'mision', sel: '.habilidades', txt: t('Estas son tus decisiones del día: Refugio protege de la radiación, Ración ahorra comida e Invernadero se puede apagar para ahorrar energía.'), si: () => actual().dia >= 1 },
+  { id: 'bitacora', en: 'mision', sel: '#bitacora', txt: t('En la Bitácora queda escrito lo que pasó cada día.'), si: () => actual().dia >= 1 },
+  { id: 'rapido', en: 'mision', sel: '#dia5', txt: t('Con ×5 avanzas cinco días seguidos. Se detiene solo si pasa algo importante.'), si: () => actual().dia >= 1 },
+  { id: 'nebulaZona', en: 'mision', sel: '.zona-nebula', txt: t('Aquí te aviso lo que pasa. Y si necesitas ayuda, toca mi botón flotante: te doy una pista. Puedes arrastrarlo a donde quieras.'), si: () => actual().dia >= 1 },
+  { id: 'mapa3d', en: 'mision', sel: '#mundo', txt: t('Toca los nombres en el mapa (cráteres, rover, antena) para visitarlos de cerca.'), si: () => actual().dia >= 1 },
   { id: 'noche', en: 'mision', sel: '.reloj-dia', txt: t('Se puso el Sol: los paneles ya no producen. Sigue avanzando y mira qué pasa.'), si: () => !S.hayLuz(G.mision, actual().dia, G.nasa) },
+  // Resultado
   { id: 'causa', en: 'resultado-falla', sel: '.cadena', txt: t('Aquí está la causa: así ocurrió la falla, paso a paso. El error es la lección.') },
+  { id: 'consejo', en: 'resultado-falla', sel: '.modal .nebula', txt: t('Y aquí te digo qué cambiar para la próxima vez.') },
+  { id: 'rebobinarBtn', en: 'resultado-falla', sel: '#rebobinar', txt: t('Con este botón vuelves a un día pasado y cambias tus decisiones sin empezar de nuevo.') },
   { id: 'redisenar', en: 'resultado-falla', sel: '#redisenar', txt: t('Ahora rediseña la base para que aguante la noche.'), accion: true },
   { id: 'baterias', en: 'diseno', sel: '[data-mas="bateria"]', txt: t('Agrega baterías: guardan la energía del día para usarla de noche. Pon 2.'), accion: true, si: () => G.tutorialFallo && G.config.bateria < 2, repetir: true },
   { id: 'lanzar2', en: 'diseno', sel: '#lanzar', txt: t('¡Ahora sí! Lanza otra vez.'), accion: true, si: () => G.tutorialFallo && G.config.bateria >= 2 },
   { id: 'premio', en: 'resultado-exito', sel: '.premio', txt: t('¡Lo lograste! Ganaste créditos estelares. Úsalos en «Tripulación» para personalizar a tus astronautas y tu base.') },
+  { id: 'nota', en: 'resultado-exito', sel: '#nota', txt: t('Escribe aquí una frase: ¿qué cambiaste para lograrlo? Tu docente la puede leer.') },
+  { id: 'siguiente', en: 'resultado-exito', sel: '#sig', txt: t('¡Ya sabes jugar! Toca aquí para empezar la Misión 1. Recuerda: el «?» y mi botón siempre te ayudan.') },
 ];
 
 function coach() {
   document.getElementById('coach')?.remove();
-  if (G.mision?.id !== 'cero' || G.demo) return;
+  if (G.mision?.id !== 'cero' || G.demo || G.coachSalteado || document.getElementById('recorrido')) return;
   const en = document.querySelector('.guia-pregunta') ? 'predice'
-    : document.body.dataset.pantalla === 'resultado' ? (document.querySelector('.premio') && !document.querySelector('#redisenar') ? 'resultado-exito' : 'resultado-falla')
+    : (document.body.dataset.pantalla === 'resultado' || document.querySelector('.hud-acciones')) ? (document.querySelector('.premio') && !document.querySelector('#redisenar') ? 'resultado-exito' : 'resultado-falla')
     : document.body.dataset.pantalla;
-  const paso = PASOS_COACH().find((p) => p.en === en && (!G.coachVisto[p.id] || p.repetir) && (!p.si || p.si()) && document.querySelector(p.sel));
+  const lista = PASOS_COACH();
+  const paso = lista.find((p) => p.en === en && (!G.coachVisto[p.id] || p.repetir) && (!p.si || p.si()) && visibleEl(document.querySelector(p.sel)));
   if (!paso) return;
   const el = document.querySelector(paso.sel);
   const r = el.getBoundingClientRect();
   const capa = document.createElement('div');
   capa.id = 'coach';
   const abajo = r.top < innerHeight / 2;
-  capa.innerHTML = `<div class="coach-foco" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px"></div>
-    <div class="coach-globo ${abajo ? 'abajo' : 'arriba'}" role="dialog" aria-live="polite" style="left:${Math.max(12, Math.min(innerWidth - 332, r.left + r.width / 2 - 160))}px;${abajo ? `top:${Math.min(innerHeight - 170, r.bottom + 14)}px` : `bottom:${Math.min(innerHeight - 170, innerHeight - r.top + 14)}px`}">
+  const grande = r.height > innerHeight * 0.5; // el mapa 3D: el globo va al centro
+  const n = Math.min(lista.length, lista.filter((p) => G.coachVisto[p.id]).length + 1);
+  capa.innerHTML = `<div class="coach-foco" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${Math.min(r.height, innerHeight - 12) + 12}px"></div>
+    <div class="coach-globo ${abajo ? 'abajo' : 'arriba'}" role="dialog" aria-live="polite" style="left:${Math.max(12, Math.min(innerWidth - 332, r.left + r.width / 2 - 160))}px;${grande ? `top:${innerHeight * 0.32}px` : abajo ? `top:${Math.min(innerHeight - 190, r.bottom + 14)}px` : `bottom:${Math.min(innerHeight - 190, innerHeight - r.top + 14)}px`}">
       <div class="coach-cara">${CARA_NEBULA}</div><p>${paso.txt}</p>
-      <div class="fila">${paso.accion ? `<small class="suave">${t('Toca lo resaltado')}</small>` : `<button class="primario chico" id="coachSig">${t('Siguiente')} →</button>`}<button class="fantasma chico" id="coachSaltar">${t('Saltar guía')}</button></div>
+      <div class="fila"><span class="coach-n">${t('Paso {n} de {t}', { n, t: lista.length })}</span>${paso.accion ? `<small class="suave">${t('Toca lo resaltado')}</small>` : `<button class="primario chico" id="coachSig">${t('Siguiente')} →</button>`}<button class="fantasma chico" id="coachSaltar">${t('Pausar guía')}</button></div>
     </div>`;
   document.body.appendChild(capa);
   A.anunciar(paso.txt);
+  leerEnVoz(paso.txt);
   const marcar = () => { G.coachVisto[paso.id] = true; };
   capa.querySelector('#coachSig')?.addEventListener('click', () => { marcar(); coach(); });
-  capa.querySelector('#coachSaltar').addEventListener('click', () => { PASOS_COACH().forEach((p) => { G.coachVisto[p.id] = true; }); G.coachSalteado = true; capa.remove(); });
+  // Pausar no borra la guía: tocando a Nebula (botón flotante) sigue donde quedó
+  capa.querySelector('#coachSaltar').addEventListener('click', () => { G.coachSalteado = true; capa.remove(); callar(); });
   if (paso.accion) el.addEventListener('click', () => { marcar(); setTimeout(coach, 350); }, { once: true, capture: true });
-  if (G.coachSalteado) capa.remove();
 }
+const visibleEl = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
 addEventListener('resize', () => { if (document.getElementById('coach')) coach(); });
 
 // ───────────────────────── Introducción rápida, guía y personajes ─────────────────────────
@@ -506,6 +537,7 @@ function globo(planeta = 'luna', elegida = null) {
     <section class="globo-pantalla" aria-label="${t('La Luna y Marte en globo')}">
       <header class="vestidor-cabecera">
         <button class="boton-icono" id="globoVolver" aria-label="${t('Volver')}">${I('volver')}</button>
+        ${botonAyuda()}
         <div><p class="lema">${t('Explora')}</p><h2>${planeta === 'marte' ? t('Marte') : t('La Luna')}</h2></div>
         <div class="vestidor-cats" role="tablist" style="margin-left:auto">
           <button role="tab" aria-selected="${planeta === 'luna'}" data-planeta="luna">${t('La Luna')}</button>
@@ -590,6 +622,7 @@ function pantallaTripulacion(aviso = '', opciones = {}) {
       <button class="boton-icono" id="vestidorVolver" aria-label="${t('Volver')}">${I('volver')}</button>
       <div><p class="lema">${probador ? t('Probador del Episodio 0') : t('Tu expedición')}</p><h2>${t('Vestidor de la tripulación')}</h2></div>
       <div class="creditos-grandes">${I('estrella')} <b>${G.rec.creditos}</b><small>${t('créditos estelares')}</small></div>
+      ${botonAyuda()}
     </header>
     ${probador ? `<div class="aviso-probador">${I('estrella')} ${t('En el Episodio 0 puedes probar todos los trajes, parches y accesorios gratis. Al terminar el entrenamiento, tu tripulación vuelve a lo que ya desbloqueaste.')}</div>` : ''}
     ${aviso ? `<div class="toast alerta" role="status">${aviso}</div>` : ''}
@@ -882,6 +915,7 @@ function inicio() {
       ${botonAcc()}
       ${chipCreditos()}
       ${chipAula()}
+      ${botonAyuda()}
     </div>
     <header class="marca">
       <h1 class="logo"><img src="assets/marca/logo-color.webp" alt="ASU STELLAR" width="1200" height="800"><span class="sub-logo">Horizonte</span></h1>
@@ -962,51 +996,107 @@ function miAula(desdeQR = false) {
 function recorridoPortada(forzar = false) {
   if (document.body.dataset.pantalla !== 'portada' || (!forzar && leer('horizonte.recorrido', false))) return;
   guardar('horizonte.recorrido', true);
-  const pasos = [
+  ayudaPantalla();
+}
+
+// ───────────────────────── Botón «?»: la llama explica cada cosa de la pantalla ─────────────────────────
+const botonAyuda = () => `<button class="boton-icono boton-ayuda" data-ayuda aria-label="${t('¿Qué es cada cosa? Ayuda de esta pantalla')}" title="${t('¿Qué es cada cosa?')}"><b aria-hidden="true">?</b></button>`;
+
+const GUIAS = () => ({
+  portada: [
     ['.lista-misiones .mision-btn', t('¡Hola! Soy la llama de la expedición. Aquí están las misiones. Empieza por el Episodio 0: es un entrenamiento corto donde aprendes a jugar.')],
     ['.lista-misiones', t('Luego vienen 4 misiones, de la Luna a Marte. Cada una que cumples te da estrellas ★ y abre la siguiente.')],
+    ['.estrellas-mini', t('Las estrellas dicen qué tan bien te fue: 3 estrellas si llegas al final sin rebobinar.')],
+    ['.fila-eval, .tarjeta-aprendizaje', t('Aquí están tus pruebas: una al inicio y otra al final, para ver cuánto aprendiste.')],
     ['#chipCreditos', t('Estos son tus créditos estelares. Los ganas al cumplir misiones, al predecir bien y al aprender de un error.')],
+    ['#aLanding', t('La casita te lleva a la página de inicio del proyecto.')],
+    ['#idioma', t('Aquí cambias el idioma: español o inglés.')],
+    ['#sonido', t('Este botón prende o apaga la música y los sonidos.')],
+    ['#voz', t('Este botón prende o apaga la voz que lee los textos.')],
+    ['#accesibilidad', t('Accesibilidad: letra más grande, alto contraste, menos movimiento y la vista 2D para equipos lentos.')],
+    ['#miAula', t('Si tu docente te dio un código de clase, escríbelo en Mi aula para que vea tu avance.')],
     ['#tripulacionBtn', t('En Tripulación gastas tus créditos: trajes, visores, parches y accesorios para tus astronautas, y objetos para la base.')],
     ['#globoBtn', t('En el Globo ves la Luna y Marte enteros y dónde queda cada misión, en su lugar real.')],
-    ['#miAula', t('Si tu docente te dio un código de clase, escríbelo en Mi aula para que vea tu avance.')],
-    ['#guiaBtn', t('En la Guía está cómo se juega y qué significa cada barra. Personajes te presenta a la tripulación y a Nebula.')],
+    ['#guiaBtn', t('En la Guía está cómo se juega y qué significa cada barra.')],
+    ['#personajesBtn', t('Personajes te presenta a la tripulación, a Nebula y a mí.')],
+    ['#historia', t('Historia: el cuento ilustrado de la expedición.')],
     ['#fuentes', t('Todos los números del juego son de la NASA. Aquí puedes ver de dónde sale cada uno.')],
-    ['.barra-rapida', t('Arriba cambias el idioma, el sonido, la voz y la accesibilidad (texto grande, alto contraste, menos movimiento).')],
-    ['#recorridoBtn', t('Si quieres volver a ver este recorrido, toca aquí. ¡Buena expedición, comandante!')],
-  ].filter(([sel]) => document.querySelector(sel));
-  let i = 0;
-  const capa = document.createElement('div');
-  capa.id = 'recorrido';
-  capa.innerHTML = `<div class="recorrido-foco"></div><div class="recorrido-globo" role="dialog" aria-live="polite" aria-label="${t('Recorrido')}">
-    <img src="assets/marca/llama-astronauta.webp" alt="" width="72" height="72"><div><p id="recorridoTexto"></p>
-    <div class="fila"><button class="fantasma chico" id="recorridoSalir">${t('Saltar')}</button><span class="recorrido-n" id="recorridoN"></span><button class="primario chico" id="recorridoSig">${t('Siguiente')} ▶</button></div></div></div>`;
-  document.body.appendChild(capa);
-  const foco = capa.querySelector('.recorrido-foco'), globo = capa.querySelector('.recorrido-globo');
-  const cerrar = () => { capa.remove(); window.removeEventListener('resize', mostrar); document.removeEventListener('keydown', tecla); };
-  function mostrar() {
-    const [sel, txt] = pasos[i];
-    const el = document.querySelector(sel);
-    if (!el) return cerrar();
-    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    const r = el.getBoundingClientRect();
-    Object.assign(foco.style, { left: `${r.left - 8}px`, top: `${r.top - 8}px`, width: `${r.width + 16}px`, height: `${Math.min(r.height, innerHeight * 0.6) + 16}px` });
-    capa.querySelector('#recorridoTexto').textContent = txt;
-    capa.querySelector('#recorridoN').textContent = `${i + 1} / ${pasos.length}`;
-    capa.querySelector('#recorridoSig').textContent = i === pasos.length - 1 ? t('¡Listo!') : `${t('Siguiente')} ▶`;
-    // el globo va donde haya espacio: debajo o encima del elemento, sin salirse de la pantalla
-    const abajo = r.bottom + 190 < innerHeight;
-    globo.style.top = `${abajo ? Math.min(r.bottom + 14, innerHeight - 190) : Math.max(10, r.top - 180)}px`;
-    globo.style.left = `${Math.max(10, Math.min(innerWidth - Math.min(420, innerWidth - 20) - 10, r.left))}px`;
-    leerEnVoz(txt);
-    capa.querySelector('#recorridoSig').focus();
-  }
-  const tecla = (e) => { if (e.key === 'Escape') cerrar(); };
-  capa.querySelector('#recorridoSig').addEventListener('click', () => { i += 1; if (i >= pasos.length) cerrar(); else mostrar(); });
-  capa.querySelector('#recorridoSalir').addEventListener('click', cerrar);
-  window.addEventListener('resize', mostrar);
-  document.addEventListener('keydown', tecla);
-  mostrar();
+    ['#mundo', t('Esta es tu base en 3D. Arrastra con el dedo para girarla y pellizca para acercarte.')],
+    ['[data-ayuda]', t('Y si no sabes qué es algo, toca este signo de pregunta: te lo explico. ¡Buena expedición, comandante!')],
+  ],
+  diseno: [
+    ['#volver', t('Esta flecha te regresa a la lista de misiones.')],
+    ['.titulo-barra', t('Aquí ves la misión: el lugar, cuántos astronautas van y cuántos días dura.')],
+    ['.masa', t('Esta barra es el peso que lleva el cohete. Si se pone roja, el cohete no puede despegar: quita algo.')],
+    ['#deDonde', t('Toca aquí para ver de dónde salen los números: todos son datos de la NASA.')],
+    ['#probador', t('En el Episodio 0 puedes probarle a tu tripulación todos los trajes, gratis.')],
+    ['.widgets-diseno', t('Estas tarjetas te dicen si tu base alcanza. Verde = suficiente. Rojo = en riesgo.')],
+    ['.briefing', t('Aquí Nebula te cuenta la misión. Léelo y toca «¡Entendido!».')],
+    ['#mundo', t('Este es el mapa de tu base. Arrastra para girar, pellizca para acercar y toca un módulo para saber qué hace.')],
+    ['[data-carta="panel"]', t('Los paneles solares dan energía, pero solo cuando hay Sol. Usa + y − para poner más o menos.')],
+    ['[data-carta="bateria"]', t('Las baterías guardan la energía del día para usarla de noche.')],
+    ['.interruptor', t('Los interruptores prenden o apagan un módulo: reactor, reciclador, invernadero…')],
+    ['.segmentos', t('El blindaje protege de la radiación. Más blindaje = más protección, pero más peso.')],
+    ['.cartas', t('Desliza esta fila hacia los lados para ver todos los módulos: oxígeno, agua y comida también.')],
+    ['#lanzar', t('Cuando tu base esté lista, toca LANZAR. Antes te pediré que predigas qué pasará.')],
+  ],
+  mision: [
+    ['#abortar', t('Este botón te devuelve al diseño de la base para cambiarla.')],
+    ['.recursos .recurso:nth-child(1)', t('Energía: los kWh guardados en las baterías. Si llega a cero, la base se apaga.')],
+    ['.recursos .recurso:nth-child(2)', t('Oxígeno: el aire que respiran los astronautas.')],
+    ['.recursos .recurso:nth-child(3)', t('Agua: para tomar y para fabricar oxígeno.')],
+    ['.recursos .recurso:nth-child(4)', t('Comida: cuántos kilos quedan.')],
+    ['.recursos .recurso:nth-child(5)', t('Radiación: esta barra debe quedarse BAJA. Si llega al límite, la misión falla.')],
+    ['.recursos .recurso:nth-child(6)', t('Salud de la tripulación: baja si comen poco o reciben mucha radiación.')],
+    ['.recursos .recurso:nth-child(7)', t('Ciencia: los experimentos que hacen. Necesitas llegar a la meta para cumplir la misión.')],
+    ['.reloj-dia', t('El reloj: qué día es, si hay Sol o es de noche, y cuántas veces rebobinaste.')],
+    ['.zona-nebula', t('Aquí Nebula te avisa lo que pasa y te da pistas.')],
+    ['[data-dec="refugio"]', t('Refugio: los astronautas se protegen de una tormenta solar. Ese día no hacen ciencia.')],
+    ['[data-dec="racion"]', t('Ración: comen menos para que la comida dure más, pero baja la salud.')],
+    ['[data-dec="invernadero"]', t('Invernadero: apágalo para ahorrar energía y agua cuando haga falta.')],
+    ['#bitacora', t('Bitácora: el diario de la misión, día por día.')],
+    ['.cronoscopio', t('El Cronoscopio guarda cada día. Toca un día pasado para volver el tiempo atrás.')],
+    ['#dia1', t('AVANZAR pasa un día. Mira cómo cambian las barras.')],
+    ['#dia5', t('Este botón avanza 5 días seguidos (se detiene si pasa algo importante).')],
+    ['#mundo', t('Tu base en 3D: arrastra para girar, pellizca para acercar y toca los puntos con nombre para visitarlos.')],
+  ],
+  resultado: [
+    ['.modal .cadena', t('La cadena de causas: lo que pasó, paso a paso. Así sabes qué falló.')],
+    ['.modal .nebula', t('Nebula te dice qué cambiar para la próxima vez.')],
+    ['.modal .prediccion', t('Aquí ves si acertaste tu predicción.')],
+    ['.modal .mas-datos', t('Toca aquí para ver más datos de la misión.')],
+    ['.modal .premio', t('Tu premio: créditos estelares e insignias. Úsalos en Tripulación.')],
+    ['.modal #nota', t('Escribe una frase en tu bitácora: qué cambiaste o qué aprendiste.')],
+    ['.hud-acciones', t('Aquí eliges qué hacer ahora: rediseñar, volver a un día, seguir a la siguiente misión o ir al menú.')],
+  ],
+  globo: [
+    ['#globoVolver', t('Esta flecha te regresa.')],
+    ['.vestidor-cats', t('Elige si quieres ver la Luna o Marte.')],
+    ['#globoEscena', t('El globo: arrástralo para girarlo. Los puntos son los lugares reales de cada misión.')],
+    ['.globo-lista', t('Toca una misión de la lista para ir a su lugar en el globo.')],
+    ['#globoFicha', t('Aquí lees qué tiene de especial ese lugar.')],
+    ['#globoJugar', t('Y desde aquí puedes empezar esa misión.')],
+  ],
+  vestidor: [
+    ['#vestidorVolver', t('Esta flecha te regresa.')],
+    ['.creditos-grandes', t('Tus créditos estelares: con ellos desbloqueas cosas nuevas.')],
+    ['.vestidor-secciones', t('Elige qué quieres personalizar: astronautas, objetos de la base o ver tus insignias.')],
+    ['#vestidorEscena', t('Tu astronauta en grande. Arrástralo para darle la vuelta.')],
+    ['.vestidor-cuerpo', t('Toca un traje, un parche o un accesorio para ponérselo. Los que tienen candado se desbloquean con créditos.')],
+  ],
+});
+
+function ayudaPantalla() {
+  const pant = document.body.dataset.pantalla === 'modal' && document.querySelector('.hud-acciones') ? 'resultado' : document.body.dataset.pantalla;
+  const pasos = GUIAS()[pant] || [['.modal', t('Lee con calma y toca el botón para seguir. Si no sabes algo, pregúntale a tu docente.')]];
+  document.getElementById('coach')?.remove();
+  guiaPantalla(pasos, {
+    textos: { saltar: t('Cerrar'), siguiente: t('Siguiente'), anterior: t('Anterior'), listo: t('¡Listo!'), titulo: t('¿Qué es cada cosa?'), pregunta: t('¿Qué es esto?') },
+    hablar: leerEnVoz,
+    alCerrar: () => { if (G.mision?.id === 'cero' && ['diseno', 'mision', 'resultado'].includes(document.body.dataset.pantalla)) setTimeout(coach, 200); },
+  });
 }
+document.addEventListener('click', (e) => { if (e.target.closest?.('[data-ayuda]')) ayudaPantalla(); });
 
 // ───────────────────────── Construcción ─────────────────────────
 function estimaciones() {
@@ -1061,6 +1151,7 @@ function construir() {
       <button id="volver" class="boton-icono" aria-label="${t('Volver a misiones')}">${I('volver')}</button>
       <div class="titulo-barra"><small>${esc(m.lugar)} · ${t('{n} astronautas · {d} días', { n: m.tripulacion, d: m.dias })}</small><b>${esc(m.titulo)}</b></div>
       <button class="boton-icono" id="deDonde" aria-label="${t('¿De dónde salen estos números?')}" title="${t('¿De dónde salen estos números?')}">${I('datos')}</button>
+      ${botonAyuda()}
       ${m.tutorial ? `<button class="secundario chico" id="probador">${I('tripulacion')} ${t('Vestir tripulación')}</button>` : ''}
       <div class="masa ${excedido ? 'peligro' : pct > 85 ? 'alerta' : ''}" title="${t('Masa que lleva el cohete')}">
         <div class="entre"><span>${I('cohete')} ${t('Masa')}</span><b>${fmt(masa, 2)} / ${m.presupuesto_t} t</b></div>
@@ -1343,6 +1434,7 @@ function nebulaFlotante() {
 
 function pistaFlotante() {
   const m = G.mision, pant = document.body.dataset.pantalla;
+  if (m?.id === 'cero' && G.coachSalteado) { G.coachSalteado = false; coach(); if (document.getElementById('coach')) return; }
   if (pant === 'diseno') { G.briefingVisto[m.id] = false; construir(); return; }
   const viejo = document.getElementById('nebula-globo');
   if (viejo) { viejo.remove(); return; }
@@ -1561,7 +1653,7 @@ function mision() {
 
   $app.innerHTML = `
     <header class="hud-superior">
-      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}${botonVoz()}${botonEscuchar()}${botonAcc()}</div>
+      <div class="grupo-botones"><button id="abortar" class="boton-icono" aria-label="${t('Volver al diseño de la base')}">${I('ajustes')}</button>${botonSonido()}${botonVoz()}${botonEscuchar()}${botonAcc()}${botonAyuda()}</div>
       <div class="recursos">
         ${recurso(I('energia'), 'kWh', e.energia, capacidad || 1, fmt(e.energia))}
         ${recurso(I('o2'), t('kg O₂'), e.o2, Math.max(ini.o2, 1), fmt(e.o2, 1))}
@@ -1727,6 +1819,7 @@ function accionesAlHud() {
   barra.className = 'hud-acciones';
   barra.setAttribute('aria-label', t('Qué hacer ahora'));
   barra.append(...fila.children);
+  barra.insertAdjacentHTML('beforeend', botonAyuda());
   fila.remove();
   $app.appendChild(barra);
   document.querySelector('.modal')?.classList.add('resultado');
