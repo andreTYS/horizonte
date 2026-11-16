@@ -269,7 +269,7 @@ async function demo() {
 // Resalta un elemento y explica qué hacer. Los pasos avanzan con «Siguiente» o al tocar lo resaltado.
 const PASOS_COACH = () => [
   // Diseño: primero conocer la pantalla y los controles
-  { id: 'briefing', en: 'diseno', sel: '#entendido', txt: t('¡Hola, cadete! Soy Nebula y te voy a enseñar a jugar paso a paso. Primero lee la misión y toca «¡Entendido!».'), accion: true },
+  { id: 'briefing', en: 'diseno', sel: '#entendido', txt: t('¡Hola, cadete! Soy Nebula y te voy a enseñar a jugar paso a paso. Primero lee la misión y toca «¡Entendido!».'), accion: true, lado: 'abajo' },
   { id: 'mapa', en: 'diseno', sel: '#mundo', txt: t('Este es el mapa 3D de tu base. Arrastra con el dedo (o el mouse) para girarlo y pellizca (o usa la rueda) para acercarte. Si tocas un módulo, te digo qué hace.') },
   { id: 'masa', en: 'diseno', sel: '.masa', txt: t('Esta barra es el peso del cohete. Todo lo que pongas pesa. Si se pone roja, el cohete no puede despegar.') },
   { id: 'cartas', en: 'diseno', sel: '.cartas', txt: t('Abajo están los módulos de tu base. Desliza la fila hacia los lados para verlos todos.') },
@@ -320,7 +320,7 @@ function coach() {
   const r = el.getBoundingClientRect();
   const capa = document.createElement('div');
   capa.id = 'coach';
-  const abajo = r.top < innerHeight / 2;
+  const abajo = paso.lado ? paso.lado === 'abajo' : r.top < innerHeight / 2; // «abajo» = el globo va debajo del elemento
   const grande = r.height > innerHeight * 0.5; // el mapa 3D: el globo va al centro
   const n = Math.min(lista.length, lista.filter((p) => G.coachVisto[p.id]).length + 1);
   capa.innerHTML = `<div class="coach-foco" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${Math.min(r.height, innerHeight - 12) + 12}px"></div>
